@@ -23,5 +23,6 @@
   "Open a workspace folder first — the agent guide is written to its AGENTS.md.": "先にワークスペースフォルダを開いてください — エージェントガイドはその AGENTS.md に書き出されます。",
   "Wrote the AI agent guide to {0} — coding agents pick it up automatically.": "AIエージェント用ガイドを {0} に書き出しました — コーディングエージェントが自動的に読み込みます。",
   "Gateway pair + segment (HSRP)": "ゲートウェイ2台 + セグメント (HSRP)",
-  "Two gateways sharing a /28 multi-access segment with an HSRP virtual IP": "2台のゲートウェイが /28 マルチアクセスセグメントと HSRP 仮想IPを共有する構成"
+  "Two gateways sharing a /28 multi-access segment with an HSRP virtual IP": "2台のゲートウェイが /28 マルチアクセスセグメントと HSRP 仮想IPを共有する構成",
+  "Updated the TopoDraft section in {0}.": "{0} 内の TopoDraft セクションを更新しました。"
 }

@@ -12,15 +12,19 @@ import { T } from './strings';
  * Explains what the AI agent guide is for, then hands off to the host,
  * which writes AGENTS.md (the same as the command-palette command).
  */
-export function createAgentGuideModal(container: HTMLElement, onConfirm: () => void) {
+export function createAgentGuideModal(
+  container: HTMLElement,
+  onConfirm: (saveAs: boolean) => void,
+) {
   const overlay = document.createElement('div');
   overlay.id = 'guideModal';
   overlay.innerHTML = `
     <div id="guideBox">
       <div class="g-head"><b>${T('gm_title')}</b><button id="guideClose" title="×">×</button></div>
-      <div class="g-body">${T('gm_body')}</div>
+      <div class="g-body">${T('gm_body')}<div class="g-note">${T('gm_exists_note')}</div></div>
       <div class="g-foot">
         <button class="m-btn" id="guideCancel">${T('m_cancel')}</button>
+        <button class="m-btn" id="guideSaveAs" title="${T('tt_gm_saveas')}">${T('gm_saveas')}</button>
         <button class="m-btn primary" id="guideWrite">${T('gm_write')}</button>
       </div>
     </div>`;
@@ -32,7 +36,11 @@ export function createAgentGuideModal(container: HTMLElement, onConfirm: () => v
   overlay.querySelector('#guideCancel')?.addEventListener('click', close);
   overlay.querySelector('#guideWrite')?.addEventListener('click', () => {
     close();
-    onConfirm();
+    onConfirm(false);
+  });
+  overlay.querySelector('#guideSaveAs')?.addEventListener('click', () => {
+    close();
+    onConfirm(true);
   });
   overlay.addEventListener('mousedown', (e) => {
     if (e.target === overlay) close();

@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { ensureTopoJsonPath } from '../src/uriUtils';
+import { ensureTopoJsonPath, isTopoPath } from '../src/uriUtils';
+
+describe('isTopoPath', () => {
+  it('matches everything the customEditors glob *.topo.json claims', () => {
+    expect(isTopoPath('/ws/a.topo.json')).toBe(true);
+    expect(isTopoPath('/ws/topo.json')).toBe(true); // `*` may match nothing
+    expect(isTopoPath('topo.json')).toBe(true);
+    expect(isTopoPath('/ws/a.json')).toBe(false);
+    expect(isTopoPath('/ws/mytopo.json')).toBe(false);
+  });
+});
 
 describe('ensureTopoJsonPath', () => {
   it('keeps already-correct paths untouched', () => {

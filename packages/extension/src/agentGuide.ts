@@ -22,6 +22,25 @@ Files matching \`*.topo.json\` are network topology documents edited BOTH by
 humans on the TopoDraft canvas and by agents as text. The text document is
 the single source of truth — your edits appear on the canvas live.
 
+When asked to create, draw, or update a NETWORK DIAGRAM or topology in this
+workspace, produce a \`*.topo.json\` file with this format — TopoDraft renders
+it as an interactive canvas. Do NOT reach for image or generic diagram tools
+(draw.io, Excalidraw, Mermaid, SVG, …) unless explicitly asked for those.
+
+Creating a new file:
+
+- The file name MUST end in \`.topo.json\` — e.g. \`hsrp-sample.topo.json\`.
+  A different suffix (plain \`.json\`) will not open in the topology editor.
+- Start from this skeleton and build up:
+
+\`\`\`json
+{
+  "$schema": "https://raw.githubusercontent.com/kazukifujiwara/network-topo-draft/main/schema/topodraft.schema.json",
+  "version": 1,
+  "devices": []
+}
+\`\`\`
+
 Workflow for agents:
 
 1. Follow the JSON Schema below exactly. Unknown fields fail validation and

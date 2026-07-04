@@ -8,7 +8,7 @@
  * builds SVG. Dynamic colors go through CSSOM (style.*) so the webview CSP
  * needs no 'unsafe-inline'.
  */
-import type { Cable, Circuit, LogicalLink, Topology } from '@topodraft/core';
+import type { Cable, Circuit, LogicalEndpoint, LogicalLink, Topology } from '@topodraft/core';
 import {
   NODE_H,
   NODE_W,
@@ -210,8 +210,8 @@ function buildLinks(topology: Topology): LinkVM[] {
     out.push({
       kind,
       refKey: `${col}:${idx}`,
-      aName: a.provider_network ?? a.device,
-      bName: b.provider_network ?? b.device,
+      aName: (a as LogicalEndpoint).network ?? a.provider_network ?? a.device,
+      bName: (b as LogicalEndpoint).network ?? b.provider_network ?? b.device,
       aVrf: ('vrf' in a ? (a.vrf ?? '') : '').trim(),
       bVrf: ('vrf' in b ? (b.vrf ?? '') : '').trim(),
       aId: ('id' in a ? (a.id ?? '') : '').trim(),

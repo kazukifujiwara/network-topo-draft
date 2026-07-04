@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
+import { isTopoPath } from './uriUtils';
 
 export function isTopoDocument(document: vscode.TextDocument): boolean {
-  return document.uri.path.endsWith('.topo.json');
+  return isTopoPath(document.uri.path);
 }
 
 /** Uri of the active tab when it is a text or custom editor. */
@@ -16,5 +17,5 @@ export function activeTabUri(): vscode.Uri | undefined {
 /** Uri of the active tab when it is a *.topo.json document. */
 export function activeTopoUri(): vscode.Uri | undefined {
   const uri = activeTabUri();
-  return uri?.path.endsWith('.topo.json') ? uri : undefined;
+  return uri && isTopoPath(uri.path) ? uri : undefined;
 }

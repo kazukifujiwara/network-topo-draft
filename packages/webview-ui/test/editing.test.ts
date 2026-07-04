@@ -569,6 +569,18 @@ describe('multi-access network segments (spec §3.10)', () => {
     expect(node.textContent).toContain('VIP 10.0.0.1/28 (hsrp 1)');
   });
 
+  it('REGRESSION: attachment links to a segment are drawn in the logical view', () => {
+    const h = harness({
+      ...SEG_TOPO,
+      logical_links: [{ a: { device: 'rt-1', vrf: 'PROD' }, b: { network: 'seg-1' } }],
+    });
+    expect(h.root.querySelectorAll('.link')).toHaveLength(0); // physical view: hidden
+    (h.root.querySelector('#btnLogi') as HTMLElement).click();
+    const links = h.root.querySelectorAll('#lyLogi .link');
+    expect(links).toHaveLength(1); // was skipped as dangling before the fix
+    expect(links[0]?.querySelector('.link-line.logical')).not.toBeNull();
+  });
+
   it('dragging from a VRF compartment onto a segment attaches with a {network} endpoint', () => {
     const h = harness(SEG_TOPO);
     (h.root.querySelector('#btnLogi') as HTMLElement).click();
@@ -627,9 +639,18 @@ describe('AI guide button (toolbar)', () => {
     (h.root.querySelector('#btnAgentGuide') as HTMLElement).click();
     expect(modal.style.display).toBe('flex');
     expect(modal.textContent).toContain('AGENTS.md');
+    // the append-not-overwrite behavior is called out prominently
+    expect(modal.querySelector('.g-note')?.textContent).toContain('NOT overwritten');
     (h.root.querySelector('#guideWrite') as HTMLElement).click();
     expect(h.f.posted).toContainEqual({ type: 'agent-guide' });
     expect(modal.style.display).toBe('none');
+  });
+
+  it('the Save as… button requests a custom target file', () => {
+    const h = harness();
+    (h.root.querySelector('#btnAgentGuide') as HTMLElement).click();
+    (h.root.querySelector('#guideSaveAs') as HTMLElement).click();
+    expect(h.f.posted).toContainEqual({ type: 'agent-guide', saveAs: true });
   });
 
   it('cancelling posts nothing', () => {

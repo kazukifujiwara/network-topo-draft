@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- AI Guide dialog: a prominent callout states that an existing AGENTS.md is
+  never overwritten (only the marker section is appended/updated), plus a
+  "Save as…" option to write the guide to a different file; the example
+  prompt now says VRF-001. The guide itself gained creation rules for
+  agents: use this format when asked for network diagrams (not image /
+  generic diagram tools) and name files `*.topo.json`, with a starter
+  skeleton including `$schema`.
+
+### Fixed
+
+- Logical links attached to a `networks[]` segment were not drawn on the
+  canvas (the endpoint-name resolution ignored `network`) — regression
+  test added.
+- Diagnostics and commands now also apply to a bare `topo.json`, matching
+  what the custom-editor glob `*.topo.json` actually claims.
+
 - Multi-access L3 segments (format spec §3.10, backward-compatible —
   `version` stays 1): new top-level `networks[]` (name, prefix, vlan,
   `fhrp { protocol, group, virtual_ip }`, description, position) and a

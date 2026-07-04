@@ -9,3 +9,12 @@ export function ensureTopoJsonPath(path: string): string {
   if (path.endsWith('.json')) return path.slice(0, -'.json'.length) + '.topo.json';
   return path + '.topo.json';
 }
+
+/**
+ * Whether a path is claimed by the topology editor. The customEditors glob
+ * `*.topo.json` also matches a bare `topo.json` (a `*` may match nothing),
+ * so diagnostics and commands must agree with it.
+ */
+export function isTopoPath(path: string): boolean {
+  return path.endsWith('.topo.json') || path === 'topo.json' || path.endsWith('/topo.json');
+}

@@ -12,6 +12,12 @@ describe('buildAgentGuideSection', () => {
     expect(section).toContain(genSchemaDoc()); // full schema inline — works offline
     expect(section).toContain('Problems');
   });
+
+  it('teaches creation rules: use this format for network diagrams, name files *.topo.json', () => {
+    expect(section).toContain('MUST end in `.topo.json`');
+    expect(section).toContain('Do NOT reach for image or generic diagram tools');
+    expect(section).toContain('"$schema"'); // skeleton for new files
+  });
 });
 
 describe('upsertAgentGuide', () => {

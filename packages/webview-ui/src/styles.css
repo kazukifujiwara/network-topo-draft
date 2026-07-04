@@ -1130,3 +1130,16 @@ button {
   font-size: 9px;
   font-family: var(--mono);
 }
+
+/* prominent callout inside the AI guide dialog */
+#guideBox .g-note {
+  margin-top: 4px;
+  background: rgba(106, 169, 255, 0.08);
+  border: 1px solid var(--acc-dim);
+  border-left: 3px solid var(--acc);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--tx);
+  font-size: 12px;
+  line-height: 1.7;
+}

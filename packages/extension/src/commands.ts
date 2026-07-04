@@ -220,15 +220,25 @@ async function saveAsTemplate(): Promise<void> {
 
 /* ---------- AI agent guide (AGENTS.md) ---------- */
 
-async function writeAgentGuide(): Promise<void> {
+async function writeAgentGuide(saveAs = false): Promise<void> {
   const root = vscode.workspace.workspaceFolders?.[0]?.uri;
-  if (!root) {
+  if (!root && !saveAs) {
     void vscode.window.showErrorMessage(
       t('Open a workspace folder first — the agent guide is written to its AGENTS.md.'),
     );
     return;
   }
-  const target = vscode.Uri.joinPath(root, 'AGENTS.md');
+  let target: vscode.Uri;
+  if (saveAs) {
+    const picked = await vscode.window.showSaveDialog({
+      defaultUri: root ? vscode.Uri.joinPath(root, 'AGENTS.md') : undefined,
+      filters: { Markdown: ['md'] },
+    });
+    if (!picked) return;
+    target = picked;
+  } else {
+    target = vscode.Uri.joinPath(root as vscode.Uri, 'AGENTS.md');
+  }
   let existing: string | null = null;
   try {
     existing = new TextDecoder().decode(await vscode.workspace.fs.readFile(target));
@@ -236,9 +246,12 @@ async function writeAgentGuide(): Promise<void> {
     // file does not exist yet
   }
   await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(upsertAgentGuide(existing)));
-  log(`agentGuide: wrote ${target.fsPath}`);
+  log(`agentGuide: wrote ${target.fsPath}${existing !== null ? ' (updated existing file)' : ''}`);
+  const shownName = target.path.split('/').pop() ?? 'AGENTS.md';
   void vscode.window.showInformationMessage(
-    t('Wrote the AI agent guide to {0} — coding agents pick it up automatically.', 'AGENTS.md'),
+    existing !== null
+      ? t('Updated the TopoDraft section in {0}.', shownName)
+      : t('Wrote the AI agent guide to {0} — coding agents pick it up automatically.', shownName),
   );
   await vscode.window.showTextDocument(target, { preview: true });
 }
@@ -251,6 +264,6 @@ export function registerCommands(): vscode.Disposable {
     vscode.commands.registerCommand('topodraft.exportDrawio', () => runExport('drawio')),
     vscode.commands.registerCommand('topodraft.newFile', () => newTopologyFile()),
     vscode.commands.registerCommand('topodraft.saveAsTemplate', () => saveAsTemplate()),
-    vscode.commands.registerCommand('topodraft.writeAgentGuide', () => writeAgentGuide()),
+    vscode.commands.registerCommand('topodraft.writeAgentGuide', (saveAs?: boolean) => writeAgentGuide(saveAs === true)),
   );
 }

@@ -659,8 +659,8 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   /* ---------- sub-modules ---------- */
 
   const configModal = createConfigContextModal($('#canvasWrap'), api);
-  const guideModal = createAgentGuideModal($('#canvasWrap'), () =>
-    host.postMessage({ type: 'agent-guide' }),
+  const guideModal = createAgentGuideModal($('#canvasWrap'), (saveAs) =>
+    host.postMessage({ type: 'agent-guide', ...(saveAs ? { saveAs: true } : {}) }),
   );
   $('#btnAgentGuide').addEventListener('click', () => guideModal.open());
   const ctxMenu = createContextMenu(dom.app, api);

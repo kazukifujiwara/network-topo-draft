@@ -100,7 +100,7 @@ export class TopoEditorProvider implements vscode.CustomTextEditorProvider {
       else if (isEditMessage(message)) void controller.handleEdit(message);
       else if (isExportRequest(message)) void runExport(message.kind, document.uri);
       else if (isAgentGuideRequest(message)) {
-        void vscode.commands.executeCommand('topodraft.writeAgentGuide');
+        void vscode.commands.executeCommand('topodraft.writeAgentGuide', message.saveAs === true);
       }
     });
     webviewPanel.onDidDispose(() => {
