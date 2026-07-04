@@ -45,7 +45,12 @@ npm run test:e2e       # VSCode integration tests (@vscode/test-electron)
 npm run lint           # eslint (includes the core browser-purity rules)
 npm run typecheck
 npm run build          # bundles the extension host + webview (esbuild)
+npm run package        # builds packages/extension/topodraft-<version>.vsix
 ```
+
+To install the VSIX into your own VSCode: Extensions panel → `…` menu →
+**Install from VSIX…** (or `code --install-extension topodraft-<version>.vsix`).
+CI also uploads the VSIX as a workflow artifact on every push.
 
 ### Trying the editor (Phase 2: full canvas editing)
 

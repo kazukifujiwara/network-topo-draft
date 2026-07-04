@@ -24,6 +24,22 @@ jobs:
       - run: npm run build
       - run: npm run test:coverage
 
+  vsix:
+    name: package (vsix artifact)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: topodraft-vsix
+          path: packages/extension/*.vsix
+
   e2e:
     name: e2e (vscode, node 22)
     runs-on: ubuntu-latest

@@ -1,0 +1,44 @@
+# TopoDraft — Network Topology as Code
+
+Draw network topologies on a canvas, store them as clean JSON, and let AI
+agents edit the very same file as text — the canvas follows live.
+
+TopoDraft is a graphical editor for `*.topo.json` files: physical view
+(cables, carrier circuits, sites) and logical view (VRF compartments
+connected by L3 links). The **text document is the single source of truth**;
+every canvas operation becomes a regular document edit, so undo/redo is
+plain `Ctrl/Cmd+Z` and git diffs stay clean thanks to deterministic,
+NetBox-friendly serialization.
+
+## Features
+
+- **Custom editor for `*.topo.json`** — open a file, get the canvas. The
+  `</>` title-bar button switches to the text view and back.
+- **Full editing** — palette drag & drop, port-drag link creation
+  (cable / circuit / logical by context), property panels, interfaces &
+  VRFs, JSON config contexts, copy/paste/duplicate, align & distribute,
+  inline rename with automatic reference updates.
+- **Agent-friendly by design** — a published JSON Schema gives text editors
+  completion and validation; semantic diagnostics (duplicate names, dangling
+  references, undeclared VRFs, …) land in the Problems panel with exact
+  ranges, so AI agents can self-correct. Stale canvas edits are discarded,
+  never overwriting agent edits; invalid mid-edit JSON just dims the canvas
+  until it parses again.
+- **Export** — Markdown documentation, an AI-chat-ready description, the
+  import schema for agents, and draw.io diagrams (toolbar button or
+  `TopoDraft:` commands).
+- **Templates** — start from built-ins or your own `*.topo.json` files in
+  `topodraft.templatesFolder` (`TopoDraft: Save as Template`).
+- **English / Japanese UI**, following the VSCode display language.
+
+## The file format
+
+Versioned, documented, and schema-validated JSON with NetBox-friendly field
+names — see the
+[format specification](https://github.com/kazukifujiwara/network-topo-draft/blob/main/docs/topodraft-file-format-v1.md).
+Legacy exports of the standalone TopoDraft (v3–v7) load and are normalized
+on save.
+
+## Privacy
+
+No telemetry. No remote code.

@@ -6,5 +6,7 @@ coverage/
 *.tsbuildinfo
 .DS_Store
 .vscode-test/
-# build-time copy of /schema for the packaged extension (see build.mjs)
+# build-time copies for the packaged extension (see build.mjs)
 packages/extension/schema/
+packages/extension/LICENSE
+packages/extension/CHANGELOG.md

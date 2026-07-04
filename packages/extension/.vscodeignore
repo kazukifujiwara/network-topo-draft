@@ -1,5 +1,7 @@
-# Curate the VSIX to the minimum (plan §9): ship dist/ and the bundled
-# schema only. Refined when packaging starts in Phase 4.
+# Curate the VSIX to the minimum (plan §9): ship dist/, schema/, nls/l10n,
+# README, LICENSE, CHANGELOG. Everything else stays out.
+.vscode-test/**
+node_modules/**
 src/**
 test/**
 test-e2e/**
@@ -8,3 +10,4 @@ build.mjs
 tsconfig.json
 vitest.config.ts
 **/*.map
+*.vsix

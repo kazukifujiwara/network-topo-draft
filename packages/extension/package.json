@@ -111,7 +111,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "node build.mjs",
-    "test:e2e": "node build.mjs && node test-e2e/run.mjs"
+    "test:e2e": "node build.mjs && node test-e2e/run.mjs",
+    "package": "node build.mjs && vsce package --no-dependencies"
   },
   "dependencies": {
     "@topodraft/core": "0.0.1",
@@ -129,5 +130,9 @@
     "netbox",
     "vrf",
     "draw.io"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kazukifujiwara/network-topo-draft.git"
+  }
 }

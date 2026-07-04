@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- VSIX packaging (`npm run package`, vsce with `--no-dependencies` since
+  everything is esbuild-bundled): 13-file / ~67 KB artifact with dist
+  bundles, schema, en/ja localization, and a Marketplace-facing extension
+  README. CI uploads the VSIX as a workflow artifact on every push
+  (Phase 4 groundwork, plan §9).
+
 - Export button in the canvas toolbar (like v7): a dropdown offering
   Markdown / For AI / Schema / draw.io, running the corresponding export
   command against this editor's document.
