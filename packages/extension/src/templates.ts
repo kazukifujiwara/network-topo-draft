@@ -36,14 +36,14 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
             { name: 'Gi0/0/0', ip_address: '10.255.0.1/30', description: 'WAN #1' },
             { name: 'Gi0/0/1', description: 'to sw' },
           ],
-          position: { x: 60, y: 60 },
+          position: { x: 400, y: 60 },
         },
         {
           name: 'rt-tokyo-02',
           role: 'router',
           site: 'Tokyo-HQ',
           interfaces: [{ name: 'Gi0/0/0', ip_address: '10.255.0.5/30', description: 'WAN #2' }],
-          position: { x: 300, y: 60 },
+          position: { x: 400, y: 190 },
         },
         {
           name: 'sw-tokyo-01',
@@ -52,23 +52,23 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
           // declared so the template opens diagnostic-clean (v7's data referenced
           // this interface from the cable without declaring it)
           interfaces: [{ name: 'Gi1/0/49', description: 'to rt-tokyo-01' }],
-          position: { x: 180, y: 210 },
+          position: { x: 170, y: 120 },
         },
         {
           name: 'rt-osaka-01',
           role: 'router',
           site: 'Osaka-DC',
           interfaces: [{ name: 'Gi0/0/0', ip_address: '10.255.0.2/30', description: 'WAN #1' }],
-          position: { x: 780, y: 60 },
+          position: { x: 810, y: 60 },
         },
         {
           name: 'rt-osaka-02',
           role: 'router',
           site: 'Osaka-DC',
           interfaces: [{ name: 'Gi0/0/0', ip_address: '10.255.0.6/30', description: 'WAN #2' }],
-          position: { x: 1020, y: 60 },
+          position: { x: 810, y: 190 },
         },
-        { name: 'sw-osaka-01', role: 'switch', site: 'Osaka-DC', position: { x: 900, y: 210 } },
+        { name: 'sw-osaka-01', role: 'switch', site: 'Osaka-DC', position: { x: 1040, y: 120 } },
       ],
       cables: [
         {
