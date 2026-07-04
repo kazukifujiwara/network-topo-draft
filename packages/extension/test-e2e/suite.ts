@@ -160,14 +160,23 @@ function defineTests(): void {
       );
     });
 
-    g.it('export command opens a Markdown preview of the active topology', async () => {
-      await vscode.commands.executeCommand('vscode.open', wsFile('site-cloud.topo.json'));
+    g.it('export command reflects UNSAVED in-editor edits, not the file on disk', async () => {
+      const uri = wsFile('site-cloud.topo.json');
+      await vscode.commands.executeCommand('vscode.open', uri);
       await waitFor(() => activeInput() instanceof vscode.TabInputCustom);
+      // simulate an in-progress editing session: dirty document, never saved
+      const doc = await vscode.workspace.openTextDocument(uri);
+      await replaceAll(uri, doc.getText().split('rt-hq-01').join('rt-unsaved-rename'));
+      assert.ok(doc.isDirty, 'document should be dirty (unsaved)');
       await vscode.commands.executeCommand('topodraft.exportMarkdown');
       await waitFor(() => vscode.window.activeTextEditor?.document.languageId === 'markdown');
       const preview = vscode.window.activeTextEditor?.document.getText() ?? '';
       assert.ok(preview.includes('# Network Configuration'));
-      assert.ok(preview.includes('rt-hq-01'));
+      assert.ok(preview.includes('rt-unsaved-rename'), 'export must use the live document');
+      assert.ok(!preview.includes('rt-hq-01'), 'export must NOT use the saved file contents');
+      // leave the workspace file untouched for the other tests
+      await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+      await replaceAll(uri, doc.getText().split('rt-unsaved-rename').join('rt-hq-01'));
     });
 
     g.it('validate command runs against the active topology document', async () => {

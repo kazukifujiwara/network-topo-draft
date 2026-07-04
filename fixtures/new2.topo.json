@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "devices": [
+    {
+      "name": "rt-hq-01",
+      "role": "router",
+      "site": "HQ",
+      "vrfs": [
+        "PROD"
+      ],
+      "interfaces": [
+        {
+          "name": "Gi0/0/0",
+          "description": "to interconnect"
+        },
+        {
+          "name": "Gi0/0/0.100",
+          "ip_address": "169.254.10.1/30",
+          "type": "virtual",
+          "description": "Interconnect VIF",
+          "vrf": "PROD"
+        }
+      ],
+      "position": {
+        "x": 120,
+        "y": 60
+      }
+    },
+    {
+      "name": "fw-hq-01",
+      "role": "firewall",
+      "site": "HQ",
+      "position": {
+        "x": 120,
+        "y": 210
+      }
+    },
+    {
+      "name": "sw-hq-01",
+      "role": "switch",
+      "site": "HQ",
+      "position": {
+        "x": 120,
+        "y": 360
+      }
+    },
+    {
+      "name": "cloud-gw-01",
+      "role": "external_peer",
+      "site": "Cloud",
+      "position": {
+        "x": 820,
+        "y": 60
+      }
+    }
+  ],
+  "provider_networks": [
+    {
+      "name": "Cloud Interconnect",
+      "provider": "ExampleNet",
+      "description": "Interconnect location: colo-01",
+      "position": {
+        "x": 470,
+        "y": 60
+      }
+    }
+  ],
+  "cables": [
+    {
+      "a": {
+        "device": "rt-hq-01"
+      },
+      "b": {
+        "device": "fw-hq-01"
+      },
+      "type": "cat6",
+      "status": "connected"
+    },
+    {
+      "a": {
+        "device": "fw-hq-01"
+      },
+      "b": {
+        "device": "sw-hq-01"
+      },
+      "type": "cat6",
+      "status": "connected"
+    }
+  ],
+  "circuits": [
+    {
+      "a": {
+        "site": "HQ",
+        "device": "rt-hq-01",
+        "interface": "Gi0/0/0"
+      },
+      "b": {
+        "provider_network": "Cloud Interconnect"
+      },
+      "cid": "IC-CID-01",
+      "provider": "ExampleNet",
+      "type": "dedicated interconnect",
+      "commit_rate": "1Gbps",
+      "status": "active"
+    },
+    {
+      "a": {
+        "provider_network": "Cloud Interconnect"
+      },
+      "b": {
+        "site": "Cloud",
+        "device": "cloud-gw-01"
+      },
+      "type": "cloud-side interconnect",
+      "status": "active"
+    }
+  ],
+  "logical_links": [
+    {
+      "a": {
+        "device": "rt-hq-01",
+        "vrf": "PROD",
+        "interface": "Gi0/0/0.100"
+      },
+      "b": {
+        "device": "cloud-gw-01",
+        "id": "attach-01"
+      },
+      "link_id": "vif-0001",
+      "label": "eBGP over interconnect VIF"
+    }
+  ]
+}

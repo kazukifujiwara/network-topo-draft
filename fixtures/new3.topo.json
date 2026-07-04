@@ -1,0 +1,292 @@
+{
+  "version": 1,
+  "devices": [
+    {
+      "name": "Site-A-RT01",
+      "role": "router",
+      "vrfs": [
+        "Tenant-001"
+      ],
+      "position": {
+        "x": 290,
+        "y": 200
+      }
+    },
+    {
+      "name": "Site-A-RT02",
+      "role": "router",
+      "vrfs": [
+        "Tenant-001"
+      ],
+      "position": {
+        "x": 290,
+        "y": 400
+      }
+    },
+    {
+      "name": "Site-B-RT01",
+      "role": "router",
+      "vrfs": [
+        "Tenant-001"
+      ],
+      "position": {
+        "x": 680,
+        "y": 190
+      }
+    },
+    {
+      "name": "Site-B-RT02",
+      "role": "router",
+      "vrfs": [
+        "Tenant-001"
+      ],
+      "position": {
+        "x": 680,
+        "y": 400
+      }
+    },
+    {
+      "name": "Site-A-SW01",
+      "role": "switch",
+      "position": {
+        "x": 50,
+        "y": 202
+      }
+    },
+    {
+      "name": "Site-A-SW02",
+      "role": "switch",
+      "position": {
+        "x": 50,
+        "y": 420
+      }
+    },
+    {
+      "name": "Site-B-SW01",
+      "role": "switch",
+      "position": {
+        "x": 1000,
+        "y": 210
+      }
+    },
+    {
+      "name": "Site-B-SW02",
+      "role": "switch",
+      "position": {
+        "x": 1000,
+        "y": 412
+      }
+    },
+    {
+      "name": "ext-01",
+      "role": "external_peer",
+      "vrfs": [
+        "ID-001"
+      ],
+      "position": {
+        "x": -190,
+        "y": 200
+      }
+    },
+    {
+      "name": "ext-02",
+      "role": "external_peer",
+      "vrfs": [
+        "ID-001"
+      ],
+      "position": {
+        "x": -190,
+        "y": 420
+      }
+    }
+  ],
+  "provider_networks": [
+    {
+      "name": "AWS",
+      "position": {
+        "x": 1260,
+        "y": 320
+      }
+    }
+  ],
+  "cables": [
+    {
+      "a": {
+        "device": "Site-A-SW01"
+      },
+      "b": {
+        "device": "Site-A-RT01"
+      }
+    },
+    {
+      "a": {
+        "device": "Site-A-RT01"
+      },
+      "b": {
+        "device": "Site-B-RT01"
+      }
+    },
+    {
+      "a": {
+        "device": "Site-B-RT01"
+      },
+      "b": {
+        "device": "Site-B-SW01"
+      }
+    },
+    {
+      "a": {
+        "device": "Site-B-RT01"
+      },
+      "b": {
+        "device": "Site-B-RT02"
+      }
+    },
+    {
+      "a": {
+        "device": "Site-A-RT01"
+      },
+      "b": {
+        "device": "Site-A-RT02"
+      }
+    },
+    {
+      "a": {
+        "device": "Site-A-RT02"
+      },
+      "b": {
+        "device": "Site-A-SW02"
+      }
+    },
+    {
+      "a": {
+        "device": "Site-A-RT02"
+      },
+      "b": {
+        "device": "Site-B-RT02"
+      }
+    },
+    {
+      "a": {
+        "device": "Site-B-RT02"
+      },
+      "b": {
+        "device": "Site-B-SW02"
+      }
+    },
+    {
+      "a": {
+        "device": "ext-01"
+      },
+      "b": {
+        "device": "Site-A-SW01"
+      }
+    },
+    {
+      "a": {
+        "device": "ext-02"
+      },
+      "b": {
+        "device": "Site-A-SW02"
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "a": {
+        "device": "Site-B-SW01"
+      },
+      "b": {
+        "provider_network": "AWS"
+      }
+    },
+    {
+      "a": {
+        "device": "Site-B-SW02"
+      },
+      "b": {
+        "provider_network": "AWS"
+      }
+    }
+  ],
+  "logical_links": [
+    {
+      "a": {
+        "device": "ext-01",
+        "vrf": "ID-001"
+      },
+      "b": {
+        "device": "Site-A-RT01",
+        "vrf": "Tenant-001"
+      }
+    },
+    {
+      "a": {
+        "device": "ext-02",
+        "vrf": "ID-001"
+      },
+      "b": {
+        "device": "Site-A-RT02",
+        "vrf": "Tenant-001"
+      }
+    },
+    {
+      "a": {
+        "device": "Site-A-RT02",
+        "vrf": "Tenant-001"
+      },
+      "b": {
+        "device": "Site-B-RT02",
+        "vrf": "Tenant-001"
+      }
+    },
+    {
+      "a": {
+        "device": "Site-A-RT01",
+        "vrf": "Tenant-001"
+      },
+      "b": {
+        "device": "Site-B-RT01",
+        "vrf": "Tenant-001"
+      }
+    },
+    {
+      "a": {
+        "device": "Site-B-RT01",
+        "vrf": "Tenant-001"
+      },
+      "b": {
+        "provider_network": "AWS"
+      }
+    },
+    {
+      "a": {
+        "device": "Site-B-RT02",
+        "vrf": "Tenant-001"
+      },
+      "b": {
+        "provider_network": "AWS"
+      }
+    },
+    {
+      "a": {
+        "device": "Site-A-RT01",
+        "vrf": "Tenant-001"
+      },
+      "b": {
+        "device": "Site-A-RT02",
+        "vrf": "Tenant-001"
+      }
+    },
+    {
+      "a": {
+        "device": "Site-B-RT01",
+        "vrf": "Tenant-001"
+      },
+      "b": {
+        "device": "Site-B-RT02",
+        "vrf": "Tenant-001"
+      }
+    }
+  ]
+}
