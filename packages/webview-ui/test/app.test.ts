@@ -13,6 +13,20 @@ beforeEach(() => {
 });
 
 describe('startup handshake', () => {
+  it('warns (only) when the host runs an older bundle than the webview', () => {
+    const f = fakeHost();
+    const fresh = mount();
+    createApp(fresh, { ...f.host, staleHost: true });
+    const toast = fresh.querySelector('#toast') as HTMLElement;
+    expect(toast.classList.contains('show')).toBe(true);
+    expect(toast.textContent).toContain('Reload Window');
+
+    const g = fakeHost();
+    const ok = mount();
+    createApp(ok, { ...g.host, staleHost: false });
+    expect((ok.querySelector('#toast') as HTMLElement).classList.contains('show')).toBe(false);
+  });
+
   it('posts ready exactly once so the host sends the initial update', () => {
     const f = fakeHost();
     createApp(mount(), f.host);

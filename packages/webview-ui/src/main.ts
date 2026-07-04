@@ -4,6 +4,7 @@
  */
 import type { PersistedViewState } from './app';
 import { createApp } from './app';
+import { BUILD_ID } from './buildId';
 import { initLocale } from './strings';
 
 declare function acquireVsCodeApi(): {
@@ -22,6 +23,8 @@ const app = createApp(root, {
   postMessage: (m) => vscode.postMessage(m),
   getState: () => vscode.getState() as PersistedViewState | undefined,
   setState: (s) => vscode.setState(s),
+  // old hosts stamp no data-build at all — that counts as a mismatch too
+  staleHost: root.dataset.build !== BUILD_ID,
 });
 
 window.addEventListener('message', (e: MessageEvent) => {

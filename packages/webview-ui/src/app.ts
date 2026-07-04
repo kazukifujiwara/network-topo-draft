@@ -76,6 +76,12 @@ export interface AppHost {
   postMessage(message: WebviewToHostMessage): void;
   getState(): PersistedViewState | undefined;
   setState(state: PersistedViewState): void;
+  /**
+   * True when the extension host that built this page runs an older bundle
+   * than the loaded webview script (same-version VSIX reinstall without a
+   * window reload) — the app shows a persistent reload hint.
+   */
+  staleHost?: boolean;
 }
 
 export interface DocState {
@@ -264,11 +270,11 @@ export function createApp(root: HTMLElement, host: AppHost): App {
     });
 
   let toastTimer: ReturnType<typeof setTimeout> | undefined;
-  const toast = (message: string): void => {
+  const toast = (message: string, ms = 1900): void => {
     toastEl.textContent = message;
     toastEl.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1900);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms);
   };
 
   const render = (): void => {
@@ -1173,6 +1179,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   renderPanelNow();
   host.postMessage({ type: 'ready' });
   host.postMessage({ type: 'list-templates' });
+  if (host.staleHost) toast(T('stale_build'), 30_000);
 
   return {
     handleMessage,

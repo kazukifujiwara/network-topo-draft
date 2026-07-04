@@ -20,6 +20,8 @@ import {
   isReadyMessage,
 } from './documentSync';
 import { listTemplateItems, runExport } from './commands';
+import { BUILD_ID } from './buildId';
+import { log } from './log';
 
 export class TopoEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = 'topodraft.editor';
@@ -74,6 +76,7 @@ export class TopoEditorProvider implements vscode.CustomTextEditorProvider {
       scriptUri: webviewUri('webview', 'webview.js'),
       styleUri: webviewUri('webview', 'webview.css'),
       locale: vscode.env.language,
+      buildId: BUILD_ID,
     });
 
     const controller = new DocumentSyncController({
@@ -106,9 +109,15 @@ export class TopoEditorProvider implements vscode.CustomTextEditorProvider {
       } else if (isNewFileRequest(message)) {
         void vscode.commands.executeCommand('topodraft.newFile', message.template);
       } else if (isListTemplatesRequest(message)) {
-        void listTemplateItems().then((items) =>
-          webviewPanel.webview.postMessage({ type: 'templates', items }),
+        void listTemplateItems().then(
+          async (items) => {
+            const delivered = await webviewPanel.webview.postMessage({ type: 'templates', items });
+            log(`templates: replied with ${items.length} item(s), delivered=${String(delivered)}`);
+          },
+          (e: Error) => log(`templates: listing failed: ${e.message}`),
         );
+      } else {
+        log(`webview: unhandled message ${JSON.stringify(message).slice(0, 120)}`);
       }
     });
     webviewPanel.onDidDispose(() => {

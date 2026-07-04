@@ -8,8 +8,18 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
+// Shared build id, compiled into BOTH bundles. Reinstalling a same-version
+// VSIX overwrites dist/ in place while the running extension host keeps the
+// old extension.js in memory — a freshly opened editor then loads the NEW
+// webview.js from disk against the OLD host. The webview compares its
+// compiled id with the one the host stamps into the HTML and asks for a
+// window reload on mismatch.
+const buildId = Date.now().toString(36);
+const define = { __TOPODRAFT_BUILD__: JSON.stringify(buildId) };
+
 await build({
   entryPoints: [resolve(here, 'src/extension.ts')],
+  define,
   bundle: true,
   platform: 'node',
   format: 'cjs',
@@ -24,6 +34,7 @@ await build({
 
 await build({
   entryPoints: [resolve(here, '../webview-ui/src/main.ts')],
+  define,
   bundle: true,
   format: 'iife',
   outfile: resolve(here, 'dist/webview/webview.js'),

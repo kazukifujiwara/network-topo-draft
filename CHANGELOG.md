@@ -22,6 +22,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Stale-host detection: reinstalling a same-version VSIX replaces the files
+  on disk while the running extension host keeps the old code in memory —
+  newly opened editors then load the NEW webview against the OLD host and
+  misbehave in confusing ways (e.g. an empty ＋New menu). Both bundles now
+  share a build id; on mismatch the canvas shows a persistent "run
+  Developer: Reload Window" hint. The host also logs each unhandled webview
+  message and the template-list replies to the TopoDraft output channel.
 - The toolbar ＋ New button appeared to do nothing: the webview re-takes
   focus right after the click, dismissing the template QuickPick before it
   became visible (microsoft/vscode#214787) — `ignoreFocusOut` was not

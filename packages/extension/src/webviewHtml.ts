@@ -11,6 +11,8 @@ export interface WebviewHtmlOptions {
   styleUri: string;
   /** VSCode display language (vscode.env.language), e.g. 'en', 'ja' (D13). */
   locale: string;
+  /** Host bundle's BUILD_ID — the webview warns when its own id differs. */
+  buildId: string;
 }
 
 export function buildWebviewHtml(o: WebviewHtmlOptions): string {
@@ -26,7 +28,7 @@ export function buildWebviewHtml(o: WebviewHtmlOptions): string {
   <title>TopoDraft</title>
 </head>
 <body>
-  <div id="root" data-locale="${locale}"></div>
+  <div id="root" data-locale="${locale}" data-build="${/^[a-z0-9-]+$/.test(o.buildId) ? o.buildId : 'dev'}"></div>
   <script nonce="${o.nonce}" src="${o.scriptUri}"></script>
 </body>
 </html>`;

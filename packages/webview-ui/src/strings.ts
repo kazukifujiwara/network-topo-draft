@@ -56,6 +56,8 @@ const EN = {
   st_devices: 'devices',
   st_pn: 'provider nets',
   st_networks: 'segments',
+  stale_build:
+    'TopoDraft was updated — run "Developer: Reload Window" to finish the update.',
   st_links: 'links',
   st_sites: 'sites',
   st_sel: 'selected',
@@ -207,6 +209,8 @@ const JA: Record<StringKey, string> = {
   st_devices: 'デバイス',
   st_pn: 'プロバイダ網',
   st_networks: 'セグメント',
+  stale_build:
+    'TopoDraft が更新されました。「開発者: ウィンドウの再読み込み」を実行して更新を完了してください。',
   st_links: 'リンク',
   st_sites: 'サイト',
   st_sel: '選択中',
