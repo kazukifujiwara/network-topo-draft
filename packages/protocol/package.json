@@ -1,0 +1,14 @@
+{
+  "name": "@topodraft/protocol",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Webview ⇔ extension-host message type definitions (shared)",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}

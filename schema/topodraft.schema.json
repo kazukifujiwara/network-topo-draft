@@ -1,0 +1,348 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Network TopoDraft topology (*.topo.json, format v1)",
+  "description": "File format v1 of Network TopoDraft. Normative specification: docs/topodraft-file-format-v1.md. Revision: 2026-07-04.",
+  "type": "object",
+  "required": [
+    "version",
+    "devices"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "position": {
+      "type": "object",
+      "description": "canvas coordinates; editor metadata with no network meaning. OPTIONAL — omit to auto-arrange on open",
+      "required": [
+        "x",
+        "y"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      }
+    },
+    "endpoint": {
+      "description": "Physical link endpoint: {site?, device, interface?} or {provider_network}.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "device"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "site": {
+              "type": "string",
+              "description": "informational; the device's site"
+            },
+            "device": {
+              "type": "string",
+              "description": "device name (must match devices[].name)"
+            },
+            "interface": {
+              "type": "string",
+              "description": "interface name on that device"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "provider_network"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "provider_network": {
+              "type": "string",
+              "description": "provider network name (must match provider_networks[].name)"
+            }
+          }
+        }
+      ]
+    },
+    "logical_endpoint": {
+      "description": "Logical link endpoint: a routing instance on a device. vrf omitted/empty = global routing table.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "device"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "device": {
+              "type": "string",
+              "description": "device name (must match devices[].name)"
+            },
+            "vrf": {
+              "type": "string",
+              "description": "VRF instance on that device; omit for the global routing table"
+            },
+            "id": {
+              "type": "string",
+              "description": "environment / attachment identifier when the VRF name is unknown (tenant ID, VIF/VC ID …); drawn next to the endpoint"
+            },
+            "interface": {
+              "type": "string",
+              "description": "interface used by this adjacency (typically a subinterface, e.g. Gi0/0/1.100)"
+            },
+            "ip_address": {
+              "type": "string",
+              "description": "endpoint IP (CIDR). If 'interface' is set, prefer putting the IP on that interface in devices[] — the editor normalizes an interface+ip_address pair by writing the IP onto the device-side interface."
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "provider_network"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "provider_network": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string",
+              "description": "attachment / VC identifier on the provider network"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "optional, recommended: URL of this schema"
+    },
+    "version": {
+      "const": 1,
+      "description": "file format version; fixed to 1. Files without it are read as legacy exports and normalized on save"
+    },
+    "devices": {
+      "type": "array",
+      "description": "network devices (≈ NetBox Device)",
+      "items": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "hostname; UNIQUE — referenced by links"
+          },
+          "device_type": {
+            "type": "string",
+            "description": "vendor + model, e.g. 'Cisco C8300'"
+          },
+          "role": {
+            "type": "string",
+            "description": "free text, e.g. router / switch / firewall / external_peer"
+          },
+          "site": {
+            "type": "string",
+            "description": "location grouping; same value = drawn in the same site frame"
+          },
+          "tenant": {
+            "type": "string",
+            "description": "owning organization"
+          },
+          "platform": {
+            "type": "string",
+            "description": "OS, e.g. 'IOS-XE 17.12'"
+          },
+          "vrfs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "VRF routing instances configured on this device; shown as compartments in the logical view"
+          },
+          "interfaces": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "e.g. Gi0/0/1, subinterface Gi0/0/1.100, LAG parent Po1"
+                },
+                "ip_address": {
+                  "type": "string",
+                  "description": "CIDR, e.g. 10.0.0.1/30"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "e.g. 1000base-t, lag, virtual"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "lag": {
+                  "type": "string",
+                  "description": "name of the parent LAG interface on the SAME device (e.g. Po1)"
+                },
+                "vrf": {
+                  "type": "string",
+                  "description": "VRF this interface belongs to"
+                }
+              }
+            }
+          },
+          "config_context": {
+            "type": "object",
+            "description": "free-form structured settings for the device (routing, BGP, policies …) — any JSON object; stored and re-exported as-is, never drawn on the canvas"
+          },
+          "position": {
+            "$ref": "#/definitions/position"
+          }
+        }
+      }
+    },
+    "provider_networks": {
+      "type": "array",
+      "description": "carrier-side networks: AWS Direct Connect, OCI FastConnect, IP-VPN cloud … (≈ NetBox Provider Network)",
+      "items": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "UNIQUE — referenced by circuits/logical_links"
+          },
+          "provider": {
+            "type": "string",
+            "description": "e.g. AWS / Oracle / Equinix"
+          },
+          "description": {
+            "type": "string"
+          },
+          "position": {
+            "$ref": "#/definitions/position"
+          }
+        }
+      }
+    },
+    "cables": {
+      "type": "array",
+      "description": "local physical connections (≈ NetBox Cable)",
+      "items": {
+        "type": "object",
+        "required": [
+          "a",
+          "b"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "a": {
+            "$ref": "#/definitions/endpoint"
+          },
+          "b": {
+            "$ref": "#/definitions/endpoint"
+          },
+          "type": {
+            "type": "string",
+            "description": "media, e.g. cat6 / smf / dac"
+          },
+          "bandwidth": {
+            "type": "string",
+            "description": "e.g. 10Gbps, 2x10G LAG"
+          },
+          "status": {
+            "type": "string",
+            "description": "e.g. connected / planned"
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "circuits": {
+      "type": "array",
+      "description": "carrier circuits between sites or to provider networks (≈ NetBox Circuit)",
+      "items": {
+        "type": "object",
+        "required": [
+          "a",
+          "b"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "a": {
+            "$ref": "#/definitions/endpoint"
+          },
+          "b": {
+            "$ref": "#/definitions/endpoint"
+          },
+          "cid": {
+            "type": "string",
+            "description": "circuit ID"
+          },
+          "provider": {
+            "type": "string",
+            "description": "carrier name"
+          },
+          "type": {
+            "type": "string",
+            "description": "e.g. leased line / IP-VPN / Direct Connect"
+          },
+          "commit_rate": {
+            "type": "string",
+            "description": "contracted bandwidth, e.g. 1Gbps"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "logical_links": {
+      "type": "array",
+      "description": "logical (L3) adjacencies between routing instances (VRFs) — Network TopoDraft extension, not a NetBox object. Rendered in the logical view connecting VRF compartments.",
+      "items": {
+        "type": "object",
+        "required": [
+          "a",
+          "b"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "a": {
+            "$ref": "#/definitions/logical_endpoint"
+          },
+          "b": {
+            "$ref": "#/definitions/logical_endpoint"
+          },
+          "link_id": {
+            "type": "string",
+            "description": "connection ID (VC / VIF / peering ID) — displayed as the link label on the diagram"
+          },
+          "vlan": {
+            "type": "string",
+            "description": "VLAN ID used by this adjacency (e.g. the VIF VLAN)"
+          },
+          "label": {
+            "type": "string",
+            "description": "e.g. 'OSPF area 0', 'eBGP'"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

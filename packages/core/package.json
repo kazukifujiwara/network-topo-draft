@@ -1,0 +1,14 @@
+{
+  "name": "@topodraft/core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "DOM- and Node-free topology data layer: model, parse, serialize, validate, operations, geometry, generators",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.src.json && tsc --noEmit"
+  }
+}

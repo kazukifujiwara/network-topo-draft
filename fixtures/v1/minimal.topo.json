@@ -1,0 +1,5 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OWNER/REPO/schema-v1/schema/topodraft.schema.json",
+  "version": 1,
+  "devices": []
+}

@@ -1,0 +1,8 @@
+# Curate the VSIX to the minimum (plan §9). Refined when packaging starts in
+# Phase 4; for now exclude sources and tests — only dist/ and the schema copy
+# will ship.
+src/**
+test/**
+tsconfig.json
+vitest.config.ts
+**/*.map

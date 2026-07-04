@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "devices": [
+    {
+      "name": "rt-hq-01",
+      "role": "router",
+      "site": "HQ",
+      "vrfs": [
+        "PROD"
+      ],
+      "interfaces": [
+        {
+          "name": "Gi0/0/0",
+          "description": "to DX"
+        },
+        {
+          "name": "Gi0/0/0.100",
+          "ip_address": "169.254.10.1/30",
+          "vrf": "PROD"
+        }
+      ],
+      "position": {
+        "x": 120,
+        "y": 60
+      }
+    },
+    {
+      "name": "aws-tgw",
+      "role": "external_peer",
+      "site": "AWS",
+      "position": {
+        "x": 820,
+        "y": 60
+      }
+    }
+  ],
+  "provider_networks": [
+    {
+      "name": "AWS Direct Connect",
+      "provider": "AWS",
+      "position": {
+        "x": 470,
+        "y": 60
+      }
+    }
+  ],
+  "circuits": [
+    {
+      "a": {
+        "site": "HQ",
+        "device": "rt-hq-01",
+        "interface": "Gi0/0/0"
+      },
+      "b": {
+        "provider_network": "AWS Direct Connect"
+      },
+      "cid": "DX-CID-01",
+      "provider": "Equinix",
+      "type": "Direct Connect",
+      "commit_rate": "1Gbps",
+      "status": "active"
+    }
+  ],
+  "logical_links": [
+    {
+      "a": {
+        "device": "rt-hq-01",
+        "vrf": "PROD",
+        "interface": "Gi0/0/0.100"
+      },
+      "b": {
+        "device": "aws-tgw",
+        "id": "tgw-attach-01",
+        "ip_address": "169.254.10.2/30"
+      },
+      "link_id": "dxvif-abc123",
+      "label": "eBGP over DX VIF"
+    },
+    {
+      "a": {
+        "device": "rt-hq-01",
+        "vrf": "PROD"
+      },
+      "b": {
+        "provider_network": "AWS Direct Connect",
+        "id": "dxcon-xyz789"
+      },
+      "link_id": "dxvif-def456"
+    }
+  ]
+}

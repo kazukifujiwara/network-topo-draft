@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "devices": [
+    {
+      "name": "rt-hq-01",
+      "role": "router",
+      "site": "HQ",
+      "vrfs": [
+        "PROD"
+      ],
+      "interfaces": [
+        {
+          "name": "Gi0/0/1"
+        },
+        {
+          "name": "Gi0/0/1.100",
+          "ip_address": "10.10.100.1/30",
+          "type": "virtual",
+          "vrf": "PROD"
+        }
+      ],
+      "position": {
+        "x": 100,
+        "y": 80
+      }
+    },
+    {
+      "name": "rt-dc-01",
+      "role": "router",
+      "site": "DC",
+      "vrfs": [
+        "PROD"
+      ],
+      "interfaces": [
+        {
+          "name": "Gi0/0/1"
+        },
+        {
+          "name": "Gi0/0/1.100",
+          "ip_address": "10.10.100.2/30",
+          "type": "virtual",
+          "vrf": "PROD"
+        }
+      ],
+      "position": {
+        "x": 500,
+        "y": 80
+      }
+    }
+  ],
+  "cables": [
+    {
+      "a": {
+        "device": "rt-hq-01",
+        "interface": "Gi0/0/1"
+      },
+      "b": {
+        "device": "rt-dc-01",
+        "interface": "Gi0/0/1"
+      },
+      "type": "smf",
+      "status": "connected"
+    }
+  ],
+  "logical_links": [
+    {
+      "a": {
+        "device": "rt-hq-01",
+        "vrf": "PROD",
+        "interface": "Gi0/0/1.100"
+      },
+      "b": {
+        "device": "rt-dc-01",
+        "vrf": "PROD",
+        "interface": "Gi0/0/1.100"
+      },
+      "label": "OSPF area 0"
+    }
+  ]
+}

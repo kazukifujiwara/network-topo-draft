@@ -1,0 +1,19 @@
+{
+  "name": "@topodraft/webview-ui",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Canvas UI for the Network TopoDraft custom editor (Phase 1+; empty shell in Phase 0)",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "esbuild src/index.ts --bundle --format=iife --outfile=dist/webview.js --log-level=warning"
+  },
+  "dependencies": {
+    "@topodraft/core": "0.0.1",
+    "@topodraft/protocol": "0.0.1"
+  }
+}
