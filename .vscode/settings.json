@@ -1,0 +1,11 @@
+{
+  // Manual wiring of the format-v1 schema for *.topo.json while developing.
+  // From Phase 1 the extension contributes this automatically via
+  // "jsonValidation" (plan §4.5) and this entry becomes redundant.
+  "json.schemas": [
+    {
+      "fileMatch": ["*.topo.json"],
+      "url": "./schema/topodraft.schema.json"
+    }
+  ]
+}
