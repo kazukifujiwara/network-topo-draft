@@ -4,9 +4,11 @@ import {
   HEAD_H,
   NODE_H,
   NODE_W,
+  SEGMENT_RX,
   VRF_PAL,
   VRF_ROW,
   anchor,
+  roundedAnchor,
   linkSegment,
   logAnchor,
   nodeHeight,
@@ -57,6 +59,33 @@ describe('anchor (edge of box toward target, v7 anchor)', () => {
     // 45° ray from center of a wide box exits through top/bottom first
     const p = anchor(0, 0, 100, 50, 150, 125);
     expect(p).toEqual({ x: 75, y: 50 });
+  });
+});
+
+describe('roundedAnchor (pill-shaped segment nodes)', () => {
+  const [X, Y, W, H, R] = [0, 0, NODE_W, NODE_H, SEGMENT_RX];
+  const boundary = (p: { x: number; y: number }): number => {
+    const ex = Math.max(Math.abs(p.x - (X + W / 2)) - (W / 2 - R), 0);
+    const ey = Math.max(Math.abs(p.y - (Y + H / 2)) - (H / 2 - R), 0);
+    return ex * ex + ey * ey;
+  };
+
+  it('matches the rect anchor on straight edges', () => {
+    expect(roundedAnchor(X, Y, W, H, R, 1000, H / 2)).toEqual(anchor(X, Y, W, H, 1000, H / 2));
+    expect(roundedAnchor(X, Y, W, H, R, W / 2, -500)).toEqual(anchor(X, Y, W, H, W / 2, -500));
+  });
+
+  it('lands ON the rounded boundary for diagonal rays (rect anchor floats outside)', () => {
+    const target = { x: 276, y: -24 }; // exits through the top-right corner arc
+    const p = roundedAnchor(X, Y, W, H, R, target.x, target.y);
+    expect(boundary(p)).toBeCloseTo(R * R, 5);
+    const rect = anchor(X, Y, W, H, target.x, target.y);
+    expect(boundary(rect)).toBeGreaterThan(R * R + 50); // the bug this fixes
+  });
+
+  it('degenerates to the rect anchor with r=0 and to the center for a zero ray', () => {
+    expect(roundedAnchor(X, Y, W, H, 0, 300, 300)).toEqual(anchor(X, Y, W, H, 300, 300));
+    expect(roundedAnchor(X, Y, W, H, R, W / 2, H / 2)).toEqual({ x: W / 2, y: H / 2 });
   });
 });
 

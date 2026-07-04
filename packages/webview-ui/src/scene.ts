@@ -12,6 +12,7 @@ import type { Cable, Circuit, LogicalEndpoint, LogicalLink, Topology } from '@to
 import {
   NODE_H,
   NODE_W,
+  SEGMENT_RX,
   allVrfs,
   anchor,
   autoLayout,
@@ -21,6 +22,7 @@ import {
   logAnchor,
   needsAutoLayout,
   nodeHeight,
+  roundedAnchor,
   siteOf,
   sitesList,
   vrfColor,
@@ -325,8 +327,13 @@ export function renderScene(
     if (!a || !b) continue; // dangling reference — validate() reports it
     const ac = { x: a.x + NODE_W / 2, y: a.y + a.h / 2 };
     const bc = { x: b.x + NODE_W / 2, y: b.y + b.h / 2 };
+    // segment nodes are pills — anchor on the rounded boundary, not the rect
+    const bodyAnchor = (n: NodeVM, tx: number, ty: number) =>
+      n.kind === 'network'
+        ? roundedAnchor(n.x, n.y, NODE_W, n.h, SEGMENT_RX, tx, ty)
+        : anchor(n.x, n.y, NODE_W, n.h, tx, ty);
     const logicalAnchor = (n: NodeVM, vrf: string, tx: number, ty: number) => {
-      if (n.kind === 'pn' || view.viewMode !== 'logical') return null;
+      if (n.kind !== 'device' || view.viewMode !== 'logical') return null;
       const idx = vrfRowIndex(n.rows, vrf, view.showGlobal);
       if (idx < 0) return null;
       return logAnchor(vrfRowRect(n.x, n.y, idx), tx, ty);
@@ -334,11 +341,11 @@ export function renderScene(
     let p1;
     let p2;
     if (l.kind === 'logical' && view.viewMode === 'logical') {
-      p1 = logicalAnchor(a, l.aVrf, bc.x, bc.y) ?? anchor(a.x, a.y, NODE_W, a.h, bc.x, bc.y);
-      p2 = logicalAnchor(b, l.bVrf, ac.x, ac.y) ?? anchor(b.x, b.y, NODE_W, b.h, ac.x, ac.y);
+      p1 = logicalAnchor(a, l.aVrf, bc.x, bc.y) ?? bodyAnchor(a, bc.x, bc.y);
+      p2 = logicalAnchor(b, l.bVrf, ac.x, ac.y) ?? bodyAnchor(b, ac.x, ac.y);
     } else {
-      p1 = anchor(a.x, a.y, NODE_W, a.h, bc.x, bc.y);
-      p2 = anchor(b.x, b.y, NODE_W, b.h, ac.x, ac.y);
+      p1 = bodyAnchor(a, bc.x, bc.y);
+      p2 = bodyAnchor(b, ac.x, ac.y);
     }
     const seg = linkSegment(p1, p2, i, pairTotal.get(key) ?? 1);
     const selected = edit.selectedLink === l.refKey;
@@ -406,7 +413,7 @@ export function renderScene(
         class: 'node-box' + (n.kind === 'pn' ? ' pnbox' : n.kind === 'network' ? ' netbox' : ''),
         width: NODE_W,
         height: n.h,
-        rx: n.kind === 'network' ? 24 : 9,
+        rx: n.kind === 'network' ? SEGMENT_RX : 9,
       }),
     );
     const ig = el('g', { transform: 'translate(11,13)' });

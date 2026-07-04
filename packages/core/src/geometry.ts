@@ -50,6 +50,58 @@ export function vrfRows(derivedVrfs: string[], showGlobal: boolean): string[] {
   return showGlobal ? ['', ...derivedVrfs] : derivedVrfs;
 }
 
+/** Corner radius of network-segment pill nodes (drawn with rx=SEGMENT_RX). */
+export const SEGMENT_RX = 24;
+
+/**
+ * Point where the ray from the center of a ROUNDED rectangle toward (tx, ty)
+ * crosses its boundary. Plain `anchor()` assumes square corners, which
+ * leaves link endpoints floating up to ~r px outside pill-shaped nodes when
+ * the ray exits through a rounded corner.
+ */
+export function roundedAnchor(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+  tx: number,
+  ty: number,
+): Point {
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+  let dx = tx - cx;
+  let dy = ty - cy;
+  if (!dx && !dy) return { x: cx, y: cy };
+  const len = Math.hypot(dx, dy);
+  dx /= len;
+  dy /= len;
+  const radius = Math.min(r, w / 2, h / 2);
+  const ix = w / 2 - radius; // straight-edge half extents
+  const iy = h / 2 - radius;
+  // exits through a straight edge?
+  const candidates: number[] = [];
+  if (dx !== 0) {
+    const t = w / 2 / Math.abs(dx);
+    if (Math.abs(dy) * t <= iy + 1e-9) candidates.push(t);
+  }
+  if (dy !== 0) {
+    const t = h / 2 / Math.abs(dy);
+    if (Math.abs(dx) * t <= ix + 1e-9) candidates.push(t);
+  }
+  let t = candidates.length ? Math.min(...candidates) : Infinity;
+  if (t === Infinity) {
+    // exits through the corner arc in the ray's quadrant:
+    // |t·d − q| = radius with q = (±ix, ±iy)
+    const qx = (dx >= 0 ? 1 : -1) * ix;
+    const qy = (dy >= 0 ? 1 : -1) * iy;
+    const b = dx * qx + dy * qy;
+    const disc = b * b - (qx * qx + qy * qy - radius * radius);
+    t = disc >= 0 ? b + Math.sqrt(disc) : 0;
+  }
+  return { x: cx + dx * t, y: cy + dy * t };
+}
+
 /**
  * Point where the ray from the box center toward (tx, ty) crosses the box
  * edge (v7 `anchor`).

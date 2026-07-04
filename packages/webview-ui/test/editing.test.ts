@@ -581,6 +581,25 @@ describe('multi-access network segments (spec §3.10)', () => {
     expect(links[0]?.querySelector('.link-line.logical')).not.toBeNull();
   });
 
+  it('REGRESSION: attachment endpoints land ON the pill boundary, not the square corner', () => {
+    const h = harness({
+      version: 1,
+      devices: [{ name: 'rt-1', position: { x: 0, y: 120 } }],
+      networks: [{ name: 'seg-1', position: { x: 400, y: 0 } }],
+      logical_links: [{ a: { device: 'rt-1' }, b: { network: 'seg-1' } }],
+    });
+    (h.root.querySelector('#btnLogi') as HTMLElement).click();
+    const dots = h.root.querySelectorAll('#lyLogi .link circle');
+    expect(dots).toHaveLength(2);
+    const seg = dots[1] as Element; // b side = the segment end
+    const px = Number(seg.getAttribute('cx'));
+    const py = Number(seg.getAttribute('cy'));
+    // pill boundary equation: max(|dx|-ix,0)² + max(|dy|-iy,0)² = r²
+    const ex = Math.max(Math.abs(px - (400 + 76)) - (76 - 24), 0);
+    const ey = Math.max(Math.abs(py - 26) - (26 - 24), 0);
+    expect(ex * ex + ey * ey).toBeCloseTo(24 * 24, 3);
+  });
+
   it('dragging from a VRF compartment onto a segment attaches with a {network} endpoint', () => {
     const h = harness(SEG_TOPO);
     (h.root.querySelector('#btnLogi') as HTMLElement).click();

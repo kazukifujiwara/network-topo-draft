@@ -31,9 +31,11 @@ import {
   deleteNodes,
   distributeH,
   distributeV,
+  SEGMENT_RX,
   findDevice,
   findNetwork,
   logAnchor,
+  roundedAnchor,
   makeClipboard,
   needsAutoLayout,
   parse,
@@ -904,7 +906,11 @@ export function createApp(root: HTMLElement, host: AppHost): App {
           const rowIdx = vrfRowIndex(from.rows, drag.fromVrf, view.showGlobal);
           if (rowIdx >= 0) p = logAnchor(vrfRowRect(from.x, from.y, rowIdx), w.x, w.y);
         }
-        p = p ?? anchor(from.x, from.y, NODE_W, from.h, w.x, w.y);
+        p =
+          p ??
+          (from.kind === 'network'
+            ? roundedAnchor(from.x, from.y, NODE_W, from.h, SEGMENT_RX, w.x, w.y)
+            : anchor(from.x, from.y, NODE_W, from.h, w.x, w.y));
         lyTemp.appendChild(svgEl('path', { class: 'templink', d: `M ${p.x} ${p.y} L ${w.x} ${w.y}` }));
       }
     } else if (drag.mode === 'place') {

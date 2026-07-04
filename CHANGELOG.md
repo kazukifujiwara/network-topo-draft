@@ -22,6 +22,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Link endpoints around network-segment nodes in the logical view were
+  misaligned: segments are drawn as pills (24px corner radius) but link
+  anchors were computed against the square bounding box, so diagonal
+  attachments landed up to ~20px outside the visible shape. Anchors (and
+  the link-drag preview) now intersect the actual rounded boundary.
 - Logical links attached to a `networks[]` segment were not drawn on the
   canvas (the endpoint-name resolution ignored `network`) — regression
   test added.
