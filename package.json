@@ -14,11 +14,13 @@
     "lint": "eslint .",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
     "@types/node": "^22.10.0",
+    "@vitest/coverage-v8": "^3.2.6",
     "ajv": "^8.17.1",
     "esbuild": "^0.25.0",
     "eslint": "^9.20.0",

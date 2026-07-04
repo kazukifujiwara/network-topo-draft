@@ -133,6 +133,40 @@ describe('uniqueName / add / delete (ported v7 behavior)', () => {
     expect(t.logical_links?.[0]?.b.provider_network).toBe('DX');
     expect(deleteLink(t, 'logical_links', 0).logical_links).toBeUndefined();
   });
+
+  it('deleteLink with an out-of-range index or absent collection is a no-op', () => {
+    expect(deleteLink(base(), 'cables', 99)).toEqual(base());
+    expect(deleteLink(base(), 'cables', -1)).toEqual(base());
+    const noCables = deleteLink(base(), 'cables', 0);
+    expect(deleteLink(noCables, 'cables', 0)).toEqual(noCables);
+  });
+
+  it('endpoint setters on a nonexistent link index are no-ops', () => {
+    expect(setLogicalEndpointIp(base(), 99, 'a', '10.0.0.1/30')).toEqual(base());
+    expect(setLogicalEndpointInterface(base(), 99, 'a', 'Gi0')).toEqual(base());
+  });
+
+  it('renameSite with an empty new name clears the site field', () => {
+    const t = renameSite(base(), 'HQ', '');
+    expect(t.devices[0]?.site).toBeUndefined();
+    expect(t.devices[1]?.site).toBe('DC');
+  });
+
+  it('clearing an endpoint IP removes it from endpoint or interface', () => {
+    let t = setLogicalEndpointIp(base(), 0, 'a', '10.0.0.1/30');
+    t = setLogicalEndpointIp(t, 0, 'a', '');
+    expect(t.logical_links?.[0]?.a.ip_address).toBeUndefined();
+    let u = setLogicalEndpointInterface(base(), 0, 'a', 'Gi0');
+    u = setLogicalEndpointIp(u, 0, 'a', '10.0.0.1/30');
+    u = setLogicalEndpointIp(u, 0, 'a', '');
+    expect(u.devices[0]?.interfaces?.[0]?.ip_address).toBeUndefined();
+  });
+
+  it('setLogicalEndpointInterface with an empty name clears the interface', () => {
+    let t = setLogicalEndpointInterface(base(), 0, 'a', 'Gi0');
+    t = setLogicalEndpointInterface(t, 0, 'a', '');
+    expect(t.logical_links?.[0]?.a.interface).toBeUndefined();
+  });
 });
 
 describe('logical endpoint semantics (v7 link panel, plan test list)', () => {

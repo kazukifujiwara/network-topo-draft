@@ -39,10 +39,11 @@ Requires Node.js ≥ 20.
 
 ```sh
 npm install
-npm test        # runs every test in every package (vitest)
-npm run lint    # eslint (includes the core browser-purity rules)
+npm test               # runs every test in every package (vitest)
+npm run test:coverage  # same, with core coverage thresholds enforced (plan §6.3)
+npm run lint           # eslint (includes the core browser-purity rules)
 npm run typecheck
-npm run build   # bundles the extension/webview shells (esbuild)
+npm run build          # bundles the extension/webview shells (esbuild)
 ```
 
 ## Testing policy

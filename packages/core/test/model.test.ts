@@ -1,6 +1,32 @@
 import { describe, expect, it } from 'vitest';
 import { parse } from '../src/parse';
-import { allVrfs, deriveDeviceVrfs, iconKey, sitesList } from '../src/model';
+import {
+  allVrfs,
+  deriveDeviceVrfs,
+  findDevice,
+  findProviderNetwork,
+  iconKey,
+  sitesList,
+} from '../src/model';
+
+describe('lookups resolve by name to the FIRST occurrence', () => {
+  const t = parse(
+    JSON.stringify({
+      version: 1,
+      devices: [{ name: 'x', role: 'first' }, { name: 'x', role: 'second' }],
+      provider_networks: [{ name: 'p', provider: 'AWS' }],
+    }),
+  );
+  it('findDevice', () => {
+    expect(findDevice(t, 'x')?.role).toBe('first');
+    expect(findDevice(t, 'ghost')).toBeUndefined();
+  });
+  it('findProviderNetwork', () => {
+    expect(findProviderNetwork(t, 'p')?.provider).toBe('AWS');
+    expect(findProviderNetwork(t, 'ghost')).toBeUndefined();
+    expect(findProviderNetwork({ version: 1, devices: [] }, 'p')).toBeUndefined();
+  });
+});
 
 describe('VRF derivation (spec §3.9, v7 devVrfs)', () => {
   const t = parse(
