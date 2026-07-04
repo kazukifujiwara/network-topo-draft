@@ -631,6 +631,14 @@ describe('multi-access network segments (spec §3.10)', () => {
   });
 });
 
+describe('New file button (toolbar)', () => {
+  it('asks the host to run the New Topology File command (template QuickPick)', () => {
+    const h = harness();
+    (h.root.querySelector('#btnNewFile') as HTMLElement).click();
+    expect(h.f.posted).toContainEqual({ type: 'new-file' });
+  });
+});
+
 describe('AI guide button (toolbar)', () => {
   it('opens the explanation dialog; confirming posts the request and closes', () => {
     const h = harness();

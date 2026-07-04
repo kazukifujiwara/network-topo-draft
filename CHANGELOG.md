@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- ＋ New button in the canvas toolbar: runs the New Topology File command,
+  showing the same template QuickPick (built-ins + your templates folder)
+  as the command palette.
+
 - AI Guide dialog: a prominent callout states that an existing AGENTS.md is
   never overwritten (only the marker section is appended/updated), plus a
   "Save as…" option to write the guide to a different file; the example

@@ -61,9 +61,18 @@ export interface AgentGuideRequestMessage {
   saveAs?: boolean;
 }
 
+/**
+ * Webview → Host: the toolbar's New button was pressed; the host runs the
+ * New Topology File command (template QuickPick → save dialog → open).
+ */
+export interface NewFileRequestMessage {
+  type: 'new-file';
+}
+
 export type HostToWebviewMessage = UpdateMessage;
 export type WebviewToHostMessage =
   | EditMessage
   | ReadyMessage
   | ExportRequestMessage
-  | AgentGuideRequestMessage;
+  | AgentGuideRequestMessage
+  | NewFileRequestMessage;

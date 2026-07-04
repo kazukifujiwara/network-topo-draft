@@ -12,6 +12,7 @@
  */
 import type {
   AgentGuideRequestMessage,
+  NewFileRequestMessage,
   EditMessage,
   ExportRequestMessage,
   ReadyMessage,
@@ -57,6 +58,14 @@ export function isAgentGuideRequest(message: unknown): message is AgentGuideRequ
     typeof message === 'object' &&
     message !== null &&
     (message as { type?: unknown }).type === 'agent-guide'
+  );
+}
+
+export function isNewFileRequest(message: unknown): message is NewFileRequestMessage {
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    (message as { type?: unknown }).type === 'new-file'
   );
 }
 

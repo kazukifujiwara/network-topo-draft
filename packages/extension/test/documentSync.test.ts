@@ -9,6 +9,7 @@ import {
   isAgentGuideRequest,
   isEditMessage,
   isExportRequest,
+  isNewFileRequest,
 } from '../src/documentSync';
 
 /** Minimal TextDocument stand-in: version bumps on every applied edit. */
@@ -113,6 +114,14 @@ describe('isAgentGuideRequest', () => {
     expect(isAgentGuideRequest({ type: 'agent-guide' })).toBe(true);
     expect(isAgentGuideRequest({ type: 'export', kind: 'markdown' })).toBe(false);
     expect(isAgentGuideRequest(null)).toBe(false);
+  });
+});
+
+describe('isNewFileRequest', () => {
+  it('accepts only { type: "new-file" } shapes', () => {
+    expect(isNewFileRequest({ type: 'new-file' })).toBe(true);
+    expect(isNewFileRequest({ type: 'ready' })).toBe(false);
+    expect(isNewFileRequest(null)).toBe(false);
   });
 });
 

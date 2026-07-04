@@ -15,6 +15,7 @@ import {
   isAgentGuideRequest,
   isEditMessage,
   isExportRequest,
+  isNewFileRequest,
   isReadyMessage,
 } from './documentSync';
 import { runExport } from './commands';
@@ -101,6 +102,8 @@ export class TopoEditorProvider implements vscode.CustomTextEditorProvider {
       else if (isExportRequest(message)) void runExport(message.kind, document.uri);
       else if (isAgentGuideRequest(message)) {
         void vscode.commands.executeCommand('topodraft.writeAgentGuide', message.saveAs === true);
+      } else if (isNewFileRequest(message)) {
+        void vscode.commands.executeCommand('topodraft.newFile');
       }
     });
     webviewPanel.onDidDispose(() => {

@@ -140,6 +140,8 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   root.innerHTML = `
     <div id="app">
       <div id="topbar">
+        <button class="tb-btn" id="btnNewFile" title="${T('tt_new')}">＋ ${T('tb_new')}</button>
+        <div class="tb-sep"></div>
         <div class="tb-seg" title="${T('tt_seg')}">
           <button id="btnPhys">${T('tb_phys')}</button>
           <button id="btnLogi">${T('tb_logi')}</button>
@@ -663,6 +665,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
     host.postMessage({ type: 'agent-guide', ...(saveAs ? { saveAs: true } : {}) }),
   );
   $('#btnAgentGuide').addEventListener('click', () => guideModal.open());
+  $('#btnNewFile').addEventListener('click', () => host.postMessage({ type: 'new-file' }));
   const ctxMenu = createContextMenu(dom.app, api);
   buildPalette($('#palette'), api, {
     svgCenterWorld: () => {

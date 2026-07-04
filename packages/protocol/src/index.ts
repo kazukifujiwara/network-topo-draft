@@ -5,6 +5,7 @@ export type {
   ExportKind,
   ExportRequestMessage,
   AgentGuideRequestMessage,
+  NewFileRequestMessage,
   HostToWebviewMessage,
   WebviewToHostMessage,
 } from './messages';
