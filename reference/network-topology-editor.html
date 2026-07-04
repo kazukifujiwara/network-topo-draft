@@ -1,0 +1,2703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network TopoDraft — Topology Editor</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+<style>
+:root{
+  --bg0:#0F1317; --bg1:#161B21; --bg2:#1D242C; --bg3:#242D37;
+  --line:#2A333E; --line2:#3A4552;
+  --tx:#DEE5EE; --tx2:#94A1B4; --tx3:#5E6B7D;
+  --acc:#6AA9FF; --acc-dim:#31517E;
+  --danger:#E5636C; --ok:#4CC38A;
+  --c-router:#5B9DFF; --c-switch:#4CC38A; --c-firewall:#F2994A;
+  --c-cloud:#B18CFF; --c-server:#45C4CE; --c-generic:#93A0B4; --c-pnet:#D9A44C;
+  --mono:ui-monospace,"SF Mono","Cascadia Code",Consolas,"Roboto Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg0);color:var(--tx);font-family:var(--sans);font-size:13px}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit}
+
+/* ---------- Layout ---------- */
+#app{display:flex;flex-direction:column;height:100%}
+#topbar{display:flex;align-items:center;gap:7px;height:46px;padding:0 12px;background:var(--bg1);border-bottom:1px solid var(--line);flex:0 0 auto}
+#main{display:flex;flex:1;min-height:0}
+#palette{width:186px;flex:0 0 auto;background:var(--bg1);border-right:1px solid var(--line);padding:10px;overflow-y:auto;display:flex;flex-direction:column}
+#canvasWrap{position:relative;flex:1;min-width:0;background:var(--bg0)}
+#panel{width:300px;flex:0 0 auto;background:var(--bg1);border-left:1px solid var(--line);overflow-y:auto;padding:12px}
+#statusbar{display:flex;align-items:center;gap:14px;height:26px;padding:0 12px;background:var(--bg1);border-top:1px solid var(--line);color:var(--tx3);font-family:var(--mono);font-size:11px;flex:0 0 auto}
+#statusbar .grow{flex:1}
+
+/* ---------- Topbar ---------- */
+.logo{display:flex;align-items:center;gap:8px;margin-right:8px}
+.logo svg{width:20px;height:20px}
+.logo b{font-size:14px;letter-spacing:.04em}
+.tb-sep{width:1px;height:22px;background:var(--line);margin:0 3px}
+.tb-btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 9px;background:transparent;border:1px solid transparent;border-radius:6px;color:var(--tx2);font-size:12px}
+.tb-btn:hover{background:var(--bg2);color:var(--tx)}
+.tb-btn:disabled{opacity:.35;cursor:default}
+.tb-btn:disabled:hover{background:transparent;color:var(--tx2)}
+.tb-btn.active{background:var(--acc-dim);color:var(--tx);border-color:var(--acc-dim)}
+.tb-btn.primary{background:var(--acc);color:#0C1522;font-weight:600}
+.tb-btn.primary:hover{filter:brightness(1.1)}
+.tb-btn svg{width:14px;height:14px}
+.tb-seg{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:7px;padding:2px}
+.tb-seg button{height:24px;padding:0 11px;border:0;background:transparent;color:var(--tx3);border-radius:5px;font-size:12px}
+.tb-seg button.on{background:var(--bg3);color:var(--tx)}
+.spacer{flex:1}
+
+/* ---------- Palette ---------- */
+.pal-title{font-size:10px;letter-spacing:.14em;color:var(--tx3);font-family:var(--mono);text-transform:uppercase;margin:6px 0 8px}
+.pal-item{display:flex;align-items:center;gap:9px;padding:7px 9px;margin-bottom:6px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;cursor:grab;user-select:none;transition:border-color .1s}
+.pal-item:hover{border-color:var(--line2);background:var(--bg3)}
+.pal-item:active{cursor:grabbing}
+.pal-item svg{width:20px;height:20px;flex:0 0 auto}
+.pal-item .pl{font-size:12px;color:var(--tx)}
+.pal-item .ps{font-size:10px;color:var(--tx3);font-family:var(--mono)}
+.pal-hint{margin-top:8px;font-size:11px;color:var(--tx3);line-height:1.7}
+.pal-hint kbd,#modalHelp kbd,.pn-info kbd{font-family:var(--mono);font-size:10px;background:var(--bg3);border:1px solid var(--line2);border-radius:4px;padding:1px 4px;color:var(--tx2)}
+.tpl-item{display:flex;align-items:center;gap:7px;padding:6px 8px;margin-bottom:5px;background:var(--bg2);border:1px solid var(--line);border-radius:7px;cursor:pointer;font-size:11.5px;color:var(--tx2)}
+.tpl-item:hover{border-color:var(--line2);color:var(--tx)}
+.tpl-item svg{width:14px;height:14px;flex:0 0 auto}
+.tpl-item .tn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tpl-x{background:transparent;border:0;color:var(--tx3);font-size:13px;padding:0 2px;border-radius:4px}
+.tpl-x:hover{color:var(--danger)}
+#tplSaveRow{display:flex;gap:5px;margin-top:4px}
+#tplName{flex:1;min-width:0;height:26px;background:var(--bg0);border:1px solid var(--line);border-radius:6px;color:var(--tx);padding:0 7px;font-size:11px;font-family:var(--mono)}
+#tplName:focus{outline:none;border-color:var(--acc-dim)}
+#tplSave{height:26px;padding:0 9px;background:var(--bg2);border:1px solid var(--line2);border-radius:6px;color:var(--tx2);font-size:11px}
+#tplSave:hover{color:var(--tx);background:var(--bg3)}
+.mini-btn{width:100%;height:27px;background:var(--bg2);border:1px dashed var(--line2);border-radius:6px;color:var(--tx2);font-size:11px;margin-top:2px}
+.mini-btn:hover{background:var(--bg3);color:var(--tx)}
+.mini-btn.danger:hover{color:var(--danger);border-color:var(--danger)}
+
+/* ---------- Canvas ---------- */
+#svg{width:100%;height:100%;display:block;cursor:default}
+#svg.panning{cursor:grabbing}
+#svg.linking{cursor:crosshair}
+.site-rect{fill:rgba(106,169,255,.025);stroke:var(--line2);stroke-width:1.2;stroke-dasharray:7 5}
+.site-label{fill:var(--tx3);font-family:var(--mono);font-size:11px;letter-spacing:.08em;cursor:text}
+.site-label:hover{fill:var(--tx2)}
+.node-box{fill:var(--bg2);stroke:var(--line2);stroke-width:1.2}
+.node-box.pnbox{stroke-dasharray:6 4;stroke:#5A5344}
+.node.selected .node-box{stroke:var(--acc);stroke-width:1.6;stroke-dasharray:none}
+.node:hover .node-box{stroke:var(--tx3)}
+.node.selected:hover .node-box{stroke:var(--acc)}
+.node{cursor:move}
+.node-name{fill:var(--tx);font-size:12px;font-weight:600;font-family:var(--mono)}
+.node-sub{fill:var(--tx3);font-size:10px;font-family:var(--mono)}
+.vrf-row{fill:var(--bg0);stroke-width:1}
+.vrf-row-label{font-size:10px;font-family:var(--mono);pointer-events:none}
+.vrf-row.drop{stroke:var(--acc) !important;stroke-width:2;fill:rgba(106,169,255,.09)}
+.ep-id{fill:var(--tx3);font-size:9px;font-family:var(--mono);pointer-events:none}
+.link-hit{stroke:transparent;stroke-width:14;fill:none;cursor:pointer}
+.link-line{stroke:var(--tx3);stroke-width:1.6;fill:none;pointer-events:none}
+.link-line.circuit{stroke:var(--c-cloud);stroke-dasharray:8 5;stroke-width:1.8}
+.link-line.logical{stroke-width:2.2;stroke-dasharray:1.5 6;stroke-linecap:round}
+.link.selected .link-line{stroke:var(--acc) !important;stroke-width:2.4}
+.link-label{fill:var(--tx3);font-size:10px;font-family:var(--mono);pointer-events:none}
+.link.selected .link-label{fill:var(--acc) !important}
+.link.dim{opacity:.15}
+.link.dim .link-hit{pointer-events:none}
+.port{fill:var(--bg1);stroke:var(--acc);stroke-width:1.4;cursor:crosshair}
+.guide{stroke:var(--acc);stroke-width:1;stroke-dasharray:4 4;pointer-events:none}
+.templink{stroke:var(--acc);stroke-width:1.6;stroke-dasharray:5 4;fill:none;pointer-events:none}
+.marquee{fill:rgba(106,169,255,.07);stroke:var(--acc);stroke-width:1;stroke-dasharray:5 4;pointer-events:none}
+#emptyHint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:var(--tx3);pointer-events:none;line-height:2}
+#emptyHint b{color:var(--tx2)}
+#zoomCtl{position:absolute;left:12px;bottom:12px;display:flex;gap:4px;background:var(--bg1);border:1px solid var(--line);border-radius:8px;padding:4px}
+#zoomCtl button{width:26px;height:26px;background:transparent;border:0;border-radius:5px;color:var(--tx2);font-size:14px}
+#zoomCtl button:hover{background:var(--bg3);color:var(--tx)}
+#vrfLegend{position:absolute;left:12px;bottom:52px;display:none;flex-direction:column;gap:5px;background:var(--bg1);border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-family:var(--mono);font-size:10px;color:var(--tx2);max-height:40vh;overflow-y:auto}
+#vrfLegend .vt{color:var(--tx3);letter-spacing:.1em;margin-bottom:2px}
+.vrf-chip{display:flex;align-items:center;gap:7px}
+.vrf-dot{width:14px;height:3px;border-radius:2px;flex:0 0 auto}
+#viewBadge{position:absolute;right:12px;top:12px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--tx3);background:var(--bg1);border:1px solid var(--line);border-radius:6px;padding:4px 9px;pointer-events:none;display:none}
+
+/* ---------- Panel ---------- */
+.pn-title{font-size:10px;letter-spacing:.14em;color:var(--tx3);font-family:var(--mono);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.pn-title .badge{background:var(--bg3);border:1px solid var(--line2);border-radius:4px;padding:1px 6px;color:var(--tx2);text-transform:none;letter-spacing:0}
+.fld{margin-bottom:9px}
+.fld label{display:block;font-size:10px;color:var(--tx3);font-family:var(--mono);margin-bottom:3px;letter-spacing:.05em}
+.fld input{width:100%;height:28px;background:var(--bg0);border:1px solid var(--line);border-radius:6px;color:var(--tx);padding:0 8px;font-size:12px;font-family:var(--mono)}
+.fld input:focus{outline:none;border-color:var(--acc-dim)}
+.fld input:disabled{opacity:.45}
+.fld input::placeholder{color:var(--tx3);opacity:.7}
+.fld-row{display:flex;gap:8px}
+.fld-row .fld{flex:1;min-width:0}
+.if-card{background:var(--bg0);border:1px solid var(--line);border-radius:7px;padding:6px;margin-bottom:6px}
+.if-row{display:grid;grid-template-columns:1fr 1fr 20px;gap:4px;margin-bottom:4px}
+.if-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:4px}
+.if-row1{display:grid;grid-template-columns:1fr;gap:4px}
+.if-card input{height:25px;background:var(--bg1);border:1px solid var(--line);border-radius:5px;color:var(--tx);padding:0 6px;font-size:11px;font-family:var(--mono);width:100%}
+.if-card input:focus{outline:none;border-color:var(--acc-dim)}
+.if-card input::placeholder{color:var(--tx3);opacity:.65}
+.if-del{background:transparent;border:0;color:var(--tx3);font-size:14px;border-radius:5px}
+.if-del:hover{color:var(--danger);background:var(--bg3)}
+.vchips{display:flex;flex-wrap:wrap;margin-bottom:4px}
+.vchip{display:inline-flex;align-items:center;gap:6px;background:var(--bg0);border:1px solid var(--line);border-radius:6px;padding:3px 8px;margin:0 6px 6px 0;font-family:var(--mono);font-size:11px;color:var(--tx)}
+.vchip .vd{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.vchip button{background:none;border:0;color:var(--tx3);font-size:12px;padding:0;line-height:1}
+.vchip button:hover{color:var(--danger)}
+.vchip.derived{opacity:.7}
+#vrfAddRow{display:flex;gap:5px}
+#vrfAddRow input{flex:1;min-width:0;height:26px;background:var(--bg0);border:1px solid var(--line);border-radius:6px;color:var(--tx);padding:0 7px;font-size:11px;font-family:var(--mono)}
+#vrfAddRow input:focus{outline:none;border-color:var(--acc-dim)}
+#vrfAddRow button{height:26px;padding:0 10px;background:var(--bg2);border:1px solid var(--line2);border-radius:6px;color:var(--tx2);font-size:11px}
+#vrfAddRow button:hover{color:var(--tx);background:var(--bg3)}
+.cc-preview{background:var(--bg0);border:1px solid var(--line);border-radius:7px;padding:7px 8px;font-family:var(--mono);font-size:10px;color:var(--tx2);white-space:pre-wrap;word-break:break-all;max-height:120px;overflow:hidden;margin-bottom:6px;cursor:pointer;line-height:1.5}
+.cc-preview:hover{border-color:var(--line2)}
+.pn-actions{display:flex;gap:6px;margin-top:14px}
+.pn-actions button{flex:1;height:29px;border-radius:6px;font-size:12px;border:1px solid var(--line2);background:var(--bg2);color:var(--tx2)}
+.pn-actions button:hover{color:var(--tx);background:var(--bg3)}
+.pn-actions button.danger:hover{color:var(--danger);border-color:var(--danger)}
+.align-row{display:flex;gap:6px;margin-bottom:6px}
+.align-row button{flex:1;height:30px;border-radius:6px;font-size:11px;border:1px solid var(--line);background:var(--bg0);color:var(--tx2);font-family:var(--mono)}
+.align-row button:hover{color:var(--tx);border-color:var(--line2);background:var(--bg2)}
+.pn-info{color:var(--tx2);font-size:12px;line-height:1.8}
+.pn-info h4{font-size:11px;color:var(--tx3);font-family:var(--mono);letter-spacing:.1em;margin:14px 0 5px}
+.pn-sep{height:1px;background:var(--line);margin:12px 0}
+.seg{display:flex;background:var(--bg0);border:1px solid var(--line);border-radius:6px;padding:2px;margin-bottom:10px}
+.seg button{flex:1;height:24px;border:0;background:transparent;color:var(--tx3);border-radius:4px;font-size:11px}
+.seg button.on{background:var(--bg3);color:var(--tx)}
+.seg button:disabled{opacity:.3;cursor:default}
+.ep-box{background:var(--bg0);border:1px solid var(--line);border-radius:7px;padding:8px;margin-bottom:8px}
+.ep-box .ep-dev{font-family:var(--mono);font-size:11px;color:var(--tx);margin-bottom:5px}
+.ep-box .ep-site{color:var(--tx3);font-size:10px;font-family:var(--mono)}
+.ep-box .ep-lbl{font-size:9px;color:var(--tx3);font-family:var(--mono);margin:5px 0 2px;letter-spacing:.06em}
+.ep-box input{width:100%;height:26px;background:var(--bg1);border:1px solid var(--line);border-radius:5px;color:var(--tx);padding:0 7px;font-size:11px;font-family:var(--mono)}
+.ep-box input:focus{outline:none;border-color:var(--acc-dim)}
+.ep-box input:disabled{opacity:.45}
+.ep-box .ep-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+
+/* ---------- Overlays ---------- */
+#ctxMenu{position:fixed;z-index:60;background:var(--bg2);border:1px solid var(--line2);border-radius:9px;padding:5px;min-width:186px;box-shadow:0 10px 30px rgba(0,0,0,.5);display:none}
+#ctxMenu .ci{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;font-size:12px;color:var(--tx);cursor:pointer;white-space:nowrap}
+#ctxMenu .ci:hover{background:var(--bg3)}
+#ctxMenu .ci.danger{color:var(--danger)}
+#ctxMenu .ci kbd{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--tx3)}
+#ctxMenu .csep{height:1px;background:var(--line);margin:5px 4px}
+#ctxMenu .clabel{font-size:10px;color:var(--tx3);font-family:var(--mono);padding:5px 10px 2px}
+#ctxMenu .roles{display:flex;gap:4px;padding:2px 8px 6px}
+#ctxMenu .roles button{width:30px;height:28px;background:var(--bg0);border:1px solid var(--line);border-radius:6px;display:flex;align-items:center;justify-content:center}
+#ctxMenu .roles button:hover{border-color:var(--acc)}
+#ctxMenu .roles svg{width:16px;height:16px}
+
+#cmdOverlay{position:fixed;inset:0;z-index:70;background:rgba(8,11,14,.55);display:none;align-items:flex-start;justify-content:center;padding-top:12vh}
+#cmdBox{width:520px;max-width:92vw;background:var(--bg1);border:1px solid var(--line2);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.6);overflow:hidden}
+#cmdInput{width:100%;height:46px;background:transparent;border:0;border-bottom:1px solid var(--line);color:var(--tx);padding:0 16px;font-size:14px;font-family:var(--mono)}
+#cmdInput:focus{outline:none}
+#cmdList{max-height:320px;overflow-y:auto;padding:6px}
+.cmd-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:13px}
+.cmd-item .ck{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--tx3)}
+.cmd-item.sel{background:var(--bg3)}
+.cmd-item .cat{font-family:var(--mono);font-size:10px;color:var(--tx3);width:64px;flex:0 0 auto}
+
+#modal{position:fixed;inset:0;z-index:80;background:rgba(8,11,14,.6);display:none;align-items:center;justify-content:center}
+#modalBox{width:740px;max-width:94vw;height:80vh;background:var(--bg1);border:1px solid var(--line2);border-radius:12px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+#modalHead{display:flex;align-items:center;gap:6px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+#modalHead b{font-size:13px;margin-right:8px}
+.mtab{height:27px;padding:0 11px;background:transparent;border:1px solid transparent;border-radius:6px;color:var(--tx3);font-size:12px}
+.mtab:hover{color:var(--tx)}
+.mtab.on{background:var(--bg3);color:var(--tx);border-color:var(--line2)}
+#modalClose{margin-left:auto;background:transparent;border:0;color:var(--tx3);font-size:18px;width:28px;height:28px;border-radius:6px}
+#modalClose:hover{background:var(--bg3);color:var(--tx)}
+#modalBody{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 14px;gap:10px}
+#modalText{flex:1;background:var(--bg0);border:1px solid var(--line);border-radius:8px;color:var(--tx);font-family:var(--mono);font-size:11.5px;padding:10px;resize:none;line-height:1.55;white-space:pre}
+#modalText:focus{outline:none;border-color:var(--acc-dim)}
+#modalHelp{flex:1;min-height:0;overflow-y:auto;background:var(--bg0);border:1px solid var(--line);border-radius:8px;padding:14px 18px;font-size:12.5px;line-height:2;color:var(--tx2);display:none}
+#modalHelp h4{font-size:11px;color:var(--tx3);font-family:var(--mono);letter-spacing:.12em;margin:12px 0 4px;text-transform:uppercase}
+#modalHelp h4:first-child{margin-top:0}
+#modalHelp b{color:var(--tx)}
+#modalFoot{display:flex;gap:8px;align-items:center}
+#modalFoot .note{color:var(--tx3);font-size:11px;flex:1}
+.m-btn{height:30px;padding:0 14px;border-radius:7px;font-size:12px;border:1px solid var(--line2);background:var(--bg2);color:var(--tx)}
+.m-btn:hover{background:var(--bg3)}
+.m-btn.primary{background:var(--acc);border-color:var(--acc);color:#0C1522;font-weight:600}
+.m-btn.primary:hover{filter:brightness(1.1)}
+
+#toast{position:fixed;bottom:44px;left:50%;transform:translateX(-50%) translateY(8px);z-index:90;background:var(--bg3);border:1px solid var(--line2);color:var(--tx);padding:8px 16px;border-radius:8px;font-size:12px;opacity:0;transition:all .18s;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+#inlineEdit{position:absolute;z-index:50;display:none;background:var(--bg0);border:1.5px solid var(--acc);border-radius:6px;color:var(--tx);font-family:var(--mono);font-size:12px;font-weight:600;padding:2px 6px;text-align:center}
+#inlineEdit:focus{outline:none}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:5px}
+::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#6AA9FF" stroke-width="1.8"><circle cx="5" cy="6" r="2.4"/><circle cx="19" cy="6" r="2.4"/><circle cx="12" cy="18" r="2.4"/><path d="M6.8 7.6 10.5 16M17.2 7.6 13.5 16M7.4 6h9.2"/></svg>
+      <b>Network TopoDraft</b>
+    </div>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" id="btnUndo" title="Undo (Ctrl+Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>Undo</button>
+    <button class="tb-btn" id="btnRedo" title="Redo (Ctrl+Shift+Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg>Redo</button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn active" id="btnSnap" title="Grid snap — while ON, dragged nodes snap to a 10px grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18"/><path d="M8.5 8.5h7v7h-7z"/></svg>Snap</button>
+    <button class="tb-btn active" id="btnGrid" title="Grid lines — show/hide the background grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>Grid</button>
+    <button class="tb-btn" id="btnFit" title="Fit view — zoom to show everything"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>Fit</button>
+    <div class="tb-sep"></div>
+    <div class="tb-seg" title="Physical view: cables & circuits. Logical view: VRF instances inside devices, connected by logical links.">
+      <button id="btnPhys" class="on">Physical</button>
+      <button id="btnLogi">Logical</button>
+    </div>
+    <button class="tb-btn active" id="btnUnder" title="Underlay — show the physical links faintly under the logical view" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 14 9 5 9-5" opacity=".45"/></svg>Underlay</button>
+    <button class="tb-btn active" id="btnGlobal" title="Global — show/hide the global-routing-table compartments in the logical view" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>Global</button>
+    <div class="spacer"></div>
+    <button class="tb-btn" id="btnCmd" title="Command palette"><kbd style="font-family:var(--mono);font-size:10px;border:1px solid var(--line2);border-radius:4px;padding:1px 5px">Ctrl+K</kbd></button>
+    <button class="tb-btn" id="btnLang" title="Switch language"></button>
+    <button class="tb-btn" id="btnHelp" title="Help & shortcuts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4.9c0 1.8-2.7 2.2-2.7 3.6"/><path d="M12 17h.01"/></svg>Help</button>
+    <button class="tb-btn" id="btnImport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Import</button>
+    <button class="tb-btn primary" id="btnExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3m0 0L8 7m4-4 4 4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Export</button>
+  </div>
+  <div id="main">
+    <div id="palette">
+      <div class="pal-title" id="palTitleNodes">Nodes</div>
+      <div id="palItems"></div>
+      <div class="pal-hint" id="palHint"></div>
+      <div style="flex:1"></div>
+      <div class="pal-title" style="margin-top:14px" id="palTitleTpl">Templates</div>
+      <div id="tplList"></div>
+      <div id="tplSaveRow">
+        <input id="tplName" placeholder="Save current as…" spellcheck="false">
+        <button id="tplSave">Save</button>
+      </div>
+      <button class="mini-btn danger" id="btnClear" style="margin-top:8px">Clear canvas</button>
+    </div>
+    <div id="canvasWrap">
+      <svg id="svg">
+        <defs>
+          <pattern id="gridS" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 H 0 V 20" fill="none" stroke="#1A212B" stroke-width="1"/>
+          </pattern>
+          <pattern id="gridL" width="100" height="100" patternUnits="userSpaceOnUse">
+            <path d="M 100 0 H 0 V 100" fill="none" stroke="#222B37" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <g id="world">
+          <g id="lyGrid">
+            <rect x="-20000" y="-20000" width="40000" height="40000" fill="url(#gridS)" pointer-events="none"/>
+            <rect x="-20000" y="-20000" width="40000" height="40000" fill="url(#gridL)" pointer-events="none"/>
+          </g>
+          <g id="lySites"></g>
+          <g id="lyLinks"></g>
+          <g id="lyNodes"></g>
+          <g id="lyLogi"></g>
+          <g id="lyGuides"></g>
+          <g id="lyTemp"></g>
+        </g>
+      </svg>
+      <div id="emptyHint">The canvas is empty<br><b>Drag a node from the left palette</b>, press <b>Ctrl+K</b>,<br>or load a template from the sidebar</div>
+      <div id="viewBadge">LOGICAL VIEW</div>
+      <div id="vrfLegend"></div>
+      <div id="zoomCtl">
+        <button id="zoomOut" title="Zoom out">−</button>
+        <button id="zoomReset" title="Zoom to 100%">⊙</button>
+        <button id="zoomIn" title="Zoom in">＋</button>
+      </div>
+      <input id="inlineEdit" type="text" spellcheck="false">
+    </div>
+    <div id="panel"></div>
+  </div>
+  <div id="statusbar">
+    <span id="stCounts">—</span>
+    <span class="grow"></span>
+    <span id="stZoom">100%</span>
+    <span id="stHint">Ctrl+K commands · Help for shortcuts</span>
+  </div>
+</div>
+
+<div id="ctxMenu"></div>
+<div id="cmdOverlay"><div id="cmdBox"><input id="cmdInput" placeholder="Type a command or node name…"><div id="cmdList"></div></div></div>
+<div id="modal"><div id="modalBox">
+  <div id="modalHead"><b id="modalTitle">Export</b><span id="modalTabs"></span><button id="modalClose">×</button></div>
+  <div id="modalBody">
+    <textarea id="modalText" spellcheck="false"></textarea>
+    <div id="modalHelp"></div>
+    <div id="modalFoot">
+      <span class="note" id="modalNote"></span>
+      <button class="m-btn" id="modalFile" style="display:none">Choose file…</button>
+      <button class="m-btn" id="modalCopy">Copy</button>
+      <button class="m-btn primary" id="modalMain">Download</button>
+    </div>
+  </div>
+</div></div>
+<div id="toast"></div>
+<input type="file" id="fileInput" accept=".json,.yaml,.yml,.txt" style="display:none">
+<script>
+/* =====================================================
+   Network TopoDraft v4 — network topology editor
+   nodes: devices[] (kind 'device' | 'pn'); devices carry vrfs[] (routing instances)
+   links[]: kind 'cable' | 'circuit' | 'logical'
+   logical link endpoints: {dev, vrf, ifname} — vrf '' = global routing table
+   logical view: devices render VRF compartments; links connect compartments
+   ===================================================== */
+'use strict';
+
+/* ---------- state ---------- */
+let devices = [];
+let links   = [];
+let seq = 0;
+const uid = p => p + (++seq) + '_' + Math.random().toString(36).slice(2,6);
+
+const NODE_W = 152, NODE_H = 52, GRID = 10;
+const HEAD_H = 44, VRF_ROW = 24;      /* logical-view compartments */
+let vt = {x: 60, y: 40, k: 1};
+let snapOn = true, gridOn = true;
+let viewMode = 'physical';
+let underlayOn = true;
+let showGlobal = true;          /* show 'global' compartments in logical view */
+let selDevs = new Set(), selLink = null;
+let hist = [], hi = -1;
+let clipboard = null, pasteN = 0;
+
+/* ---------- dom refs ---------- */
+const $ = s => document.querySelector(s);
+const svg = $('#svg'), world = $('#world');
+const lySites = $('#lySites'), lyLinks = $('#lyLinks'), lyNodes = $('#lyNodes'),
+      lyGuides = $('#lyGuides'), lyTemp = $('#lyTemp'), lyGrid = $('#lyGrid'), lyLogi = $('#lyLogi');
+const canvasWrap = $('#canvasWrap'), panel = $('#panel');
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+/* ---------- icons & roles ---------- */
+const ICONS = {
+  router:  '<circle cx="12" cy="12" r="9"/><path d="M8 9.5h5m0 0-1.8-1.8M13 9.5l-1.8 1.8M16 14.5h-5m0 0 1.8-1.8M11 14.5l1.8 1.8"/>',
+  switch:  '<rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 10.2h4m0 0-1.5-1.4M11 10.2l-1.5 1.4M17 13.8h-4m0 0 1.5-1.4M13 13.8l1.5 1.4"/>',
+  firewall:'<rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M4 9.7h16M4 14.3h16M9.3 5v4.7M14.7 9.7v4.6M9.3 14.3V19"/>',
+  cloud:   '<path d="M7 18a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17.1 8.7 4.2 4.2 0 0 1 16.8 18H7Z"/>',
+  server:  '<rect x="4" y="4" width="16" height="7" rx="1.5"/><rect x="4" y="13" width="16" height="7" rx="1.5"/><path d="M8 7.5h.01M8 16.5h.01M12 7.5h4M12 16.5h4"/>',
+  generic: '<path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/>',
+  pnet:    '<path d="M6.5 15.5a3.5 3.5 0 0 1-.5-6.96A4.8 4.8 0 0 1 15.3 7.4 3.6 3.6 0 0 1 15 14.5"/><path d="M4 19h16M7.5 15.5V19M12 14.5V19M16.5 14.5V19"/>'
+};
+const ROLE_COLOR = {router:'var(--c-router)', switch:'var(--c-switch)', firewall:'var(--c-firewall)',
+                    cloud:'var(--c-cloud)', server:'var(--c-server)', generic:'var(--c-generic)', pnet:'var(--c-pnet)'};
+function iconKey(role){
+  const r = (role||'').toLowerCase();
+  if(/fw|firewall|utm|waf/.test(r)) return 'firewall';
+  if(/sw|switch|l2|l3|fabric/.test(r)) return 'switch';
+  if(/rt|router|gw|gateway|edge|core/.test(r)) return 'router';
+  if(/cloud|external|internet|peer|isp|wan|saas|aws|oci|azure|gcp/.test(r)) return 'cloud';
+  if(/server|srv|host|vm|lb|balancer/.test(r)) return 'server';
+  return 'generic';
+}
+function nodeIconKey(d){ return d.kind==='pn' ? 'pnet' : iconKey(d.role); }
+function iconSvg(key, size){
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${ROLE_COLOR[key]}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[key]}</svg>`;
+}
+const PAL_TYPES = [
+  {k:'router',   role:'router',        sub:'router'},
+  {k:'switch',   role:'switch',        sub:'switch'},
+  {k:'firewall', role:'firewall',      sub:'firewall'},
+  {k:'extpeer',  role:'external_peer', sub:'external_peer'},
+  {k:'server',   role:'server',        sub:'server'},
+  {k:'pn',       role:'__pn__',        sub:'provider_network', pn:true},
+  {k:'generic',  role:'',              sub:'(no role)'}
+];
+const VRF_PAL = ['#6AA9FF','#4CC38A','#F2994A','#B18CFF','#45C4CE','#E5636C','#D9C24C','#7BD88F'];
+function vrfColor(v){
+  if(!v) return '#8FA0B8';
+  let h = 0;
+  for(const c of v) h = (h*31 + c.charCodeAt(0)) >>> 0;
+  return VRF_PAL[h % VRF_PAL.length];
+}
+
+/* ---------- helpers ---------- */
+const devById = id => devices.find(d=>d.id===id);
+const isPn = d => d && d.kind==='pn';
+const esc = s => String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toWorld(sx, sy){
+  const r = svg.getBoundingClientRect();
+  return {x:(sx-r.left-vt.x)/vt.k, y:(sy-r.top-vt.y)/vt.k};
+}
+function toScreen(wx, wy){ return {x: wx*vt.k+vt.x, y: wy*vt.k+vt.y}; }
+function snap(v){ return snapOn ? Math.round(v/GRID)*GRID : v; }
+function el(tag, attrs, html){
+  const e = document.createElementNS(SVGNS, tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  if(html!=null) e.innerHTML = html;
+  return e;
+}
+function uniqueName(base){
+  let n = base, i = 2;
+  while(devices.some(d=>d.name===n)) n = base + '-' + (i++);
+  return n;
+}
+function newDevice(role, x, y){
+  if(role==='__pn__'){
+    return {id:uid('d'), kind:'pn', name:uniqueName('pnet-01'), provider:'', description:'',
+            device_type:'', role:'', site:'', platform:'', tenant:'', vrfs:[], interfaces:[],
+            config_context:null, x:snap(x), y:snap(y)};
+  }
+  const key = iconKey(role);
+  const base = {router:'rt-01', switch:'sw-01', firewall:'fw-01', cloud:'ext-01', server:'srv-01', generic:'node-01'}[key];
+  return {id:uid('d'), kind:'device', name:uniqueName(base), device_type:'', role:role||'', site:'', platform:'',
+          tenant:'', vrfs:[], interfaces:[], config_context:null, x:snap(x), y:snap(y)};
+}
+function siteOf(dev){ return isPn(dev) ? '' : (dev.site||'').trim(); }
+function sitesList(){ return [...new Set(devices.map(siteOf).filter(Boolean))]; }
+/* VRF instances of a device = explicit vrfs[] ∪ interface vrfs ∪ logical-endpoint vrfs */
+function devVrfs(d){
+  if(isPn(d)) return [];
+  const s = new Set((d.vrfs||[]).map(v=>v.trim()).filter(Boolean));
+  (d.interfaces||[]).forEach(f=>{ const v=(f.vrf||'').trim(); if(v) s.add(v); });
+  links.forEach(l=>{
+    if(l.kind!=='logical') return;
+    if(l.a.dev===d.id && (l.a.vrf||'').trim()) s.add(l.a.vrf.trim());
+    if(l.b.dev===d.id && (l.b.vrf||'').trim()) s.add(l.b.vrf.trim());
+  });
+  return [...s];
+}
+function allVrfs(){
+  const s = new Set();
+  devices.forEach(d=>devVrfs(d).forEach(v=>s.add(v)));
+  return [...s];
+}
+function vrfRows(d){ return showGlobal ? ['', ...devVrfs(d)] : devVrfs(d); }
+function nodeH(d){
+  if(viewMode!=='logical' || isPn(d)) return NODE_H;
+  return HEAD_H + vrfRows(d).length*VRF_ROW + 6;
+}
+function ensureIf(dev, name){
+  let f = dev.interfaces.find(x=>x.name===name);
+  if(!f){ f = {name, ip_address:'', type:'', description:'', lag:'', vrf:''}; dev.interfaces.push(f); }
+  return f;
+}
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove('show'), 1900);
+}
+
+/* =====================================================
+   i18n — default English, switchable to Japanese
+   (data / export field names stay English in both languages)
+   ===================================================== */
+const STR = {
+en: {
+  tb_undo:'Undo', tb_redo:'Redo', tb_snap:'Snap', tb_grid:'Grid', tb_fit:'Fit',
+  tb_phys:'Physical', tb_logi:'Logical', tb_under:'Underlay', tb_global:'Global',
+  tb_draw:'Draw', tb_png:'PNG', tb_help:'Help', tb_import:'Import', tb_export:'Export',
+  tt_snap:'Grid snap — while ON, dragged nodes snap to a 10px grid',
+  tt_grid:'Grid lines — show/hide the background grid',
+  tt_fit:'Fit view — zoom to show everything',
+  tt_seg:'Physical view: cables & circuits. Logical view: VRF instances inside devices, connected by logical links.',
+  tt_under:'Underlay — show the physical links faintly under the logical view',
+  tt_global:'Global — show/hide the global-routing-table compartments in the logical view',
+  tt_draw:'Draw — freehand annotations & text notes over the diagram',
+  tt_png:'Export the diagram (and annotations) as a PNG image',
+  tt_help:'Help & shortcuts', tt_lang:'言語を日本語に切り替え',
+  lang_label:'EN',
+  pal_nodes:'Nodes', pal_tpl:'Templates',
+  pal_router:'Router', pal_switch:'Switch', pal_firewall:'Firewall', pal_extpeer:'External peer',
+  pal_server:'Server', pal_generic:'Generic node', pal_pn:'Provider network',
+  pal_hint:'Drag onto the canvas to place.<br>Connect: drag from a <b style="color:var(--acc)">◦ port</b> shown on hover.<br><kbd>Shift</kbd>+click / <kbd>Shift</kbd>+drag: multi-select',
+  tpl_ph:'Save current as…', tpl_save:'Save', clear_canvas:'Clear canvas', tpl_more:'+{n} more via Ctrl+K',
+  empty_hint:'The canvas is empty<br><b>Drag a node from the left palette</b>, press <b>Ctrl+K</b>,<br>or load a template from the sidebar',
+  st_hint:'Ctrl+K commands · Help for shortcuts',
+  st_devices:'devices', st_pn:'provider nets', st_links:'links', st_sites:'sites', st_sel:'selected',
+  dev_title:'Device', pn_title2:'Provider network', pn_badge:'circuit endpoint',
+  sel_title:'Selection', badge_nodes:'{n} nodes',
+  bulk_label:'set site for all selected devices', bulk_ph:'site name…', bulk_apply:'Apply site',
+  arrange:'Arrange', al_row:'═ Row', al_col:'║ Column', al_dh:'↔ Distribute', al_dv:'↕ Distribute',
+  tt_row:'Same Y — align in one horizontal row', tt_col:'Same X — align in one vertical column',
+  tt_dh:'Even horizontal spacing (3+ nodes)', tt_dv:'Even vertical spacing (3+ nodes)',
+  copy:'Copy', dup:'Duplicate', del:'Delete', del_link:'Delete link',
+  vrf_title:'VRF instances', vrf_none:'Only the global routing table',
+  vrf_ph:'Add VRF (e.g. PROD)', vrf_add:'Add',
+  vrf_hint:"Shown as compartments in the logical view — drag from a compartment's ◦ port to connect VRFs across devices.",
+  vrf_chip_derived:'defined by an interface or logical link', vrf_chip:'routing instance', vrf_chip_del:'Remove VRF',
+  if_title:'Interfaces',
+  if_none:'None yet — subinterfaces (Gi0/0/1.100), LAG parents (lag) and VRFs are supported',
+  if_add:'+ Add interface',
+  pn_info:'A provider network is a carrier-side network (DX, FastConnect, IP-VPN cloud …). Links attached to it are always <b>circuits</b>. In exports it appears in <b>provider_networks[]</b>.',
+  log_title:'Logical link', log_badge:'L3 / VRF',
+  phy_title:'Physical link', badge_cable:'Cable / local', badge_circuit:'Circuit / carrier',
+  ep_vrf:'VRF (empty = global)', ep_id:'ID (tenant / attach …)', ep_id_pn:'ID (attachment / VC / VIF …)',
+  ep_if:'interface (subIF ok)', ep_ip:'ip_address',
+  log_note:'With an interface set, the ip_address is written to that interface on the device (created if missing). Without one, the IP stays on this endpoint. Endpoint IDs are drawn next to the link ends.',
+  seg_pn_dis:'Provider-network links must be circuits',
+  cc_title:'Config Context', cc_edit:'Edit config context (JSON / YAML)', cc_modal:'Config Context',
+  cm_cc:'Config context…',
+  m_cc_note:'Free-form structured settings for this device (routing, BGP, policies …). Stored with the device and exported as devices[].config_context. Save with empty text to clear.',
+  m_save:'Save', t_cc_saved:'Config context saved', t_cc_err:'Parse error: ',
+  t_cc_obj:'Top level must be an object (key/value map)', t_yaml_na:'js-yaml is not loaded — YAML is unavailable here',
+  home_html:`Sketch the network in your head, fast — then export it as <b>structured data (JSON/YAML)</b> for other tools and AI chats. Every field is <b>optional</b>.
+      <h4>Physical view</h4>
+      Cables &amp; carrier circuits. Drag nodes from the palette (incl. <b>Provider network</b> for DX / FastConnect) and connect via <b>◦ ports</b>.
+      <h4>Logical view</h4>
+      Each device shows its <b>VRF instances as compartments</b> (plus <b>global</b>). Add VRFs in the device panel, then drag from a <b>compartment's ◦ port</b> to a compartment on another device — that creates a logical link between routing instances. Set interface + IP per endpoint in the link panel. <b>Global</b> hides the global rows; <b>Underlay</b> toggles the faint physical links.
+      <h4>Select &amp; edit</h4>
+      <kbd>Shift</kbd>+click / <kbd>Shift</kbd>+drag: multi-select → align &amp; distribute.<br>
+      <kbd>Ctrl+C/V/D</kbd> copy · paste · duplicate · <kbd>Del</kbd> delete · <kbd>Ctrl+Z</kbd> undo.
+      <div class="pn-sep"></div>
+      Full shortcut list: <b>Help</b>. AI-agent import schema: <b>Export → Schema</b>.`,
+  cm_rename:'Rename', cm_role:'Change role', cm_del_n:'Delete {n} nodes', cm_selected:'{n} nodes selected',
+  cm_align_row:'Align in a row', cm_align_col:'Align in a column',
+  cm_dist_h:'Distribute horizontally', cm_dist_v:'Distribute vertically',
+  cm_to_circuit:'Change to circuit', cm_to_cable:'Change to cable',
+  cm_add_here:'Add node here', cm_paste:'Paste here', cm_select_all:'Select all',
+  cat_add:'Add', cat_view:'View', cat_edit:'Edit', cat_io:'I/O', cat_help:'Help', cat_tpl:'Template', cat_jump:'Jump',
+  c_add:'Add ', c_phys:'Switch to physical view', c_logi:'Switch to logical view',
+  c_under:'Toggle physical underlay (logical view)', c_global:'Toggle global compartments (logical view)',
+  c_grid:'Toggle grid lines', c_snap:'Toggle grid snap', c_fit:'Fit view',
+  c_draw:'Toggle drawing mode', c_png:'Export PNG image',
+  c_selall:'Select all', c_copy:'Copy selection', c_paste:'Paste', c_undo:'Undo', c_redo:'Redo',
+  c_arow:'Align selection in a row', c_acol:'Align selection in a column',
+  c_dh:'Distribute selection horizontally', c_dv:'Distribute selection vertically',
+  c_clear:'Clear canvas', c_export:'Export…', c_schema:'Export import-schema for AI agents…',
+  c_import:'Import…', c_help:'Help & shortcuts', c_tpl:'Template: ', c_tpl_save:'Save current as template…', c_jump:'Jump to ',
+  m_export:'Export', m_import:'Import', m_help:'Help & shortcuts',
+  m_download:'Download', m_copy:'Copy', m_do_import:'Import', m_file:'Choose file…',
+  m_import_ph:'Paste JSON or YAML here…',
+  m_import_note:'Paste exported JSON/YAML or choose a file. Current canvas will be replaced (undoable).',
+  m_help_note:'Network TopoDraft — draw fast, export structured.',
+  note_json:'NetBox-friendly field names. Round-trips via Import.',
+  note_yaml:'Same data model as JSON.',
+  note_md:'Human-readable configuration document (tables).',
+  note_ai:'Schema legend + current data. Paste into an AI chat to describe THIS topology.',
+  note_schema:'Import format spec (JSON Schema + rules + example). Give this to an AI agent so it can GENERATE an importable topology.',
+  note_drawio:'Open in draw.io / diagrams.net via File > Open.',
+  t_snap_on:'Grid snap ON — positions snap to a 10px grid', t_snap_off:'Grid snap OFF — free positioning',
+  t_global_on:'Global compartments shown', t_global_off:'Global hidden — links to global attach to the node body',
+  t_cleared:'Canvas cleared — Ctrl+Z to undo',
+  t_copied:'Copied {n} node(s) / {m} link(s)',
+  t_log_link:'Logical link: {a} [{va}] — {b} [{vb}]', t_global_word:'global',
+  t_circuit:'Connected as circuit', t_cable:'Connected as cable',
+  t_parse:'Could not parse — please check the JSON / YAML',
+  t_imported:'Imported {d} nodes / {l} links', t_import_fail:'Import failed: ',
+  t_tpl_loaded:'Loaded template: ', t_tpl_deleted:'Template deleted',
+  t_tpl_name:'Give the template a name first', t_tpl_empty:'Canvas is empty — nothing to save',
+  t_tpl_saved:'Saved template: ',
+  t_clip:'Copied to clipboard', t_clip2:'Copied',
+  t_png_fail:'PNG export failed', t_png_empty:'Nothing to export yet',
+  t_ink_cleared:'Drawing cleared — Ctrl+Z to undo',
+  ink_pen:'Pen', ink_text:'Text note', ink_erase:'Eraser', ink_clear:'Clear', ink_done:'Done',
+  help_html:`
+    <h4>Views</h4>
+    <b>Physical</b> shows cables (solid) and carrier circuits (purple dashed).<br>
+    <b>Logical</b> shows each device's routing instances: a <b>global</b> compartment plus one per <b>VRF</b> (add VRFs in the device panel; VRFs referenced by interfaces or links appear automatically). Drag from a <b>compartment's ◦ port</b> (hover a compartment to also get top/bottom ports) and drop <b>anywhere on the target compartment</b> — it highlights. The two ends may be different VRFs (route leaking). Logical links are straight lines drawn <b>on top of</b> the nodes, anchored on whichever of the compartment's 4 sides faces the target, with a colored dot at each end; the line label is the <b>link_id</b>. <b>Global</b> hides the global compartments; <b>Underlay</b> toggles the faint physical links.
+    <h4>Logical link panel</h4>
+    Each endpoint edits its <b>VRF</b>, an optional <b>ID</b> (tenant / VIF / VC identifier for peers whose VRF name is unknown; drawn next to that end), an <b>interface</b> (subIF like Gi0/0/1.100) and an <b>ip_address</b>. With an interface set the IP is written through to the device (created if missing); without one it stays on the endpoint. Link-level fields: <b>link_id</b> (shown on the canvas) and <b>vlan</b>.
+    <h4>Mouse</h4>
+    <b>Drag empty canvas</b> pan · <b>Wheel</b> zoom · <b>Shift+drag empty canvas</b> box-select<br>
+    <b>Drag a node</b> move (moves the whole selection) · <b>Shift+click</b> add/remove from selection<br>
+    <b>Drag from a ◦ port</b> create a link · <b>Double-click</b> rename · <b>Right-click</b> context menu
+    <h4>Keyboard</h4>
+    <b>Ctrl+K</b> command palette · <b>Ctrl+C / V / D</b> copy / paste / duplicate · <b>Ctrl+A</b> select all<br>
+    <b>Delete</b> delete selection · <b>Ctrl+Z / Ctrl+Shift+Z</b> undo / redo · <b>Arrows</b> nudge (<b>Alt</b>=1px) · <b>Esc</b> deselect / close
+    <h4>Toolbar</h4>
+    <b>Snap</b> — dragged nodes snap to a 10px grid; blue guides appear when centers line up.<br>
+    <b>Grid</b> — background grid lines (20px minor / 100px major).<br>
+    <b>Fit</b> — zoom to show the whole topology.
+    <h4>Objects & concepts</h4>
+    <b>site</b> — nodes with the same site value are framed together; cross-site links default to circuit.<br>
+    <b>Provider network</b> — carrier-side networks (amber, dashed). Links to it are always circuits; exported as <b>provider_networks[]</b>.<br>
+    <b>VRF</b> — a routing instance on a device (devices carry a <b>vrfs</b> list). Logical links connect {device, vrf} to {device, vrf}; empty vrf = global.<br>
+    <b>tenant</b> — owning organization (free text). <b>LAG</b> — member interfaces set <b>lag</b> to the parent name (Po1); parent type <b>lag</b>.<br>
+    <b>Config Context</b> — free-form JSON/YAML settings per device (device panel or right-click → Config context…); exported as <b>config_context</b>, never drawn.<br>
+    <b>Everything is optional</b> — empty fields are omitted from exports.
+    <h4>AI round-trip</h4>
+    <b>Export → For AI</b>: legend + current data, for describing THIS topology to an AI chat.<br>
+    <b>Export → Schema</b>: the import-format spec — hand it to an AI agent to generate a draft, then Import and fine-tune here.
+    <h4>Templates</h4>
+    Save the current canvas from the sidebar; the three most recent are pinned, all are in <b>Ctrl+K</b>. Persists via localStorage when opened locally.`
+},
+ja: {
+  tb_undo:'元に戻す', tb_redo:'やり直す', tb_snap:'スナップ', tb_grid:'グリッド', tb_fit:'全体表示',
+  tb_phys:'物理', tb_logi:'論理', tb_under:'物理を薄く表示', tb_global:'global',
+  tb_draw:'手描き', tb_png:'PNG', tb_help:'ヘルプ', tb_import:'インポート', tb_export:'エクスポート',
+  tt_snap:'グリッドスナップ — ONの間、ノードは10pxグリッドに吸着します',
+  tt_grid:'グリッド線 — 背景グリッドの表示/非表示',
+  tt_fit:'全体表示 — 全ノードが収まるようにズーム',
+  tt_seg:'物理ビュー: ケーブルと回線。論理ビュー: デバイス内のVRFインスタンスを論理リンクで接続。',
+  tt_under:'物理リンクを論理ビューの下に薄く表示',
+  tt_global:'論理ビューでglobal(グローバルルーティングテーブル)区画の表示/非表示',
+  tt_draw:'手描きモード — 構成図の上にフリーハンド描画とテキストメモ',
+  tt_png:'構成図(注釈含む)をPNG画像として保存',
+  tt_help:'ヘルプとショートカット', tt_lang:'Switch language to English',
+  lang_label:'日本語',
+  pal_nodes:'ノード', pal_tpl:'テンプレート',
+  pal_router:'ルーター', pal_switch:'スイッチ', pal_firewall:'ファイアウォール', pal_extpeer:'外部ピア',
+  pal_server:'サーバー', pal_generic:'汎用ノード', pal_pn:'プロバイダ網',
+  pal_hint:'パレットからキャンバスへドラッグで配置。<br>接続: ホバーで表示される<b style="color:var(--acc)">◦ ポート</b>からドラッグ。<br><kbd>Shift</kbd>+クリック / <kbd>Shift</kbd>+ドラッグ: 複数選択',
+  tpl_ph:'現在の図を保存…', tpl_save:'保存', clear_canvas:'キャンバスをクリア', tpl_more:'ほか{n}件は Ctrl+K から',
+  empty_hint:'キャンバスは空です<br><b>左のパレットからノードをドラッグ</b>、<b>Ctrl+K</b>、<br>またはサイドバーのテンプレートを読み込んでください',
+  st_hint:'Ctrl+K: コマンド · ショートカットはヘルプへ',
+  st_devices:'デバイス', st_pn:'プロバイダ網', st_links:'リンク', st_sites:'サイト', st_sel:'選択中',
+  dev_title:'デバイス', pn_title2:'プロバイダ網', pn_badge:'回線の終端',
+  sel_title:'選択', badge_nodes:'{n} ノード',
+  bulk_label:'選択中の全デバイスにサイトを設定', bulk_ph:'サイト名…', bulk_apply:'サイトを適用',
+  arrange:'整列', al_row:'═ 横一列', al_col:'║ 縦一列', al_dh:'↔ 等間隔', al_dv:'↕ 等間隔',
+  tt_row:'Y座標を揃えて横一列に', tt_col:'X座標を揃えて縦一列に',
+  tt_dh:'水平方向に等間隔配置(3ノード以上)', tt_dv:'垂直方向に等間隔配置(3ノード以上)',
+  copy:'コピー', dup:'複製', del:'削除', del_link:'リンクを削除',
+  vrf_title:'VRF インスタンス', vrf_none:'グローバルルーティングテーブルのみ',
+  vrf_ph:'VRFを追加 (例: PROD)', vrf_add:'追加',
+  vrf_hint:'論理ビューでは区画(コンパートメント)として表示されます。区画の ◦ ポートからドラッグしてデバイス間のVRFを接続します。',
+  vrf_chip_derived:'インターフェイスまたは論理リンクで定義', vrf_chip:'ルーティングインスタンス', vrf_chip_del:'VRFを削除',
+  if_title:'インターフェイス',
+  if_none:'未登録 — サブIF (Gi0/0/1.100)、LAG親 (lag)、VRF に対応',
+  if_add:'+ インターフェイスを追加',
+  pn_info:'プロバイダ網はキャリア側のネットワークです(DX、FastConnect、IP-VPN網など)。接続されるリンクは常に<b>circuit</b>になります。エクスポートでは <b>provider_networks[]</b> に出力されます。',
+  log_title:'論理リンク', log_badge:'L3 / VRF',
+  phy_title:'物理リンク', badge_cable:'ケーブル / 構内', badge_circuit:'回線 / キャリア',
+  ep_vrf:'VRF (空 = global)', ep_id:'ID (テナント / アタッチ等)', ep_id_pn:'ID (アタッチメント / VC / VIF等)',
+  ep_if:'interface (サブIF可)', ep_ip:'ip_address',
+  log_note:'interfaceを指定するとIPアドレスはデバイス側のそのインターフェイスに書き込まれます(なければ自動作成)。未指定ならIPはこのエンドポイントに保持されます。エンドポイントIDはリンクの端に描画されます。',
+  seg_pn_dis:'プロバイダ網へのリンクはcircuit固定です',
+  cc_title:'Config Context', cc_edit:'Config Contextを編集 (JSON / YAML)', cc_modal:'Config Context',
+  cm_cc:'Config Context…',
+  m_cc_note:'このデバイスの自由な構造化設定(ルーティング、BGP、ポリシー等)。デバイスと共に保持され、devices[].config_context としてエクスポートされます。空にして保存すると削除されます。',
+  m_save:'保存', t_cc_saved:'Config Contextを保存しました', t_cc_err:'解析エラー: ',
+  t_cc_obj:'トップレベルはオブジェクト(キー/値)にしてください', t_yaml_na:'js-yamlが読み込まれていないためYAMLは使用できません',
+  home_html:`頭の中のネットワークを素早く描き、<b>構造化データ (JSON/YAML)</b> としてエクスポートして他ツールやAIチャットに渡せます。すべての項目は<b>省略可能</b>です。
+      <h4>物理ビュー</h4>
+      ケーブルとキャリア回線。パレットからノードをドラッグし(DX / FastConnect用の<b>プロバイダ網</b>もあります)、<b>◦ ポート</b>から接続します。
+      <h4>論理ビュー</h4>
+      各デバイスは<b>VRFインスタンスを区画</b>として表示します(+<b>global</b>)。デバイスパネルでVRFを追加し、<b>区画の ◦ ポート</b>から別デバイスの区画へドラッグするとルーティングインスタンス間の論理リンクが作成されます。リンクパネルでエンドポイントごとにinterfaceとIPを設定できます。<b>global</b>ボタンでglobal行の非表示、<b>物理を薄く表示</b>で物理リンクの重ね表示を切り替えます。
+      <h4>選択と編集</h4>
+      <kbd>Shift</kbd>+クリック / <kbd>Shift</kbd>+ドラッグ: 複数選択 → 整列・等間隔配置。<br>
+      <kbd>Ctrl+C/V/D</kbd> コピー・貼り付け・複製 · <kbd>Del</kbd> 削除 · <kbd>Ctrl+Z</kbd> 元に戻す。
+      <div class="pn-sep"></div>
+      ショートカット一覧は<b>ヘルプ</b>。AIエージェント用スキーマ: <b>エクスポート → Schema</b>。`,
+  cm_rename:'名前を変更', cm_role:'ロールを変更', cm_del_n:'{n} ノードを削除', cm_selected:'{n} ノードを選択中',
+  cm_align_row:'横一列に整列', cm_align_col:'縦一列に整列',
+  cm_dist_h:'水平方向に等間隔配置', cm_dist_v:'垂直方向に等間隔配置',
+  cm_to_circuit:'circuitに変更', cm_to_cable:'cableに変更',
+  cm_add_here:'ここにノードを追加', cm_paste:'ここに貼り付け', cm_select_all:'すべて選択',
+  cat_add:'追加', cat_view:'表示', cat_edit:'編集', cat_io:'入出力', cat_help:'ヘルプ', cat_tpl:'テンプレ', cat_jump:'移動',
+  c_add:'追加: ', c_phys:'物理ビューに切り替え', c_logi:'論理ビューに切り替え',
+  c_under:'物理リンクの薄表示を切り替え(論理ビュー)', c_global:'global区画の表示を切り替え(論理ビュー)',
+  c_grid:'グリッド線を切り替え', c_snap:'グリッドスナップを切り替え', c_fit:'全体表示',
+  c_draw:'手描きモードを切り替え', c_png:'PNG画像をエクスポート',
+  c_selall:'すべて選択', c_copy:'選択をコピー', c_paste:'貼り付け', c_undo:'元に戻す', c_redo:'やり直す',
+  c_arow:'選択を横一列に整列', c_acol:'選択を縦一列に整列',
+  c_dh:'選択を水平方向に等間隔配置', c_dv:'選択を垂直方向に等間隔配置',
+  c_clear:'キャンバスをクリア', c_export:'エクスポート…', c_schema:'AIエージェント用インポートスキーマを出力…',
+  c_import:'インポート…', c_help:'ヘルプとショートカット', c_tpl:'テンプレート: ', c_tpl_save:'現在の図をテンプレートとして保存…', c_jump:'移動: ',
+  m_export:'エクスポート', m_import:'インポート', m_help:'ヘルプとショートカット',
+  m_download:'ダウンロード', m_copy:'コピー', m_do_import:'インポート', m_file:'ファイルを選択…',
+  m_import_ph:'JSONまたはYAMLを貼り付けてください…',
+  m_import_note:'エクスポートしたJSON/YAMLの貼り付け、またはファイル選択。現在のキャンバスは置き換えられます(Ctrl+Zで戻せます)。',
+  m_help_note:'Network TopoDraft — 素早く描いて、構造化してエクスポート。',
+  note_json:'NetBox準拠のフィールド名。インポートで完全に往復できます。',
+  note_yaml:'JSONと同じデータモデルです。',
+  note_md:'人が読むための構成ドキュメント(表形式)。',
+  note_ai:'スキーマ凡例 + 現在のデータ。AIチャットに貼り付けてこの構成を説明できます。',
+  note_schema:'インポート形式の仕様(JSON Schema + ルール + サンプル)。AIエージェントに渡すと、読み込み可能な構成の叩き台を生成させられます。',
+  note_drawio:'draw.io / diagrams.net の File > Open で開けます。',
+  t_snap_on:'グリッドスナップ ON — 10pxグリッドに吸着します', t_snap_off:'グリッドスナップ OFF — 自由配置',
+  t_global_on:'global区画を表示しました', t_global_off:'globalを非表示 — global宛リンクはノード本体に接続されます',
+  t_cleared:'キャンバスをクリアしました — Ctrl+Zで戻せます',
+  t_copied:'{n} ノード / {m} リンクをコピーしました',
+  t_log_link:'論理リンク: {a} [{va}] — {b} [{vb}]', t_global_word:'global',
+  t_circuit:'circuitとして接続しました', t_cable:'cableとして接続しました',
+  t_parse:'解析できませんでした — JSON / YAMLを確認してください',
+  t_imported:'{d} ノード / {l} リンクをインポートしました', t_import_fail:'インポート失敗: ',
+  t_tpl_loaded:'テンプレートを読み込みました: ', t_tpl_deleted:'テンプレートを削除しました',
+  t_tpl_name:'先にテンプレート名を入力してください', t_tpl_empty:'キャンバスが空です — 保存するものがありません',
+  t_tpl_saved:'テンプレートを保存しました: ',
+  t_clip:'クリップボードにコピーしました', t_clip2:'コピーしました',
+  t_png_fail:'PNGエクスポートに失敗しました', t_png_empty:'エクスポートする内容がありません',
+  t_ink_cleared:'描画を消去しました — Ctrl+Zで戻せます',
+  ink_pen:'ペン', ink_text:'テキストメモ', ink_erase:'消しゴム', ink_clear:'全消去', ink_done:'完了',
+  help_html:`
+    <h4>ビュー</h4>
+    <b>物理</b>はケーブル(実線)とキャリア回線(紫の破線)を表示します。<br>
+    <b>論理</b>は各デバイスのルーティングインスタンスを表示します: <b>global</b>区画 + <b>VRF</b>ごとの区画(デバイスパネルで追加。インターフェイスやリンクが参照するVRFは自動で現れます)。<b>区画の ◦ ポート</b>からドラッグし(区画にホバーすると上下のポートも出ます)、<b>相手の区画のどこでも</b>ドロップすると論理リンクが作成されます(区画がハイライトされます)。両端は異なるVRFでも構いません(route leak)。論理リンクは<b>ノードの上</b>に直線で描画され、区画の4辺のうち相手に向いた辺にアンカーされます。線上のラベルは<b>link_id</b>です。<b>global</b>ボタンでglobal区画を非表示にできます(global宛リンクはノード本体に接続)。
+    <h4>論理リンクパネル</h4>
+    各エンドポイントで<b>VRF</b>、任意の<b>ID</b>(VRF名が不明な外部ピアやプロバイダ網用のテナント/VIF/VC識別子。リンクの端に描画)、<b>interface</b>(Gi0/0/1.100等のサブIF)、<b>ip_address</b>を編集できます。interface指定時はIPがデバイス側に書き込まれ(なければ自動作成)、未指定ならエンドポイントに保持されます。リンク単位の項目: <b>link_id</b>(キャンバスに表示)と<b>vlan</b>。
+    <h4>マウス</h4>
+    <b>空きキャンバスをドラッグ</b> パン · <b>ホイール</b> ズーム · <b>Shift+ドラッグ</b> 矩形選択<br>
+    <b>ノードをドラッグ</b> 移動(選択全体が動きます) · <b>Shift+クリック</b> 選択に追加/除外<br>
+    <b>◦ ポートからドラッグ</b> リンク作成 · <b>ダブルクリック</b> 名前変更 · <b>右クリック</b> メニュー
+    <h4>キーボード</h4>
+    <b>Ctrl+K</b> コマンドパレット · <b>Ctrl+C / V / D</b> コピー / 貼り付け / 複製 · <b>Ctrl+A</b> 全選択<br>
+    <b>Delete</b> 削除 · <b>Ctrl+Z / Ctrl+Shift+Z</b> 元に戻す / やり直す · <b>矢印</b> 微調整(<b>Alt</b>=1px) · <b>Esc</b> 選択解除 / 閉じる
+    <h4>ツールバー</h4>
+    <b>スナップ</b> — ドラッグ中のノードが10pxグリッドに吸着。中心が揃うと青いガイドが表示されます。<br>
+    <b>グリッド</b> — 背景グリッド線(細20px / 太100px)。<br>
+    <b>全体表示</b> — 構成全体が収まるようにズーム。
+    <h4>オブジェクトと概念</h4>
+    <b>site</b> — 同じsite値のノードは枠でまとめられます。サイトをまたぐリンクは既定でcircuitになります。<br>
+    <b>プロバイダ網</b> — キャリア側ネットワーク(琥珀色・破線)。接続リンクは常にcircuit。<b>provider_networks[]</b>としてエクスポートされます。<br>
+    <b>VRF</b> — デバイス上のルーティングインスタンス(デバイスは<b>vrfs</b>リストを持ちます)。論理リンクは {device, vrf} 同士を接続し、vrf空はglobalです。<br>
+    <b>tenant</b> — 所属組織(自由記述)。<b>LAG</b> — メンバーIFの<b>lag</b>に親名(Po1)を設定し、親IFのtypeを<b>lag</b>に。<br>
+    <b>Config Context</b> — デバイスごとの自由なJSON/YAML設定(デバイスパネルまたは右クリック → Config Context…)。<b>config_context</b>としてエクスポートされ、描画には影響しません。<br>
+    <b>すべて省略可能</b> — 空の項目はエクスポートから省かれます。
+    <h4>AIとの往復</h4>
+    <b>エクスポート → For AI</b>: 凡例 + 現在のデータ。この構成をAIチャットに説明する用途。<br>
+    <b>エクスポート → Schema</b>: インポート形式の仕様。AIエージェントに渡して叩き台を生成させ、ここでインポートして微修正します。
+    <h4>テンプレート</h4>
+    サイドバーから現在の図を保存できます。直近3件がピン留めされ、全件は<b>Ctrl+K</b>から。ローカルで開いた場合はlocalStorageに保持されます。`
+}
+};
+let lang = 'en';
+try{ const lv = localStorage.getItem('topodraft.lang'); if(lv==='ja'||lv==='en') lang = lv; }catch(e){}
+const T = k => (STR[lang] && STR[lang][k] != null ? STR[lang][k] : (STR.en[k] != null ? STR.en[k] : k));
+function applyLang(){
+  const btnTxt = (sel, key)=>{
+    const b = $(sel);
+    if(!b) return;
+    const tn = b.lastChild;
+    if(tn && tn.nodeType===3) tn.nodeValue = T(key);
+  };
+  btnTxt('#btnUndo','tb_undo'); btnTxt('#btnRedo','tb_redo');
+  btnTxt('#btnSnap','tb_snap'); btnTxt('#btnGrid','tb_grid'); btnTxt('#btnFit','tb_fit');
+  btnTxt('#btnUnder','tb_under'); btnTxt('#btnGlobal','tb_global');
+  btnTxt('#btnHelp','tb_help'); btnTxt('#btnImport','tb_import'); btnTxt('#btnExport','tb_export');
+  const setTitle = (sel, key)=>{ const el2=$(sel); if(el2) el2.title = T(key); };
+  setTitle('#btnSnap','tt_snap'); setTitle('#btnGrid','tt_grid'); setTitle('#btnFit','tt_fit');
+  setTitle('#btnUnder','tt_under'); setTitle('#btnGlobal','tt_global');
+  setTitle('#btnHelp','tt_help'); setTitle('#btnLang','tt_lang');
+  const seg = document.querySelector('.tb-seg'); if(seg) seg.title = T('tt_seg');
+  $('#btnPhys').textContent = T('tb_phys');
+  $('#btnLogi').textContent = T('tb_logi');
+  const bl = $('#btnLang'); if(bl) bl.textContent = T('lang_label');
+  $('#palTitleNodes').textContent = T('pal_nodes');
+  $('#palTitleTpl').textContent = T('pal_tpl');
+  $('#palHint').innerHTML = T('pal_hint');
+  $('#tplName').placeholder = T('tpl_ph');
+  $('#tplSave').textContent = T('tpl_save');
+  $('#btnClear').textContent = T('clear_canvas');
+  $('#emptyHint').innerHTML = T('empty_hint');
+  $('#stHint').textContent = T('st_hint');
+  $('#modalCopy').textContent = T('m_copy');
+  $('#modalFile').textContent = T('m_file');
+  buildPalette();
+}
+
+/* ---------- history ---------- */
+function snapshotStr(){ return JSON.stringify({devices, links}); }
+function pushHistory(){
+  hist = hist.slice(0, hi+1);
+  hist.push(snapshotStr());
+  if(hist.length > 150) hist.shift();
+  hi = hist.length-1;
+  updateUndoBtns();
+}
+function restore(str){
+  const o = JSON.parse(str);
+  devices = o.devices; links = o.links;
+  selDevs = new Set([...selDevs].filter(id=>devById(id)));
+  if(selLink && !links.find(l=>l.id===selLink)) selLink = null;
+  render(); renderPanel();
+}
+function undo(){ if(hi>0){ hi--; restore(hist[hi]); updateUndoBtns(); } }
+function redo(){ if(hi<hist.length-1){ hi++; restore(hist[hi]); updateUndoBtns(); } }
+function updateUndoBtns(){
+  $('#btnUndo').disabled = hi<=0;
+  $('#btnRedo').disabled = hi>=hist.length-1;
+}
+
+/* ---------- selection ---------- */
+function selectOnly(id){ selDevs = new Set([id]); selLink = null; render(); renderPanel(); }
+function toggleSel(id){ selLink = null; if(selDevs.has(id)) selDevs.delete(id); else selDevs.add(id); render(); renderPanel(); }
+function selectLink(id){ selDevs.clear(); selLink = id; render(); renderPanel(); }
+function selectNone(){ if(!selDevs.size && !selLink) return; selDevs.clear(); selLink = null; render(); renderPanel(); }
+function selectAll(){ selDevs = new Set(devices.map(d=>d.id)); selLink = null; render(); renderPanel(); }
+
+/* ---------- geometry ---------- */
+function anchor(dev, tx, ty){
+  const h = nodeH(dev);
+  const cx = dev.x+NODE_W/2, cy = dev.y+h/2;
+  const dx = tx-cx, dy = ty-cy;
+  if(!dx && !dy) return {x:cx, y:cy};
+  const sx = (NODE_W/2)/Math.max(Math.abs(dx),1e-9);
+  const sy = (h/2)/Math.max(Math.abs(dy),1e-9);
+  const s = Math.min(sx, sy);
+  return {x:cx+dx*s, y:cy+dy*s};
+}
+/* compartment rect of a VRF row ('' = global) in logical view */
+function vrfRowIdx(d, vrf){
+  const v = (vrf||'').trim();
+  const rows = vrfRows(d);
+  if(!v) return showGlobal ? 0 : -1;
+  const i = rows.indexOf(v);
+  return i<0 ? (showGlobal ? 0 : -1) : i;
+}
+function vrfRowRect(d, vrf){
+  const idx = vrfRowIdx(d, vrf);
+  if(idx<0) return null;
+  return {x:d.x+8, y:d.y+HEAD_H+idx*VRF_ROW+2, w:NODE_W-16, h:VRF_ROW-4};
+}
+/* anchor for a logical endpoint: one of the 4 sides of the compartment, chosen by the
+   direction to the target. Falls back to the node body (null) when the row is hidden. */
+function logAnchor(d, vrf, tx, ty){
+  if(isPn(d) || viewMode!=='logical') return null;
+  const r = vrfRowRect(d, vrf);
+  if(!r) return null;
+  const cx = r.x+r.w/2, cy = r.y+r.h/2;
+  const dx = tx-cx, dy = (ty==null ? cy : ty)-cy;
+  if(Math.abs(dy) > Math.abs(dx)) return {x:cx, y: dy>0 ? r.y+r.h : r.y};
+  return {x: dx>0 ? r.x+r.w : r.x, y: cy};
+}
+function linkPath(l, i, n){
+  const a = devById(l.a.dev), b = devById(l.b.dev);
+  if(!a || !b) return null;
+  const ac = {x:a.x+NODE_W/2, y:a.y+nodeH(a)/2}, bc = {x:b.x+NODE_W/2, y:b.y+nodeH(b)/2};
+  let p1, p2;
+  if(l.kind==='logical' && viewMode==='logical'){
+    p1 = logAnchor(a, l.a.vrf, bc.x, bc.y) || anchor(a, bc.x, bc.y);
+    p2 = logAnchor(b, l.b.vrf, ac.x, ac.y) || anchor(b, ac.x, ac.y);
+  } else {
+    p1 = anchor(a, bc.x, bc.y);
+    p2 = anchor(b, ac.x, ac.y);
+  }
+  /* straight lines; parallel links are offset perpendicular to the segment */
+  const off = (i-(n-1)/2)*16;
+  const dx = p2.x-p1.x, dy = p2.y-p1.y, len = Math.hypot(dx,dy)||1;
+  const nx = -dy/len*off, ny = dx/len*off;
+  const q1 = {x:p1.x+nx, y:p1.y+ny}, q2 = {x:p2.x+nx, y:p2.y+ny};
+  return {d:`M ${q1.x} ${q1.y} L ${q2.x} ${q2.y}`, lx:(q1.x+q2.x)/2, ly:(q1.y+q2.y)/2-6, p1:q1, p2:q2};
+}
+
+/* ---------- render ---------- */
+let hoverNode = null, hoverVrfRow = null;
+function logicalVrfOf(l){
+  const a=(l.a.vrf||'').trim(), b=(l.b.vrf||'').trim();
+  return a || b;
+}
+function linkLabelText(l){
+  if(l.kind==='circuit') return [l.cid, l.provider, l.commit_rate].filter(Boolean).join(' · ') || 'circuit';
+  if(l.kind==='logical'){
+    /* VRF names are already visible on the compartments — show connection ID / free label only */
+    return [l.link_id, l.label].filter(Boolean).join(' · ');
+  }
+  return [l.label, l.type, l.bandwidth].filter(Boolean).join(' · ');
+}
+function render(){
+  lyGrid.style.display = gridOn ? '' : 'none';
+  /* sites */
+  lySites.innerHTML = '';
+  const groups = {};
+  devices.forEach(d=>{ const s = siteOf(d); if(s){ (groups[s]=groups[s]||[]).push(d); } });
+  for(const s in groups){
+    const ds = groups[s], PAD = 26;
+    const x0 = Math.min(...ds.map(d=>d.x))-PAD, y0 = Math.min(...ds.map(d=>d.y))-PAD-12;
+    const x1 = Math.max(...ds.map(d=>d.x+NODE_W))+PAD, y1 = Math.max(...ds.map(d=>d.y+nodeH(d)))+PAD;
+    const g = el('g', {});
+    g.appendChild(el('rect', {class:'site-rect', x:x0, y:y0, width:x1-x0, height:y1-y0, rx:12}));
+    const lbl = el('text', {class:'site-label', x:x0+12, y:y0+18, 'data-site':s});
+    lbl.textContent = '⌖ ' + s;
+    g.appendChild(lbl);
+    lySites.appendChild(g);
+  }
+  /* links */
+  lyLinks.innerHTML = '';
+  lyLogi.innerHTML = '';
+  const pairIdx = {}, pairTotal = {};
+  links.forEach(l=>{
+    const key = [l.a.dev, l.b.dev].sort().join('|');
+    pairTotal[key] = (pairTotal[key]||0)+1;
+  });
+  links.forEach(l=>{
+    const key = [l.a.dev, l.b.dev].sort().join('|');
+    const i = pairIdx[key] = (pairIdx[key]??-1)+1;
+    if(viewMode==='physical' && l.kind==='logical') return;
+    const physInLogical = viewMode==='logical' && l.kind!=='logical';
+    if(physInLogical && !underlayOn) return;
+    const p = linkPath(l, i, pairTotal[key]);
+    if(!p) return;
+    const selected = selLink===l.id;
+    const g = el('g', {class:'link'+(selected?' selected':'')+(physInLogical?' dim':''), 'data-link':l.id});
+    g.appendChild(el('path', {class:'link-hit', d:p.d}));
+    const lineAttrs = {class:'link-line '+(l.kind==='circuit'?'circuit':l.kind==='logical'?'logical':''), d:p.d};
+    if(l.kind==='logical' && !selected) lineAttrs.style = 'stroke:'+vrfColor(logicalVrfOf(l));
+    g.appendChild(el('path', lineAttrs));
+    const txt = linkLabelText(l);
+    if(txt){
+      const tAttrs = {class:'link-label', x:p.lx, y:p.ly, 'text-anchor':'middle'};
+      if(l.kind==='logical' && !selected) tAttrs.style = 'fill:'+vrfColor(logicalVrfOf(l));
+      const t = el('text', tAttrs);
+      t.textContent = txt;
+      g.appendChild(t);
+    }
+    /* logical links in the logical view: draw ABOVE nodes, mark endpoints, show endpoint IDs */
+    if(l.kind==='logical' && viewMode==='logical'){
+      [['a', p.p1, p.p2], ['b', p.p2, p.p1]].forEach(([side, pt, other])=>{
+        g.appendChild(el('circle', {cx:pt.x, cy:pt.y, r:3.2,
+          fill:vrfColor((l[side].vrf||'').trim()), 'pointer-events':'none'}));
+        const idTxt = (l[side].id||'').trim();
+        if(idTxt){
+          const f = 0.16;
+          const tx = pt.x + (other.x-pt.x)*f, ty = pt.y + (other.y-pt.y)*f - 7;
+          const t2 = el('text', {class:'ep-id', x:tx, y:ty, 'text-anchor':'middle'});
+          t2.textContent = idTxt;
+          g.appendChild(t2);
+        }
+      });
+      lyLogi.appendChild(g);
+    } else {
+      lyLinks.appendChild(g);
+    }
+  });
+  /* nodes */
+  lyNodes.innerHTML = '';
+  devices.forEach(d=>{
+    const sel = selDevs.has(d.id);
+    const h = nodeH(d);
+    const showPorts = (sel && selDevs.size===1) || d.id === hoverNode;
+    const g = el('g', {class:'node'+(sel?' selected':''), 'data-node':d.id, transform:`translate(${d.x},${d.y})`});
+    g.appendChild(el('rect', {class:'node-box'+(isPn(d)?' pnbox':''), width:NODE_W, height:h, rx:9}));
+    const key = nodeIconKey(d);
+    const ig = el('g', {transform:'translate(11,13)'});
+    ig.innerHTML = `<g fill="none" stroke="${ROLE_COLOR[key]}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" transform="scale(1.08)">${ICONS[key]}</g>`;
+    g.appendChild(ig);
+    const nm = el('text', {class:'node-name', x:44, y:22});
+    nm.textContent = d.name || '(no name)';
+    g.appendChild(nm);
+    const sub = el('text', {class:'node-sub', x:44, y:37});
+    sub.textContent = isPn(d)
+      ? ('provider net' + (d.provider ? ' · '+d.provider : ''))
+      : ([d.role, d.device_type].filter(Boolean).join(' · ') || '—');
+    g.appendChild(sub);
+    /* logical view: VRF compartments (global + each VRF) */
+    if(viewMode==='logical' && !isPn(d)){
+      const rows = vrfRows(d);
+      rows.forEach((v, idx)=>{
+        const ry = HEAD_H + idx*VRF_ROW + 2;
+        const col = v ? vrfColor(v) : 'var(--line2)';
+        const dropping = drag && drag.mode==='link' && drag.hoverRow === d.id+'|'+v;
+        g.appendChild(el('rect', {class:'vrf-row'+(dropping?' drop':''), x:8, y:ry, width:NODE_W-16, height:VRF_ROW-4, rx:5,
+                                  stroke:col, 'stroke-opacity': v?0.9:0.6,
+                                  'data-vrfrow':d.id, 'data-vrfname':v}));
+        const t = el('text', {class:'vrf-row-label', x:16, y:ry+14, fill: v?col:'var(--tx3)'});
+        t.textContent = v || 'global';
+        g.appendChild(t);
+        if(showPorts || (drag && drag.mode==='link')){
+          const rcy = ry+(VRF_ROW-4)/2;
+          const pts = [[8, rcy],[NODE_W-8, rcy]];
+          if(hoverVrfRow === d.id+'|'+v) pts.push([NODE_W/2, ry], [NODE_W/2, ry+VRF_ROW-4]);
+          pts.forEach(([px,py])=>{
+            g.appendChild(el('circle', {class:'port', cx:px, cy:py, r:4,
+              'data-vrfport':d.id, 'data-vrfname':v}));
+          });
+        }
+      });
+    }
+    /* node-edge ports: physical view for all; logical view for PN and for devices with no visible compartments */
+    if(showPorts && (viewMode!=='logical' || isPn(d) || vrfRows(d).length===0)){
+      [[NODE_W/2,0],[NODE_W,h/2],[NODE_W/2,h],[0,h/2]].forEach(([px,py])=>{
+        g.appendChild(el('circle', {class:'port', cx:px, cy:py, r:4.5, 'data-port':d.id}));
+      });
+    }
+    lyNodes.appendChild(g);
+  });
+  world.setAttribute('transform', `translate(${vt.x},${vt.y}) scale(${vt.k})`);
+  $('#emptyHint').style.display = devices.length ? 'none' : 'block';
+  /* vrf legend */
+  const leg = $('#vrfLegend');
+  const vrfs = allVrfs();
+  if(viewMode==='logical' && vrfs.length){
+    leg.style.display = 'flex';
+    leg.innerHTML = '<div class="vt">VRF</div>' + vrfs.map(v=>
+      `<div class="vrf-chip"><span class="vrf-dot" style="background:${vrfColor(v)}"></span>${esc(v)}</div>`).join('');
+  } else leg.style.display = 'none';
+  $('#viewBadge').style.display = viewMode==='logical' ? 'block' : 'none';
+  /* status */
+  const nDev = devices.filter(d=>!isPn(d)).length, nPn = devices.length-nDev;
+  const nc = links.filter(l=>l.kind==='cable').length,
+        ni = links.filter(l=>l.kind==='circuit').length,
+        nl = links.filter(l=>l.kind==='logical').length;
+  $('#stCounts').textContent =
+    `${nDev} ${T('st_devices')}${nPn?` · ${nPn} ${T('st_pn')}`:''} · ${links.length} ${T('st_links')} (${nc} cable / ${ni} circuit / ${nl} logical) · ${sitesList().length} ${T('st_sites')}`
+    + (selDevs.size>1 ? ` · ${selDevs.size} ${T('st_sel')}` : '');
+  $('#stZoom').textContent = Math.round(vt.k*100)+'%';
+}
+
+/* =====================================================
+   interactions
+   ===================================================== */
+let drag = null;
+const elAt = (x, y)=>{ try{ return document.elementFromPoint(x, y); }catch(err){ return null; } };
+
+svg.addEventListener('wheel', e=>{
+  e.preventDefault();
+  const w = toWorld(e.clientX, e.clientY);
+  const k2 = Math.min(2.5, Math.max(0.25, vt.k * (e.deltaY<0 ? 1.12 : 1/1.12)));
+  const r = svg.getBoundingClientRect();
+  vt.x = e.clientX - r.left - w.x*k2;
+  vt.y = e.clientY - r.top  - w.y*k2;
+  vt.k = k2;
+  render();
+}, {passive:false});
+
+svg.addEventListener('mousedown', e=>{
+  hideCtx();
+  const vport = e.target.closest('[data-vrfport]');
+  const port = vport ? null : e.target.closest('[data-port]');
+  const nodeG = (port||vport) ? null : e.target.closest('[data-node]');
+  const linkG = e.target.closest('[data-link]');
+  if(e.button===1 || (e.button===0 && !port && !vport && !nodeG && !linkG)){
+    if(e.button===0 && e.shiftKey){
+      drag = {mode:'marquee', start:toWorld(e.clientX, e.clientY)};
+    } else {
+      if(e.button===0) selectNone();
+      drag = {mode:'pan', sx:e.clientX, sy:e.clientY, ox:vt.x, oy:vt.y};
+      svg.classList.add('panning');
+    }
+    e.preventDefault();
+    return;
+  }
+  if(e.button!==0) return;
+  if(vport){
+    drag = {mode:'link', from:vport.getAttribute('data-vrfport'), fromVrf:vport.getAttribute('data-vrfname')||''};
+    svg.classList.add('linking');
+    e.preventDefault();
+    return;
+  }
+  if(port){
+    drag = {mode:'link', from:port.getAttribute('data-port'), fromVrf:''};
+    svg.classList.add('linking');
+    e.preventDefault();
+    return;
+  }
+  if(nodeG){
+    const id = nodeG.getAttribute('data-node');
+    if(e.shiftKey){
+      toggleSel(id);
+    } else {
+      if(!selDevs.has(id)) selectOnly(id);
+      const w = toWorld(e.clientX, e.clientY);
+      const offs = {};
+      selDevs.forEach(sid=>{ const dv = devById(sid); offs[sid] = {dx:w.x-dv.x, dy:w.y-dv.y}; });
+      drag = {mode:'node', primary:id, offs, moved:false};
+    }
+    e.preventDefault();
+    return;
+  }
+  if(linkG){
+    selectLink(linkG.getAttribute('data-link'));
+  }
+});
+
+window.addEventListener('mousemove', e=>{
+  if(!drag){
+    const t = e.target;
+    const g = t && t.closest ? (t.closest('[data-node]') || t.closest('[data-port]') || t.closest('[data-vrfport]')) : null;
+    const nid = g ? (g.getAttribute('data-node') || g.getAttribute('data-port') || g.getAttribute('data-vrfport')) : null;
+    const rEl = t && t.closest ? (t.closest('[data-vrfrow]') || t.closest('[data-vrfport]')) : null;
+    const rk = rEl ? (rEl.getAttribute('data-vrfrow')||rEl.getAttribute('data-vrfport'))+'|'+(rEl.getAttribute('data-vrfname')||'') : null;
+    if(nid !== hoverNode || rk !== hoverVrfRow){ hoverNode = nid; hoverVrfRow = rk; render(); }
+    return;
+  }
+  if(drag.mode==='pan'){
+    vt.x = drag.ox + (e.clientX-drag.sx);
+    vt.y = drag.oy + (e.clientY-drag.sy);
+    render();
+  } else if(drag.mode==='marquee'){
+    const w = toWorld(e.clientX, e.clientY);
+    drag.cur = w;
+    lyGuides.innerHTML = '';
+    lyGuides.appendChild(el('rect', {class:'marquee',
+      x:Math.min(drag.start.x, w.x), y:Math.min(drag.start.y, w.y),
+      width:Math.abs(w.x-drag.start.x), height:Math.abs(w.y-drag.start.y)}));
+  } else if(drag.mode==='node'){
+    const prim = devById(drag.primary);
+    const w = toWorld(e.clientX, e.clientY);
+    const off = drag.offs[drag.primary];
+    let nx = snap(w.x-off.dx), ny = snap(w.y-off.dy);
+    lyGuides.innerHTML = '';
+    const th = 6/vt.k;
+    let gx=null, gy=null;
+    for(const o of devices){
+      if(selDevs.has(o.id)) continue;
+      const ocx=o.x+NODE_W/2, ocy=o.y+nodeH(o)/2;
+      if(Math.abs((nx+NODE_W/2)-ocx)<=th){ nx = ocx-NODE_W/2; gx = ocx; }
+      if(Math.abs((ny+nodeH(prim)/2)-ocy)<=th){ ny = ocy-nodeH(prim)/2; gy = ocy; }
+    }
+    if(gx!=null) lyGuides.appendChild(el('line',{class:'guide',x1:gx,y1:-1e5,x2:gx,y2:1e5}));
+    if(gy!=null) lyGuides.appendChild(el('line',{class:'guide',x1:-1e5,y1:gy,x2:1e5,y2:gy}));
+    const ddx = nx-prim.x, ddy = ny-prim.y;
+    if(ddx || ddy){
+      selDevs.forEach(sid=>{ const dv = devById(sid); dv.x += ddx; dv.y += ddy; });
+      drag.moved = true;
+      render();
+    }
+  } else if(drag.mode==='link'){
+    const from = devById(drag.from);
+    const w = toWorld(e.clientX, e.clientY);
+    /* highlight the VRF compartment under the cursor as the drop target */
+    const under = elAt(e.clientX, e.clientY);
+    const rowEl = under && under.closest ? (under.closest('[data-vrfport]') || under.closest('[data-vrfrow]')) : null;
+    const hk = rowEl
+      ? (rowEl.getAttribute('data-vrfport')||rowEl.getAttribute('data-vrfrow'))+'|'+(rowEl.getAttribute('data-vrfname')||'')
+      : null;
+    if(hk !== drag.hoverRow){ drag.hoverRow = hk; render(); }
+    const p = (viewMode==='logical' && !isPn(from) ? logAnchor(from, drag.fromVrf, w.x, w.y) : null) || anchor(from, w.x, w.y);
+    lyTemp.innerHTML = '';
+    lyTemp.appendChild(el('path', {class:'templink', d:`M ${p.x} ${p.y} L ${w.x} ${w.y}`}));
+  }
+});
+
+window.addEventListener('mouseup', e=>{
+  if(!drag) return;
+  const d = drag; drag = null;
+  svg.classList.remove('panning','linking');
+  lyGuides.innerHTML = ''; lyTemp.innerHTML = '';
+  if(d.mode==='node' && d.moved){ pushHistory(); }
+  if(d.mode==='marquee' && d.cur){
+    const x0=Math.min(d.start.x,d.cur.x), x1=Math.max(d.start.x,d.cur.x);
+    const y0=Math.min(d.start.y,d.cur.y), y1=Math.max(d.start.y,d.cur.y);
+    selLink = null;
+    devices.forEach(dv=>{
+      if(dv.x < x1 && dv.x+NODE_W > x0 && dv.y < y1 && dv.y+nodeH(dv) > y0) selDevs.add(dv.id);
+    });
+    render(); renderPanel();
+  }
+  if(d.mode==='link'){
+    const t = elAt(e.clientX, e.clientY);
+    const vpG = t && t.closest && (t.closest('[data-vrfport]') || t.closest('[data-vrfrow]'));
+    const nG  = t && t.closest && (t.closest('[data-node]') || t.closest('[data-port]'));
+    let toId = null, toVrf = '';
+    if(vpG){
+      toId = vpG.getAttribute('data-vrfport') || vpG.getAttribute('data-vrfrow');
+      toVrf = vpG.getAttribute('data-vrfname')||'';
+    }
+    else if(nG){ toId = nG.getAttribute('data-node')||nG.getAttribute('data-port'); }
+    if(toId && toId !== d.from){
+      const a = devById(d.from), b = devById(toId);
+      let kind;
+      if(viewMode==='logical'){
+        kind = 'logical';
+      } else if(isPn(a) || isPn(b)){
+        kind = 'circuit';
+      } else {
+        const sa = siteOf(a), sb = siteOf(b);
+        kind = (sa && sb && sa!==sb) ? 'circuit' : 'cable';
+      }
+      const l = {id:uid('l'), kind,
+                 a:{dev:a.id, ifname:'', vrf: kind==='logical' ? (d.fromVrf||'') : '', id:'', ip:''},
+                 b:{dev:b.id, ifname:'', vrf: kind==='logical' ? toVrf : '', id:'', ip:''},
+                 type:'', status:'', label:'', bandwidth:'', cid:'', provider:'', commit_rate:'',
+                 link_id:'', vlan:'', description:''};
+      links.push(l);
+      selectLink(l.id);
+      pushHistory();
+      if(kind==='logical'){
+        const va=(l.a.vrf||T('t_global_word')), vb=(l.b.vrf||T('t_global_word'));
+        toast(T('t_log_link').replace('{a}', a.name).replace('{va}', va).replace('{b}', b.name).replace('{vb}', vb));
+      } else {
+        toast(kind==='circuit' ? T('t_circuit') : T('t_cable'));
+      }
+    }
+    render();
+  }
+});
+
+/* ---------- clipboard / duplicate / delete / clear ---------- */
+function cloneEp(ep, idMap){
+  return {dev: idMap ? idMap[ep.dev] : ep.dev, ifname: ep.ifname||'', vrf: ep.vrf||'', id: ep.id||'', ip: ep.ip||''};
+}
+function copySel(){
+  if(!selDevs.size) return false;
+  const devs = [...selDevs].map(devById).map(d=>JSON.parse(JSON.stringify(d)));
+  const ls = links.filter(l=>selDevs.has(l.a.dev) && selDevs.has(l.b.dev)).map(l=>JSON.parse(JSON.stringify(l)));
+  clipboard = {devs, ls};
+  pasteN = 0;
+  toast(T('t_copied').replace('{n}', devs.length).replace('{m}', ls.length));
+  return true;
+}
+function pasteClip(at){
+  if(!clipboard || !clipboard.devs.length) return;
+  pasteN++;
+  const minX = Math.min(...clipboard.devs.map(d=>d.x));
+  const minY = Math.min(...clipboard.devs.map(d=>d.y));
+  const bx = at ? at.x : minX + 32*pasteN;
+  const by = at ? at.y : minY + 32*pasteN;
+  const idMap = {};
+  const newDevs = clipboard.devs.map(d=>{
+    const c = JSON.parse(JSON.stringify(d));
+    idMap[d.id] = c.id = uid('d');
+    c.name = uniqueName(c.name || 'node');
+    c.x = snap(bx + (d.x-minX)); c.y = snap(by + (d.y-minY));
+    return c;
+  });
+  devices.push(...newDevs);
+  clipboard.ls.forEach(l=>{
+    const c = JSON.parse(JSON.stringify(l));
+    c.id = uid('l');
+    c.a = cloneEp(l.a, idMap);
+    c.b = cloneEp(l.b, idMap);
+    links.push(c);
+  });
+  selDevs = new Set(newDevs.map(d=>d.id)); selLink = null;
+  pushHistory(); render(); renderPanel();
+}
+function duplicateSel(){
+  if(!selDevs.size) return;
+  const keep = clipboard, keepN = pasteN;
+  clipboard = {
+    devs: [...selDevs].map(devById).map(d=>JSON.parse(JSON.stringify(d))),
+    ls: links.filter(l=>selDevs.has(l.a.dev) && selDevs.has(l.b.dev)).map(l=>JSON.parse(JSON.stringify(l)))
+  };
+  pasteN = 0;
+  pasteClip();
+  clipboard = keep; pasteN = keepN;
+}
+function deleteSelection(){
+  if(selLink){
+    links = links.filter(l=>l.id!==selLink);
+    selLink = null;
+  } else if(selDevs.size){
+    devices = devices.filter(d=>!selDevs.has(d.id));
+    links = links.filter(l=>!selDevs.has(l.a.dev) && !selDevs.has(l.b.dev));
+    selDevs.clear();
+  } else return;
+  pushHistory(); render(); renderPanel();
+}
+function clearCanvas(){
+  if(!devices.length && !links.length) return;
+  devices = []; links = []; selDevs.clear(); selLink = null;
+  pushHistory(); render(); renderPanel();
+  toast(T('t_cleared'));
+}
+
+/* ---------- arrange ---------- */
+const selArr = () => [...selDevs].map(devById);
+function alignRow(){
+  const ds = selArr(); if(ds.length<2) return;
+  const y = snap(Math.round(ds.reduce((s,d)=>s+d.y,0)/ds.length));
+  ds.forEach(d=>d.y=y);
+  pushHistory(); render();
+}
+function alignCol(){
+  const ds = selArr(); if(ds.length<2) return;
+  const x = snap(Math.round(ds.reduce((s,d)=>s+d.x,0)/ds.length));
+  ds.forEach(d=>d.x=x);
+  pushHistory(); render();
+}
+function distH(){
+  const ds = selArr().sort((a,b)=>a.x-b.x); if(ds.length<3) return;
+  const step = (ds[ds.length-1].x - ds[0].x)/(ds.length-1);
+  ds.forEach((d,i)=>d.x = snap(ds[0].x + step*i));
+  pushHistory(); render();
+}
+function distV(){
+  const ds = selArr().sort((a,b)=>a.y-b.y); if(ds.length<3) return;
+  const step = (ds[ds.length-1].y - ds[0].y)/(ds.length-1);
+  ds.forEach((d,i)=>d.y = snap(ds[0].y + step*i));
+  pushHistory(); render();
+}
+
+/* ---------- auto layout (import fallback) / fit / zoom ---------- */
+function autoLayout(){          /* used only when an import has no positions */
+  if(!devices.length) return;
+  const groups = new Map();
+  devices.forEach(d=>{
+    const s = siteOf(d) || '\u0000';
+    if(!groups.has(s)) groups.set(s, []);
+    groups.get(s).push(d);
+  });
+  const entries = [...groups.entries()].map(([s,ds])=>({s, ds}));
+  const CELL_W = 210, CELL_H = 130, GAP = 100, PAD = 44;
+  const perRow = Math.max(1, Math.ceil(Math.sqrt(entries.length)));
+  let gx = 0, gy = 0, rowH = 0, col = 0;
+  for(const en of entries){
+    const ds = en.ds;
+    const cols = Math.ceil(Math.sqrt(ds.length));
+    ds.forEach((d,i)=>{
+      d.x = gx + PAD + (i%cols)*CELL_W;
+      d.y = gy + PAD + Math.floor(i/cols)*CELL_H;
+    });
+    const w = PAD*2 + cols*CELL_W;
+    const h = PAD*2 + Math.ceil(ds.length/cols)*CELL_H;
+    rowH = Math.max(rowH, h);
+    col++;
+    if(col>=perRow){ col=0; gx=0; gy+=rowH+GAP; rowH=0; }
+    else gx += w + GAP;
+  }
+  pushHistory(); render(); fitView();
+}
+function fitView(){
+  if(!devices.length) return;
+  const x0 = Math.min(...devices.map(d=>d.x))-70, y0 = Math.min(...devices.map(d=>d.y))-70;
+  const x1 = Math.max(...devices.map(d=>d.x+NODE_W))+70, y1 = Math.max(...devices.map(d=>d.y+nodeH(d)))+70;
+  const r = svg.getBoundingClientRect();
+  const k = Math.min(2, Math.max(0.25, Math.min(r.width/(x1-x0), r.height/(y1-y0))));
+  vt.k = k;
+  vt.x = (r.width - (x1-x0)*k)/2 - x0*k;
+  vt.y = (r.height - (y1-y0)*k)/2 - y0*k;
+  render();
+}
+function zoomCenter(f){
+  const r = svg.getBoundingClientRect();
+  const cx = r.width/2, cy = r.height/2;
+  const w = {x:(cx-vt.x)/vt.k, y:(cy-vt.y)/vt.k};
+  vt.k = Math.min(2.5, Math.max(0.25, vt.k*f));
+  vt.x = cx - w.x*vt.k; vt.y = cy - w.y*vt.k;
+  render();
+}
+
+/* ---------- view switching ---------- */
+function setView(mode){
+  viewMode = mode;
+  $('#btnPhys').classList.toggle('on', mode==='physical');
+  $('#btnLogi').classList.toggle('on', mode==='logical');
+  $('#btnUnder').style.display = mode==='logical' ? '' : 'none';
+  $('#btnGlobal').style.display = mode==='logical' ? '' : 'none';
+  if(selLink){
+    const l = links.find(x=>x.id===selLink);
+    if(l && viewMode==='physical' && l.kind==='logical') selLink = null;
+  }
+  render(); renderPanel();
+}
+$('#btnPhys').onclick = ()=> setView('physical');
+$('#btnLogi').onclick = ()=> setView('logical');
+$('#btnUnder').onclick = ()=>{
+  underlayOn = !underlayOn;
+  $('#btnUnder').classList.toggle('active', underlayOn);
+  render();
+};
+$('#btnGlobal').onclick = ()=>{
+  showGlobal = !showGlobal;
+  $('#btnGlobal').classList.toggle('active', showGlobal);
+  render();
+  toast(showGlobal ? T('t_global_on') : T('t_global_off'));
+};
+
+/* ---------- language toggle ---------- */
+$('#btnLang').onclick = ()=>{
+  lang = lang==='en' ? 'ja' : 'en';
+  try{ localStorage.setItem('topodraft.lang', lang); }catch(e){}
+  applyLang();
+  render(); renderPanel(); renderTpls();
+};
+
+/* ---------- inline edit ---------- */
+const ie = $('#inlineEdit');
+let ieCtx = null;
+svg.addEventListener('dblclick', e=>{
+  const nodeG = e.target.closest('[data-node]');
+  const siteL = e.target.closest('[data-site]');
+  if(nodeG){
+    const dev = devById(nodeG.getAttribute('data-node'));
+    startInline({type:'node', id:dev.id}, dev.name, toScreen(dev.x, dev.y), NODE_W*vt.k, HEAD_H*vt.k);
+  } else if(siteL){
+    const s = siteL.getAttribute('data-site');
+    const r = siteL.getBoundingClientRect(), cr = canvasWrap.getBoundingClientRect();
+    ie.style.width = '180px'; ie.style.height = '26px';
+    ie.style.left = (r.left-cr.left-4)+'px';
+    ie.style.top = (r.top-cr.top-4)+'px';
+    ieCtx = {type:'site', site:s};
+    ie.value = s; ie.style.display='block'; ie.focus(); ie.select();
+  }
+});
+function startInline(ctxObj, val, pos, w, h){
+  ieCtx = ctxObj;
+  ie.style.left = pos.x+'px'; ie.style.top = pos.y+'px';
+  ie.style.width = w+'px'; ie.style.height = h+'px';
+  ie.value = val; ie.style.display='block'; ie.focus(); ie.select();
+}
+function commitInline(){
+  if(!ieCtx) return;
+  const v = ie.value.trim();
+  if(ieCtx.type==='node'){
+    const dev = devById(ieCtx.id);
+    if(dev && v && v!==dev.name){ dev.name = v; pushHistory(); }
+  } else if(ieCtx.type==='site'){
+    if(v!==ieCtx.site){
+      devices.forEach(d=>{ if(siteOf(d)===ieCtx.site) d.site = v; });
+      pushHistory();
+    }
+  }
+  ieCtx = null; ie.style.display='none';
+  render(); renderPanel();
+}
+ie.addEventListener('keydown', e=>{
+  if(e.key==='Enter') commitInline();
+  if(e.key==='Escape'){ ieCtx=null; ie.style.display='none'; }
+  e.stopPropagation();
+});
+ie.addEventListener('blur', commitInline);
+
+/* ---------- context menu ---------- */
+const ctx = $('#ctxMenu');
+function hideCtx(){ ctx.style.display='none'; }
+document.addEventListener('click', e=>{ if(!ctx.contains(e.target)) hideCtx(); });
+svg.addEventListener('contextmenu', e=>{
+  e.preventDefault();
+  const nodeG = e.target.closest('[data-node]');
+  const linkG = e.target.closest('[data-link]');
+  ctx.innerHTML = '';
+  const item = (label, fn, opts={}) => {
+    const d = document.createElement('div');
+    d.className = 'ci' + (opts.danger?' danger':'');
+    d.innerHTML = esc(label) + (opts.kbd?`<kbd>${opts.kbd}</kbd>`:'');
+    d.onclick = ()=>{ hideCtx(); fn(); };
+    ctx.appendChild(d);
+  };
+  const sep = ()=>{ const s=document.createElement('div'); s.className='csep'; ctx.appendChild(s); };
+  const label = t=>{ const l=document.createElement('div'); l.className='clabel'; l.textContent=t; ctx.appendChild(l); };
+  if(nodeG){
+    const id = nodeG.getAttribute('data-node');
+    if(!selDevs.has(id)) selectOnly(id);
+    if(selDevs.size > 1){
+      label(T('cm_selected').replace('{n}', selDevs.size));
+      item(T('copy'), copySel, {kbd:'Ctrl+C'});
+      item(T('dup'), duplicateSel, {kbd:'Ctrl+D'});
+      sep();
+      item(T('cm_align_row'), alignRow);
+      item(T('cm_align_col'), alignCol);
+      item(T('cm_dist_h'), distH);
+      item(T('cm_dist_v'), distV);
+      sep();
+      item(T('cm_del_n').replace('{n}', selDevs.size), deleteSelection, {danger:true, kbd:'Del'});
+    } else {
+      const dev = devById(id);
+      item(T('cm_rename'), ()=> startInline({type:'node', id:dev.id}, dev.name, toScreen(dev.x, dev.y), NODE_W*vt.k, HEAD_H*vt.k), {kbd:'DblClick'});
+      item(T('copy'), copySel, {kbd:'Ctrl+C'});
+      item(T('dup'), duplicateSel, {kbd:'Ctrl+D'});
+      if(!isPn(dev)){
+        item(T('cm_cc'), ()=> openConfigCtx(dev.id));
+        sep();
+        label(T('cm_role'));
+        const row = document.createElement('div'); row.className='roles';
+        PAL_TYPES.filter(t=>!t.pn).forEach(t=>{
+          const b = document.createElement('button');
+          b.innerHTML = iconSvg(t.role?iconKey(t.role):'generic', 16);
+          b.title = T('pal_'+t.k);
+          b.onclick = ev=>{ ev.stopPropagation(); hideCtx(); dev.role = t.role; pushHistory(); render(); renderPanel(); };
+          row.appendChild(b);
+        });
+        ctx.appendChild(row);
+      }
+      sep();
+      item(T('del'), deleteSelection, {danger:true, kbd:'Del'});
+    }
+  } else if(linkG){
+    const l = links.find(x=>x.id===linkG.getAttribute('data-link'));
+    selectLink(l.id);
+    if(l.kind!=='logical'){
+      const A = devById(l.a.dev), B = devById(l.b.dev);
+      if(!isPn(A) && !isPn(B)){
+        item(l.kind==='cable' ? T('cm_to_circuit') : T('cm_to_cable'), ()=>{
+          l.kind = l.kind==='cable' ? 'circuit' : 'cable';
+          pushHistory(); render(); renderPanel();
+        });
+      }
+    }
+    sep();
+    item(T('del_link'), deleteSelection, {danger:true, kbd:'Del'});
+  } else {
+    const w = toWorld(e.clientX, e.clientY);
+    label(T('cm_add_here'));
+    PAL_TYPES.forEach(t=>{
+      item(T('pal_'+t.k), ()=>{
+        const d = newDevice(t.role, w.x-NODE_W/2, w.y-NODE_H/2);
+        devices.push(d); selectOnly(d.id); pushHistory(); render();
+      });
+    });
+    if(clipboard && clipboard.devs.length){
+      sep();
+      item(T('cm_paste'), ()=> pasteClip({x:w.x-NODE_W/2, y:w.y-NODE_H/2}), {kbd:'Ctrl+V'});
+    }
+    sep();
+    item(T('cm_select_all'), selectAll, {kbd:'Ctrl+A'});
+  }
+  ctx.style.display='block';
+  const mw = ctx.offsetWidth, mh = ctx.offsetHeight;
+  ctx.style.left = Math.min(e.clientX, innerWidth-mw-8)+'px';
+  ctx.style.top  = Math.min(e.clientY, innerHeight-mh-8)+'px';
+});
+
+/* ---------- keyboard ---------- */
+window.addEventListener('keydown', e=>{
+  const tag = (document.activeElement||{}).tagName;
+  const typing = tag==='INPUT' || tag==='TEXTAREA' || tag==='SELECT';
+  const mod = e.ctrlKey || e.metaKey;
+  if(mod && e.key.toLowerCase()==='k'){ e.preventDefault(); openCmd(); return; }
+  if(typing) return;
+  if(mod && !e.shiftKey && e.key.toLowerCase()==='z'){ e.preventDefault(); undo(); return; }
+  if(mod && (e.key.toLowerCase()==='y' || (e.shiftKey && e.key.toLowerCase()==='z'))){ e.preventDefault(); redo(); return; }
+  if(mod && e.key.toLowerCase()==='c'){ if(copySel()) e.preventDefault(); return; }
+  if(mod && e.key.toLowerCase()==='v'){ e.preventDefault(); pasteClip(); return; }
+  if(mod && e.key.toLowerCase()==='d'){ e.preventDefault(); duplicateSel(); return; }
+  if(mod && e.key.toLowerCase()==='a'){ e.preventDefault(); selectAll(); return; }
+  if(e.key==='Delete' || e.key==='Backspace'){ e.preventDefault(); deleteSelection(); return; }
+  if(e.key==='Escape'){ selectNone(); closeCmd(); closeModal(); return; }
+  if(selDevs.size && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){
+    e.preventDefault();
+    const step = e.altKey ? 1 : GRID;
+    const dx = e.key==='ArrowLeft' ? -step : e.key==='ArrowRight' ? step : 0;
+    const dy = e.key==='ArrowUp' ? -step : e.key==='ArrowDown' ? step : 0;
+    selDevs.forEach(id=>{ const d = devById(id); d.x+=dx; d.y+=dy; });
+    render();
+    clearTimeout(window._nudgeTm);
+    window._nudgeTm = setTimeout(pushHistory, 400);
+  }
+});
+
+/* ---------- palette drag ---------- */
+function buildPalette(){
+  const wrap = $('#palItems');
+  wrap.innerHTML = '';
+  PAL_TYPES.forEach(t=>{
+    const d = document.createElement('div');
+    d.className = 'pal-item';
+    d.draggable = true;
+    const key = t.pn ? 'pnet' : (t.role ? iconKey(t.role) : 'generic');
+    d.innerHTML = iconSvg(key, 20) + `<div><div class="pl">${esc(T('pal_'+t.k))}</div><div class="ps">${esc(t.sub)}</div></div>`;
+    d.addEventListener('dragstart', e=>{
+      e.dataTransfer.setData('text/topodraft-role', t.role);
+      e.dataTransfer.setData('text/plain', 'topodraft:'+t.role);
+      e.dataTransfer.effectAllowed = 'copy';
+    });
+    wrap.appendChild(d);
+  });
+}
+svg.addEventListener('dragover', e=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; });
+svg.addEventListener('drop', e=>{
+  e.preventDefault();
+  let role = e.dataTransfer.getData('text/topodraft-role');
+  if(!role){
+    const tp = e.dataTransfer.getData('text/plain');
+    if(tp && tp.startsWith('topodraft:')) role = tp.slice(10);
+    else if(!e.dataTransfer.types.includes('text/topodraft-role')) return;
+  }
+  const w = toWorld(e.clientX, e.clientY);
+  const d = newDevice(role, w.x-NODE_W/2, w.y-NODE_H/2);
+  devices.push(d);
+  selectOnly(d.id);
+  pushHistory(); render();
+});
+
+/* ---------- topbar ---------- */
+$('#btnFit').onclick = fitView;
+$('#btnUndo').onclick = undo;
+$('#btnRedo').onclick = redo;
+$('#btnSnap').onclick = ()=>{
+  snapOn = !snapOn;
+  $('#btnSnap').classList.toggle('active', snapOn);
+  toast(snapOn ? T('t_snap_on') : T('t_snap_off'));
+};
+$('#btnGrid').onclick = ()=>{
+  gridOn = !gridOn;
+  $('#btnGrid').classList.toggle('active', gridOn);
+  render();
+};
+$('#btnClear').onclick = clearCanvas;
+$('#zoomIn').onclick = ()=> zoomCenter(1.2);
+$('#zoomOut').onclick = ()=> zoomCenter(1/1.2);
+$('#zoomReset').onclick = ()=> zoomCenter(1/vt.k);
+
+/* ---------- command palette ---------- */
+const cmdOverlay = $('#cmdOverlay'), cmdInput = $('#cmdInput'), cmdList = $('#cmdList');
+let cmdItems = [], cmdSel = 0;
+function openCmd(){ cmdOverlay.style.display='flex'; cmdInput.value=''; buildCmd(''); cmdInput.focus(); }
+function closeCmd(){ cmdOverlay.style.display='none'; }
+cmdOverlay.addEventListener('mousedown', e=>{ if(e.target===cmdOverlay) closeCmd(); });
+$('#btnCmd').onclick = openCmd;
+function allCommands(){
+  const r = svg.getBoundingClientRect();
+  const c = toWorld(r.left+r.width/2, r.top+r.height/2);
+  const addAt = role => {
+    const d = newDevice(role, c.x-NODE_W/2, c.y-NODE_H/2);
+    devices.push(d); selectOnly(d.id); pushHistory(); render();
+  };
+  const cmds = [];
+  PAL_TYPES.forEach(t=> cmds.push({cat:T('cat_add'), label:T('c_add')+T('pal_'+t.k), fn:()=>addAt(t.role)}));
+  cmds.push(
+    {cat:T('cat_view'), label:T('c_phys'), fn:()=>setView('physical')},
+    {cat:T('cat_view'), label:T('c_logi'), fn:()=>setView('logical')},
+    {cat:T('cat_view'), label:T('c_under'), fn:()=>$('#btnUnder').click()},
+    {cat:T('cat_view'), label:T('c_global'), fn:()=>$('#btnGlobal').click()},
+    {cat:T('cat_view'), label:T('c_grid'), fn:()=>$('#btnGrid').click()},
+    {cat:T('cat_view'), label:T('c_snap'), fn:()=>$('#btnSnap').click()},
+    {cat:T('cat_view'), label:T('c_fit'), fn:fitView},
+    {cat:T('cat_edit'), label:T('c_selall'), fn:selectAll, kbd:'Ctrl+A'},
+    {cat:T('cat_edit'), label:T('c_copy'), fn:copySel, kbd:'Ctrl+C'},
+    {cat:T('cat_edit'), label:T('c_paste'), fn:()=>pasteClip(), kbd:'Ctrl+V'},
+    {cat:T('cat_edit'), label:T('c_undo'), fn:undo, kbd:'Ctrl+Z'},
+    {cat:T('cat_edit'), label:T('c_redo'), fn:redo, kbd:'Ctrl+Shift+Z'},
+    {cat:T('cat_edit'), label:T('c_arow'), fn:alignRow},
+    {cat:T('cat_edit'), label:T('c_acol'), fn:alignCol},
+    {cat:T('cat_edit'), label:T('c_dh'), fn:distH},
+    {cat:T('cat_edit'), label:T('c_dv'), fn:distV},
+    {cat:T('cat_edit'), label:T('c_clear'), fn:clearCanvas},
+    {cat:T('cat_io'),   label:T('c_export'), fn:()=>openExport('json')},
+    {cat:T('cat_io'),   label:T('c_schema'), fn:()=>openExport('schema')},
+    {cat:T('cat_io'),   label:T('c_import'), fn:openImport},
+    {cat:T('cat_help'), label:T('c_help'), fn:openHelp}
+  );
+  BUILTIN_TPLS.forEach(t=> cmds.push({cat:T('cat_tpl'), label:T('c_tpl')+t.name, fn:()=>loadTplData(t.data, t.name)}));
+  userTpls().forEach(t=> cmds.push({cat:T('cat_tpl'), label:T('c_tpl')+t.name, fn:()=>loadTplData(t.data, t.name)}));
+  cmds.push({cat:T('cat_tpl'), label:T('c_tpl_save'), fn:()=>{ $('#tplName').focus(); }});
+  devices.forEach(d=> cmds.push({cat:T('cat_jump'), label:T('c_jump')+(d.name||'(no name)'), fn:()=>{
+    selectOnly(d.id);
+    const r2 = svg.getBoundingClientRect();
+    vt.x = r2.width/2 - (d.x+NODE_W/2)*vt.k;
+    vt.y = r2.height/2 - (d.y+nodeH(d)/2)*vt.k;
+    render();
+  }}));
+  return cmds;
+}
+function buildCmd(q){
+  const qq = q.toLowerCase();
+  cmdItems = allCommands().filter(c=> c.label.toLowerCase().includes(qq));
+  cmdSel = 0;
+  renderCmd();
+}
+function renderCmd(){
+  cmdList.innerHTML = '';
+  cmdItems.slice(0,40).forEach((c,i)=>{
+    const d = document.createElement('div');
+    d.className = 'cmd-item'+(i===cmdSel?' sel':'');
+    d.innerHTML = `<span class="cat">${esc(c.cat)}</span>${esc(c.label)}` + (c.kbd?`<span class="ck">${esc(c.kbd)}</span>`:'');
+    d.onclick = ()=>{ closeCmd(); c.fn(); };
+    d.onmouseenter = ()=>{ cmdSel=i; renderCmd(); };
+    cmdList.appendChild(d);
+  });
+  if(!cmdItems.length) cmdList.innerHTML = '<div style="padding:14px;color:var(--tx3);font-size:12px">No matching commands</div>';
+}
+cmdInput.addEventListener('input', ()=> buildCmd(cmdInput.value));
+cmdInput.addEventListener('keydown', e=>{
+  if(e.key==='ArrowDown'){ e.preventDefault(); cmdSel=Math.min(cmdItems.length-1,cmdSel+1); renderCmd(); }
+  if(e.key==='ArrowUp'){ e.preventDefault(); cmdSel=Math.max(0,cmdSel-1); renderCmd(); }
+  if(e.key==='Enter' && cmdItems[cmdSel]){ const c=cmdItems[cmdSel]; closeCmd(); c.fn(); }
+  if(e.key==='Escape') closeCmd();
+  e.stopPropagation();
+});
+
+/* =====================================================
+   properties panel
+   ===================================================== */
+function fld(key, value, ph, listId, disp){
+  return `<div class="fld"><label>${esc(disp||key)}</label>
+    <input value="${esc(value||'')}" placeholder="${esc(ph||'')}" data-f="${esc(key)}" ${listId?`list="${listId}"`:''}></div>`;
+}
+function datalists(){
+  const sites = sitesList().map(s=>`<option value="${esc(s)}">`).join('');
+  const roles = ['router','switch','firewall','external_peer','server','load_balancer','access_point']
+    .map(r=>`<option value="${r}">`).join('');
+  const status = ['connected','planned','active','provisioning','decommissioning','offline']
+    .map(r=>`<option value="${r}">`).join('');
+  const vrfs = allVrfs().map(v=>`<option value="${esc(v)}">`).join('');
+  const tenants = [...new Set(devices.map(d=>(d.tenant||'').trim()).filter(Boolean))]
+    .map(t=>`<option value="${esc(t)}">`).join('');
+  return `<datalist id="dlSites">${sites}</datalist><datalist id="dlRoles">${roles}</datalist>
+          <datalist id="dlStatus">${status}</datalist><datalist id="dlVrfs">${vrfs}</datalist>
+          <datalist id="dlTenants">${tenants}</datalist>`;
+}
+function bindPanelInputs(target){
+  panel.querySelectorAll('input[data-f]').forEach(inp=>{
+    inp.addEventListener('input', ()=>{ target[inp.getAttribute('data-f')] = inp.value; render(); });
+    inp.addEventListener('change', ()=>{ pushHistory(); });
+  });
+}
+function renderPanel(){
+  /* --- multi selection --- */
+  if(!selLink && selDevs.size > 1){
+    const n = selDevs.size;
+    panel.innerHTML = `
+      ${datalists()}
+      <div class="pn-title">${esc(T('sel_title'))} <span class="badge">${esc(T('badge_nodes').replace('{n}', n))}</span></div>
+      <div class="fld"><label>${esc(T('bulk_label'))}</label>
+        <input id="bulkSite" list="dlSites" placeholder="${esc(T('bulk_ph'))}"></div>
+      <button class="mini-btn" id="bulkSiteApply">${esc(T('bulk_apply'))}</button>
+      <div class="pn-sep"></div>
+      <div class="pn-title">${esc(T('arrange'))}</div>
+      <div class="align-row">
+        <button id="alRow" title="${esc(T('tt_row'))}">${esc(T('al_row'))}</button>
+        <button id="alCol" title="${esc(T('tt_col'))}">${esc(T('al_col'))}</button>
+      </div>
+      <div class="align-row">
+        <button id="alDh" title="${esc(T('tt_dh'))}">${esc(T('al_dh'))}</button>
+        <button id="alDv" title="${esc(T('tt_dv'))}">${esc(T('al_dv'))}</button>
+      </div>
+      <div class="pn-actions">
+        <button id="pnCopy">${esc(T('copy'))}</button>
+        <button id="pnDup">${esc(T('dup'))}</button>
+        <button id="pnDel" class="danger">${esc(T('del'))}</button>
+      </div>`;
+    $('#alRow').onclick = alignRow;
+    $('#alCol').onclick = alignCol;
+    $('#alDh').onclick = distH;
+    $('#alDv').onclick = distV;
+    $('#pnCopy').onclick = copySel;
+    $('#pnDup').onclick = duplicateSel;
+    $('#pnDel').onclick = deleteSelection;
+    $('#bulkSiteApply').onclick = ()=>{
+      const v = $('#bulkSite').value.trim();
+      selDevs.forEach(id=>{ const d = devById(id); if(!isPn(d)) d.site = v; });
+      pushHistory(); render(); renderPanel();
+    };
+    return;
+  }
+  /* --- single node --- */
+  if(!selLink && selDevs.size === 1){
+    const d = devById([...selDevs][0]);
+    if(!d){ selDevs.clear(); renderPanel(); return; }
+    if(isPn(d)){
+      panel.innerHTML = `
+        ${datalists()}
+        <div class="pn-title">${esc(T('pn_title2'))} <span class="badge">${esc(T('pn_badge'))}</span></div>
+        ${fld('name', d.name, 'e.g. AWS Direct Connect')}
+        ${fld('provider', d.provider, 'e.g. AWS / Oracle / Equinix')}
+        ${fld('description', d.description, '')}
+        <div class="pn-sep"></div>
+        <div class="pn-info" style="font-size:11px">${T('pn_info')}</div>
+        <div class="pn-actions">
+          <button id="pnCopy">${esc(T('copy'))}</button>
+          <button id="pnDup">${esc(T('dup'))}</button>
+          <button id="pnDel" class="danger">${esc(T('del'))}</button>
+        </div>`;
+      bindPanelInputs(d);
+      $('#pnCopy').onclick = copySel;
+      $('#pnDup').onclick = duplicateSel;
+      $('#pnDel').onclick = deleteSelection;
+      return;
+    }
+    /* device */
+    const explicit = new Set((d.vrfs||[]).map(v=>v.trim()).filter(Boolean));
+    const vchips = devVrfs(d).map(v=>{
+      const derived = !explicit.has(v);
+      return `<span class="vchip${derived?' derived':''}" title="${esc(derived?T('vrf_chip_derived'):T('vrf_chip'))}">
+        <span class="vd" style="background:${vrfColor(v)}"></span>${esc(v)}
+        ${derived?'':`<button data-vdel="${esc(v)}" title="${esc(T('vrf_chip_del'))}">×</button>`}</span>`;
+    }).join('');
+    const ifs = d.interfaces.map((f,i)=>`
+      <div class="if-card">
+        <div class="if-row">
+          <input data-if="${i}" data-k="name" value="${esc(f.name)}" placeholder="Gi0/0/1 or Gi0/0/1.100">
+          <input data-if="${i}" data-k="ip_address" value="${esc(f.ip_address)}" placeholder="10.0.0.1/30">
+          <button class="if-del" data-ifdel="${i}" title="${esc(T('del'))}">×</button>
+        </div>
+        <div class="if-row3">
+          <input data-if="${i}" data-k="type" value="${esc(f.type)}" placeholder="type / lag / virtual">
+          <input data-if="${i}" data-k="lag" value="${esc(f.lag)}" placeholder="lag parent (Po1)">
+          <input data-if="${i}" data-k="vrf" value="${esc(f.vrf)}" placeholder="vrf" list="dlVrfs">
+        </div>
+        <div class="if-row1">
+          <input data-if="${i}" data-k="description" value="${esc(f.description)}" placeholder="description">
+        </div>
+      </div>`).join('');
+    panel.innerHTML = `
+      ${datalists()}
+      <div class="pn-title">${esc(T('dev_title'))} <span class="badge">${esc(iconKey(d.role))}</span></div>
+      ${fld('name', d.name, 'hostname')}
+      <div class="fld-row">
+        ${fld('role', d.role, 'router / fw / …', 'dlRoles')}
+        ${fld('site', d.site, 'site name', 'dlSites')}
+      </div>
+      <div class="fld-row">
+        ${fld('tenant', d.tenant, 'owning org', 'dlTenants')}
+        ${fld('platform', d.platform, 'OS')}
+      </div>
+      ${fld('device_type', d.device_type, 'vendor + model (e.g. Cisco C8300)')}
+      <div class="pn-sep"></div>
+      <div class="pn-title">${esc(T('vrf_title'))} <span class="badge">${devVrfs(d).length}</span></div>
+      <div class="vchips">${vchips || `<span style="color:var(--tx3);font-size:11px">${esc(T('vrf_none'))}</span>`}</div>
+      <div id="vrfAddRow">
+        <input id="vrfNew" placeholder="${esc(T('vrf_ph'))}" list="dlVrfs" spellcheck="false">
+        <button id="vrfAdd">${esc(T('vrf_add'))}</button>
+      </div>
+      <div style="color:var(--tx3);font-size:10px;line-height:1.6;margin-top:5px">${esc(T('vrf_hint'))}</div>
+      <div class="pn-sep"></div>
+      <div class="pn-title">${esc(T('if_title'))} <span class="badge">${d.interfaces.length}</span></div>
+      ${ifs || `<div style="color:var(--tx3);font-size:11px;margin-bottom:6px">${esc(T('if_none'))}</div>`}
+      <button class="mini-btn" id="ifAdd">${esc(T('if_add'))}</button>
+      <div class="pn-sep"></div>
+      <div class="pn-title">${esc(T('cc_title'))} <span class="badge">${d.config_context?Object.keys(d.config_context).length:'—'}</span></div>
+      ${d.config_context?`<div class="cc-preview" id="ccPreview" title="${esc(T('cc_edit'))}">${esc(JSON.stringify(d.config_context, null, 1).split('\n').slice(0,8).join('\n'))}${JSON.stringify(d.config_context, null, 1).split('\n').length>8?'\n…':''}</div>`:''}
+      <button class="mini-btn" id="ccEdit">${esc(T('cc_edit'))}</button>
+      <div class="pn-actions">
+        <button id="pnCopy">${esc(T('copy'))}</button>
+        <button id="pnDup">${esc(T('dup'))}</button>
+        <button id="pnDel" class="danger">${esc(T('del'))}</button>
+      </div>`;
+    bindPanelInputs(d);
+    const addVrf = ()=>{
+      const v = $('#vrfNew').value.trim();
+      if(!v) return;
+      d.vrfs = d.vrfs || [];
+      if(!d.vrfs.includes(v)) d.vrfs.push(v);
+      pushHistory(); render(); renderPanel();
+    };
+    $('#vrfAdd').onclick = addVrf;
+    $('#vrfNew').addEventListener('keydown', e=>{ if(e.key==='Enter') addVrf(); e.stopPropagation(); });
+    panel.querySelectorAll('[data-vdel]').forEach(b=>{
+      b.onclick = ()=>{
+        const v = b.getAttribute('data-vdel');
+        d.vrfs = (d.vrfs||[]).filter(x=>x!==v);
+        pushHistory(); render(); renderPanel();
+      };
+    });
+    panel.querySelectorAll('input[data-if]').forEach(inp=>{
+      const i = +inp.getAttribute('data-if'), k = inp.getAttribute('data-k');
+      inp.addEventListener('input', ()=>{ d.interfaces[i][k] = inp.value; if(k==='vrf') render(); });
+      inp.addEventListener('change', ()=>{ pushHistory(); });
+    });
+    panel.querySelectorAll('[data-ifdel]').forEach(b=>{
+      b.onclick = ()=>{ d.interfaces.splice(+b.getAttribute('data-ifdel'),1); pushHistory(); render(); renderPanel(); };
+    });
+    $('#ifAdd').onclick = ()=>{ d.interfaces.push({name:'',ip_address:'',type:'',description:'',lag:'',vrf:''}); pushHistory(); renderPanel(); };
+    $('#ccEdit').onclick = ()=> openConfigCtx(d.id);
+    const ccp = $('#ccPreview');
+    if(ccp) ccp.onclick = ()=> openConfigCtx(d.id);
+    $('#pnCopy').onclick = copySel;
+    $('#pnDup').onclick = duplicateSel;
+    $('#pnDel').onclick = deleteSelection;
+    return;
+  }
+  /* --- link --- */
+  if(selLink){
+    const l = links.find(x=>x.id===selLink);
+    if(!l){ selLink=null; renderPanel(); return; }
+    const A = devById(l.a.dev), B = devById(l.b.dev);
+    /* ===== logical link: dedicated panel ===== */
+    if(l.kind==='logical'){
+      const epL = (side, dev) => {
+        const borderCol = vrfColor((l[side].vrf||'').trim());
+        if(isPn(dev)) return `<div class="ep-box" style="border-left:3px solid ${borderCol}">
+          <div class="ep-dev">${esc(dev.name)} <span class="ep-site">${esc(T('pn_title2'))}${dev.provider?' · '+esc(dev.provider):''}</span></div>
+          <div class="ep-lbl">${esc(T('ep_id_pn'))}</div>
+          <input data-epid="${side}" value="${esc(l[side].id)}" placeholder="e.g. dxvif-xxxx / ocid1.vc…">
+        </div>`;
+        const ifn = l[side].ifname;
+        const curIf = dev.interfaces.find(f=>f.name===ifn);
+        const ip = ifn ? (curIf ? curIf.ip_address : '') : (l[side].ip||'');
+        const vrfOpts = `<datalist id="dlv_${dev.id}_${side}">${devVrfs(dev).map(v=>`<option value="${esc(v)}">`).join('')}</datalist>`;
+        const ifOpts = `<datalist id="dli_${dev.id}_${side}">${dev.interfaces.map(f=>`<option value="${esc(f.name)}">`).join('')}</datalist>`;
+        return `<div class="ep-box" style="border-left:3px solid ${borderCol}">
+          <div class="ep-dev">${esc(dev.name)} <span class="ep-site">${esc(siteOf(dev)||'(no site)')}</span></div>
+          ${vrfOpts}${ifOpts}
+          <div class="ep-grid">
+            <div>
+              <div class="ep-lbl">${esc(T('ep_vrf'))}</div>
+              <input data-epv="${side}" list="dlv_${dev.id}_${side}" value="${esc(l[side].vrf)}" placeholder="global">
+            </div>
+            <div>
+              <div class="ep-lbl">${esc(T('ep_id'))}</div>
+              <input data-epid="${side}" value="${esc(l[side].id)}" placeholder="optional">
+            </div>
+          </div>
+          <div class="ep-grid" style="margin-top:4px">
+            <div>
+              <div class="ep-lbl">${esc(T('ep_if'))}</div>
+              <input data-epi="${side}" list="dli_${dev.id}_${side}" value="${esc(ifn)}" placeholder="Gi0/0/1.100">
+            </div>
+            <div>
+              <div class="ep-lbl">${esc(T('ep_ip'))}</div>
+              <input data-epip="${side}" value="${esc(ip)}" placeholder="10.0.0.1/30">
+            </div>
+          </div>
+        </div>`;
+      };
+      panel.innerHTML = `
+        ${datalists()}
+        <div class="pn-title">${esc(T('log_title'))} <span class="badge">${esc(T('log_badge'))}</span></div>
+        ${epL('a', A)}
+        <div style="text-align:center;color:var(--tx3);font-size:11px;margin:2px 0 8px">▲▼</div>
+        ${epL('b', B)}
+        <div class="pn-sep"></div>
+        <div class="fld-row">
+          ${fld('link_id', l.link_id, 'VC / VIF ID — shown on diagram')}
+          ${fld('vlan', l.vlan, 'VLAN ID')}
+        </div>
+        ${fld('label', l.label, 'e.g. eBGP / OSPF area 0')}
+        ${fld('description', l.description, '')}
+        <div style="color:var(--tx3);font-size:10px;line-height:1.6;margin-top:2px">${esc(T('log_note'))}</div>
+        <div class="pn-actions"><button id="pnDel" class="danger">${esc(T('del_link'))}</button></div>`;
+      bindPanelInputs(l);
+      panel.querySelectorAll('input[data-epv]').forEach(inp=>{
+        const side = inp.getAttribute('data-epv');
+        inp.addEventListener('input', ()=>{ l[side].vrf = inp.value; render(); });
+        inp.addEventListener('change', ()=>{ pushHistory(); renderPanel(); });
+      });
+      panel.querySelectorAll('input[data-epid]').forEach(inp=>{
+        const side = inp.getAttribute('data-epid');
+        inp.addEventListener('input', ()=>{ l[side].id = inp.value; render(); });
+        inp.addEventListener('change', ()=>{ pushHistory(); });
+      });
+      panel.querySelectorAll('input[data-epi]').forEach(inp=>{
+        const side = inp.getAttribute('data-epi');
+        inp.addEventListener('input', ()=>{ l[side].ifname = inp.value; });
+        inp.addEventListener('change', ()=>{
+          /* an endpoint-held IP migrates onto the newly named interface */
+          const dev = devById(l[side].dev);
+          const ifn = l[side].ifname;
+          if(dev && !isPn(dev) && ifn && (l[side].ip||'').trim()){
+            const f = ensureIf(dev, ifn);
+            if(!f.ip_address) f.ip_address = l[side].ip;
+            const v = (l[side].vrf||'').trim();
+            if(v && !f.vrf) f.vrf = v;
+            l[side].ip = '';
+          }
+          pushHistory(); renderPanel();
+        });
+      });
+      panel.querySelectorAll('input[data-epip]').forEach(inp=>{
+        const side = inp.getAttribute('data-epip');
+        inp.addEventListener('input', ()=>{
+          const dev = devById(l[side].dev);
+          const ifn = l[side].ifname;
+          if(dev && ifn){
+            const f = ensureIf(dev, ifn);
+            f.ip_address = inp.value;
+            const v = (l[side].vrf||'').trim();
+            if(v) f.vrf = v;
+          } else {
+            l[side].ip = inp.value;    /* no interface named — keep the IP on the endpoint itself */
+          }
+        });
+        inp.addEventListener('change', ()=>{ pushHistory(); });
+      });
+      $('#pnDel').onclick = deleteSelection;
+      return;
+    }
+    /* ===== physical link (cable / circuit) ===== */
+    const hasPn = isPn(A) || isPn(B);
+    const ifOpts = dev => `<datalist id="dl_${dev.id}">${(dev.interfaces||[]).map(f=>`<option value="${esc(f.name)}">`).join('')}</datalist>`;
+    const ep = (side, dev) => isPn(dev)
+      ? `<div class="ep-box"><div class="ep-dev">${esc(dev.name)} <span class="ep-site">${esc(T('pn_title2'))}${dev.provider?' · '+esc(dev.provider):''}</span></div></div>`
+      : `<div class="ep-box">
+          <div class="ep-dev">${esc(dev.name)} <span class="ep-site">${esc(siteOf(dev)||'(no site)')}</span></div>
+          ${ifOpts(dev)}
+          <input data-ep="${side}" list="dl_${dev.id}" value="${esc(l[side].ifname)}" placeholder="interface (e.g. Gi0/0/1)">
+        </div>`;
+    let common;
+    if(l.kind==='cable'){
+      common = fld('type', l.type, 'cat6 / smf / dac …') +
+        `<div class="fld-row">${fld('bandwidth', l.bandwidth, 'e.g. 10Gbps / 2x10G LAG')}${fld('status', l.status, 'connected', 'dlStatus')}</div>` +
+        fld('label', l.label, '');
+    } else {
+      common = fld('cid', l.cid, 'circuit ID') +
+        fld('provider', l.provider, 'carrier (e.g. NTT Com)') +
+        `<div class="fld-row">${fld('type', l.type, 'leased line / DX …')}${fld('commit_rate', l.commit_rate, 'bandwidth, e.g. 1Gbps')}</div>` +
+        fld('status', l.status, 'active / provisioning', 'dlStatus');
+    }
+    panel.innerHTML = `
+      ${datalists()}
+      <div class="pn-title">${esc(T('phy_title'))} <span class="badge">${esc(l.kind==='cable'?T('badge_cable'):T('badge_circuit'))}</span></div>
+      <div class="seg">
+        <button id="segCable" class="${l.kind==='cable'?'on':''}" ${hasPn?`disabled title="${esc(T('seg_pn_dis'))}"`:''}>cable</button>
+        <button id="segCircuit" class="${l.kind==='circuit'?'on':''}">circuit</button>
+      </div>
+      ${ep('a', A)}
+      <div style="text-align:center;color:var(--tx3);font-size:11px;margin:2px 0 8px">▲▼</div>
+      ${ep('b', B)}
+      <div class="pn-sep"></div>
+      ${common}
+      <div class="pn-actions"><button id="pnDel" class="danger">${esc(T('del_link'))}</button></div>`;
+    const setKind = k => { if(l.kind!==k){ l.kind=k; pushHistory(); render(); renderPanel(); } };
+    $('#segCable').onclick = ()=>{ if(!hasPn) setKind('cable'); };
+    $('#segCircuit').onclick = ()=> setKind('circuit');
+    bindPanelInputs(l);
+    panel.querySelectorAll('input[data-ep]').forEach(inp=>{
+      inp.addEventListener('input', ()=>{ l[inp.getAttribute('data-ep')].ifname = inp.value; });
+      inp.addEventListener('change', ()=>{ pushHistory(); });
+    });
+    $('#pnDel').onclick = deleteSelection;
+    return;
+  }
+  /* --- nothing selected --- */
+  panel.innerHTML = `
+    <div class="pn-title">Network TopoDraft</div>
+    <div class="pn-info">${T('home_html')}</div>`;
+}
+
+/* =====================================================
+   export / import
+   ===================================================== */
+function clean(o){
+  if(Array.isArray(o)){
+    const a = o.map(clean).filter(v=>v!==undefined);
+    return a.length ? a : undefined;
+  }
+  if(o && typeof o==='object'){
+    const r = {};
+    for(const k in o){
+      const v = clean(o[k]);
+      if(v!==undefined) r[k] = v;
+    }
+    return Object.keys(r).length ? r : undefined;
+  }
+  if(o==='' || o==null) return undefined;
+  return o;
+}
+function epOut(dev, ep, withSite, withVrf){
+  if(isPn(dev)){
+    const o = {provider_network: dev.name};
+    if(withVrf && (ep.id||'').trim()) o.id = ep.id.trim();
+    return o;
+  }
+  const o = {};
+  if(withSite && siteOf(dev)) o.site = siteOf(dev);
+  o.device = dev.name;
+  if(withVrf && (ep.vrf||'').trim()) o.vrf = ep.vrf.trim();
+  if(withVrf && (ep.id||'').trim()) o.id = ep.id.trim();
+  if(ep.ifname) o.interface = ep.ifname;
+  if(withVrf && !ep.ifname && (ep.ip||'').trim()) o.ip_address = ep.ip.trim();
+  return o;
+}
+function exportData(){
+  const devs = devices.filter(d=>!isPn(d)).map(d=>{
+    const o = clean({
+      name:d.name, device_type:d.device_type, role:d.role, site:d.site, tenant:d.tenant, platform:d.platform,
+      vrfs: (d.vrfs||[]).map(v=>v.trim()).filter(Boolean),
+      interfaces: d.interfaces.map(f=>clean({name:f.name, ip_address:f.ip_address, type:f.type,
+                                             description:f.description, lag:f.lag, vrf:f.vrf}))
+    }) || {};
+    if(d.config_context && Object.keys(d.config_context).length) o.config_context = d.config_context;
+    o.position = {x:Math.round(d.x), y:Math.round(d.y)};
+    if(!o.name) o.name = '';
+    return o;
+  });
+  const pns = devices.filter(isPn).map(d=>{
+    const o = clean({name:d.name, provider:d.provider, description:d.description}) || {};
+    o.position = {x:Math.round(d.x), y:Math.round(d.y)};
+    if(!o.name) o.name = '';
+    return o;
+  });
+  const cables = [], circuits = [], logical = [];
+  links.forEach(l=>{
+    const A = devById(l.a.dev), B = devById(l.b.dev);
+    if(!A||!B) return;
+    if(l.kind==='circuit'){
+      circuits.push(clean({
+        cid:l.cid, provider:l.provider, type:l.type, commit_rate:l.commit_rate, status:l.status,
+        a:epOut(A, l.a, true, false), b:epOut(B, l.b, true, false)
+      }) || {});
+    } else if(l.kind==='logical'){
+      logical.push(clean({
+        link_id:l.link_id, vlan:l.vlan, label:l.label, description:l.description,
+        a:epOut(A, l.a, false, true), b:epOut(B, l.b, false, true)
+      }) || {});
+    } else {
+      cables.push(clean({
+        a:epOut(A, l.a, false, false), b:epOut(B, l.b, false, false),
+        type:l.type, status:l.status, label:l.label, bandwidth:l.bandwidth
+      }) || {});
+    }
+  });
+  const out = {devices:devs};
+  if(pns.length) out.provider_networks = pns;
+  if(cables.length) out.cables = cables;
+  if(circuits.length) out.circuits = circuits;
+  if(logical.length) out.logical_links = logical;
+  return out;
+}
+function importData(obj){
+  if(!obj || !Array.isArray(obj.devices)) throw new Error('no "devices" array found');
+  const nd = [], nl = [];
+  const byName = {};
+  obj.devices.forEach((d,i)=>{
+    const dev = {
+      id: uid('d'), kind:'device',
+      name: d.name || ('node-'+(i+1)),
+      device_type: d.device_type || '',
+      role: d.role || '',
+      site: d.site || '',
+      tenant: d.tenant || '',
+      platform: d.platform || '',
+      vrfs: Array.isArray(d.vrfs) ? d.vrfs.map(v=>String(v).trim()).filter(Boolean) : [],
+      interfaces: (d.interfaces||[]).map(f=>({name:f.name||'', ip_address:f.ip_address||'', type:f.type||'',
+                                              description:f.description||'', lag:f.lag||'', vrf:f.vrf||''})),
+      config_context: (d.config_context && typeof d.config_context==='object' && !Array.isArray(d.config_context)) ? d.config_context : null,
+      x: d.position && Number.isFinite(d.position.x) ? d.position.x : NaN,
+      y: d.position && Number.isFinite(d.position.y) ? d.position.y : NaN
+    };
+    nd.push(dev);
+    if(!(dev.name in byName)) byName[dev.name] = dev;
+  });
+  (obj.provider_networks||[]).forEach((p,i)=>{
+    const dev = {
+      id: uid('d'), kind:'pn',
+      name: p.name || ('pnet-'+(i+1)),
+      provider: p.provider || '', description: p.description || '',
+      device_type:'', role:'', site:'', tenant:'', platform:'', vrfs:[], interfaces:[], config_context:null,
+      x: p.position && Number.isFinite(p.position.x) ? p.position.x : NaN,
+      y: p.position && Number.isFinite(p.position.y) ? p.position.y : NaN
+    };
+    nd.push(dev);
+    if(!(dev.name in byName)) byName[dev.name] = dev;
+  });
+  const epDev = ep => ep ? (ep.provider_network ? byName[ep.provider_network] : byName[ep.device]) : null;
+  const mkEp = (dev, ep, fallbackVrf) => ({dev:dev.id, ifname:(ep && ep.interface)||'',
+    vrf: ((ep && ep.vrf) || fallbackVrf || '').trim(),
+    id: (ep && ep.id) || '',
+    ip: (ep && !ep.interface && ep.ip_address) || ''});
+  (obj.cables||[]).forEach(c=>{
+    const A = epDev(c.a), B = epDev(c.b);
+    if(!(A&&B)) return;
+    nl.push({id:uid('l'), kind:'cable', a:mkEp(A,c.a,''), b:mkEp(B,c.b,''),
+             type:c.type||'', status:c.status||'', label:c.label||'', bandwidth:c.bandwidth||'',
+             cid:'', provider:'', commit_rate:'', link_id:'', vlan:'', description:''});
+  });
+  (obj.circuits||[]).forEach(c=>{
+    const A = epDev(c.a), B = epDev(c.b);
+    if(!(A&&B)) return;
+    nl.push({id:uid('l'), kind:'circuit', a:mkEp(A,c.a,''), b:mkEp(B,c.b,''),
+             type:c.type||'', status:c.status||'', label:'', bandwidth:'',
+             cid:c.cid||'', provider:c.provider||'', commit_rate:c.commit_rate||'', link_id:'', vlan:'', description:''});
+  });
+  const epIfWrite = (dev, ep)=>{
+    if(dev && !isPn(dev) && ep && ep.interface && ep.ip_address){
+      const f = ensureIf(dev, ep.interface);
+      if(!f.ip_address) f.ip_address = ep.ip_address;
+      if(ep.vrf && !f.vrf) f.vrf = ep.vrf;
+    }
+  };
+  (obj.logical_links||[]).forEach(c=>{
+    const A = epDev(c.a), B = epDev(c.b);
+    if(!(A&&B)) return;
+    epIfWrite(A, c.a); epIfWrite(B, c.b);
+    /* back-compat: v3 exports carried a single top-level "vrf" */
+    nl.push({id:uid('l'), kind:'logical', a:mkEp(A,c.a,c.vrf), b:mkEp(B,c.b,c.vrf),
+             type:'', status:'', label:c.label||'', bandwidth:'',
+             cid:'', provider:'', commit_rate:'', link_id:c.link_id||'', vlan:c.vlan||'', description:c.description||''});
+  });
+  devices = nd; links = nl; selDevs.clear(); selLink = null;
+  const noPos = devices.some(d=>!Number.isFinite(d.x));
+  if(noPos){
+    devices.forEach(d=>{ if(!Number.isFinite(d.x)){ d.x=0; d.y=0; } });
+    autoLayout();
+  } else {
+    pushHistory(); render(); fitView();
+  }
+  renderPanel();
+}
+
+/* ---------- generators ---------- */
+function genJSON(){ return JSON.stringify(exportData(), null, 2); }
+function genYAML(){
+  if(typeof jsyaml === 'undefined') return '# js-yaml failed to load (offline?). Please use the JSON tab.';
+  return jsyaml.dump(exportData(), {lineWidth:120, noRefs:true});
+}
+function mdTable(headers, rows){
+  if(!rows.length) return '_none_\n';
+  const h = '| '+headers.join(' | ')+' |';
+  const s = '|'+headers.map(()=>' --- ').join('|')+'|';
+  const b = rows.map(r=>'| '+r.map(c=>String(c??'').replace(/\|/g,'\\|')||'—').join(' | ')+' |').join('\n');
+  return h+'\n'+s+'\n'+b+'\n';
+}
+const epStr = e => !e ? '' : (e.provider_network
+  ? ['PN: '+e.provider_network, e.id?('id:'+e.id):''].filter(Boolean).join(' / ')
+  : [e.site, e.device, e.vrf?('['+e.vrf+']'):'', e.id?('id:'+e.id):'', e.interface, e.ip_address].filter(Boolean).join(' / '));
+function genMarkdown(){
+  const d = exportData();
+  let md = `# Network Configuration\n\nGenerated: ${new Date().toISOString().slice(0,10)} · ${d.devices.length} devices · ${links.length} links · ${sitesList().length} sites\n\n`;
+  md += '## Devices\n\n' + mdTable(
+    ['name','role','site','tenant','vrfs','device_type','platform'],
+    d.devices.map(x=>[x.name, x.role, x.site, x.tenant, (x.vrfs||[]).join(', '), x.device_type, x.platform])) + '\n';
+  if(d.provider_networks)
+    md += '## Provider Networks\n\n' + mdTable(['name','provider','description'],
+      d.provider_networks.map(p=>[p.name, p.provider, p.description])) + '\n';
+  const ifRows = [];
+  d.devices.forEach(x=>(x.interfaces||[]).forEach(f=>ifRows.push([x.name, f.name, f.ip_address, f.vrf, f.lag, f.type, f.description])));
+  md += '## Interfaces\n\n' + mdTable(['device','interface','ip_address','vrf','lag','type','description'], ifRows) + '\n';
+  md += '## Local Connections (Cables)\n\n' + mdTable(
+    ['A','B','type','bandwidth','status','label'],
+    (d.cables||[]).map(c=>[epStr(c.a), epStr(c.b), c.type, c.bandwidth, c.status, c.label])) + '\n';
+  md += '## Carrier Circuits\n\n' + mdTable(
+    ['cid','provider','type','commit_rate','status','A','B'],
+    (d.circuits||[]).map(c=>[c.cid, c.provider, c.type, c.commit_rate, c.status, epStr(c.a), epStr(c.b)])) + '\n';
+  md += '## Logical Links (L3 / VRF)\n\n' + mdTable(
+    ['link_id','vlan','A (device [vrf] if)','B (device [vrf] if)','label','description'],
+    (d.logical_links||[]).map(c=>[c.link_id, c.vlan, epStr(c.a), epStr(c.b), c.label, c.description]));
+  const ccDevs = d.devices.filter(x=>x.config_context);
+  if(ccDevs.length){
+    md += '\n## Config Contexts\n\n';
+    ccDevs.forEach(x=>{ md += '### ' + x.name + '\n\n```json\n' + JSON.stringify(x.config_context, null, 2) + '\n```\n\n'; });
+  }
+  return md;
+}
+function schemaLegend(){
+  return `- devices[] : network devices (≈ NetBox Device)
+  - name: hostname (unique, used as reference key) / device_type / role: free text / site: location grouping / tenant: owning organization / platform: OS
+  - vrfs[]: VRF routing instances configured on the device (names, free text)
+  - config_context: free-form structured settings per device (routing, BGP, policies …) as a JSON object; stored as-is, not drawn
+  - interfaces[]: name (physical "Gi0/0/1", subinterface "Gi0/0/1.100", or LAG parent "Po1"), ip_address (CIDR), type, description, lag (parent LAG interface on the same device), vrf (VRF the interface belongs to)
+  - position: editor canvas coordinates {x,y} — no network meaning; optional
+- provider_networks[] : carrier-side networks such as AWS Direct Connect / OCI FastConnect (≈ NetBox Provider Network)
+  - name (unique) / provider / description / position
+- cables[] : local physical connections (≈ NetBox Cable) — a/b: {device, interface}; type / bandwidth / status / label
+- circuits[] : carrier circuits (≈ NetBox Circuit) — cid / provider / type / commit_rate / status; a/b: {site, device, interface} or {provider_network}
+- logical_links[] : logical (L3) adjacencies between routing instances — Network TopoDraft extension, not a NetBox object
+  - a / b endpoints: {device, vrf, id, interface, ip_address} — vrf omitted = global routing table; id = environment/attachment identifier (tenant ID, VIF/VC ID) for peers whose VRF name is unknown; ip_address allowed directly when no interface is named; {provider_network, id} is also accepted
+  - link_id (connection / VC / VIF ID — displayed on the diagram) / vlan (VLAN ID) / label / description
+- Empty fields are omitted. Devices sharing the same "site" belong to the same location.`;
+}
+function genAI(){
+  return `The following is network topology data. Read "Topology data (JSON)" using the schema legend below.
+
+## Schema legend
+${schemaLegend()}
+
+## Topology data (JSON)
+\`\`\`json
+${genJSON()}
+\`\`\``;
+}
+function genSchema(){
+  const endpointDef = {
+    description:"Physical link endpoint: {device, interface} or {provider_network}.",
+    oneOf:[
+      {type:"object", required:["device"], properties:{
+        device:{type:"string", description:"device name (must match devices[].name)"},
+        interface:{type:"string", description:"interface name on that device"},
+        site:{type:"string", description:"informational; the device's site"}}},
+      {type:"object", required:["provider_network"], properties:{
+        provider_network:{type:"string", description:"provider network name (must match provider_networks[].name)"}}}
+    ]
+  };
+  const logEndpointDef = {
+    description:"Logical link endpoint: a routing instance on a device. vrf omitted/empty = global routing table.",
+    oneOf:[
+      {type:"object", required:["device"], properties:{
+        device:{type:"string", description:"device name (must match devices[].name)"},
+        vrf:{type:"string", description:"VRF instance on that device; omit for the global routing table"},
+        id:{type:"string", description:"environment / attachment identifier when the VRF name is unknown (tenant ID, VIF/VC ID …); drawn next to the endpoint"},
+        interface:{type:"string", description:"interface used by this adjacency (typically a subinterface, e.g. Gi0/0/1.100)"},
+        ip_address:{type:"string", description:"endpoint IP (CIDR). If 'interface' is set, prefer putting the IP on that interface in devices[]."}}},
+      {type:"object", required:["provider_network"], properties:{
+        provider_network:{type:"string"},
+        id:{type:"string", description:"attachment / VC identifier on the provider network"}}}
+    ]
+  };
+  const schema = {
+    $schema:"http://json-schema.org/draft-07/schema#",
+    title:"Network TopoDraft topology (import format)",
+    type:"object",
+    required:["devices"],
+    additionalProperties:false,
+    definitions:{ endpoint: endpointDef, logical_endpoint: logEndpointDef },
+    properties:{
+      devices:{type:"array", description:"network devices (≈ NetBox Device)", items:{
+        type:"object", required:["name"], additionalProperties:false, properties:{
+          name:{type:"string", description:"hostname; UNIQUE — referenced by links"},
+          device_type:{type:"string", description:"vendor + model, e.g. 'Cisco C8300'"},
+          role:{type:"string", description:"free text, e.g. router / switch / firewall / external_peer"},
+          site:{type:"string", description:"location grouping; same value = drawn in the same site frame"},
+          tenant:{type:"string", description:"owning organization"},
+          platform:{type:"string", description:"OS, e.g. 'IOS-XE 17.12'"},
+          vrfs:{type:"array", items:{type:"string"},
+            description:"VRF routing instances configured on this device; shown as compartments in the logical view"},
+          config_context:{type:"object",
+            description:"free-form structured settings for the device (routing, BGP, policies …) — any JSON object; stored and re-exported as-is, never drawn on the canvas"},
+          interfaces:{type:"array", items:{type:"object", additionalProperties:false, properties:{
+            name:{type:"string", description:"e.g. Gi0/0/1, subinterface Gi0/0/1.100, LAG parent Po1"},
+            ip_address:{type:"string", description:"CIDR, e.g. 10.0.0.1/30"},
+            type:{type:"string", description:"e.g. 1000base-t, lag, virtual"},
+            description:{type:"string"},
+            lag:{type:"string", description:"name of the parent LAG interface on the SAME device (e.g. Po1)"},
+            vrf:{type:"string", description:"VRF this interface belongs to"}}}},
+          position:{type:"object", description:"canvas coords; OPTIONAL — omit to auto-arrange on import",
+            properties:{x:{type:"number"}, y:{type:"number"}}}}}},
+      provider_networks:{type:"array", description:"carrier-side networks: AWS Direct Connect, OCI FastConnect, IP-VPN cloud … (≈ NetBox Provider Network)", items:{
+        type:"object", required:["name"], additionalProperties:false, properties:{
+          name:{type:"string", description:"UNIQUE — referenced by circuits/logical_links"},
+          provider:{type:"string", description:"e.g. AWS / Oracle / Equinix"},
+          description:{type:"string"},
+          position:{type:"object", properties:{x:{type:"number"}, y:{type:"number"}}}}}},
+      cables:{type:"array", description:"local physical connections (≈ NetBox Cable)", items:{
+        type:"object", required:["a","b"], additionalProperties:false, properties:{
+          a:{$ref:"#/definitions/endpoint"}, b:{$ref:"#/definitions/endpoint"},
+          type:{type:"string", description:"media, e.g. cat6 / smf / dac"},
+          bandwidth:{type:"string", description:"e.g. 10Gbps, 2x10G LAG"},
+          status:{type:"string", description:"e.g. connected / planned"},
+          label:{type:"string"}}}},
+      circuits:{type:"array", description:"carrier circuits between sites or to provider networks (≈ NetBox Circuit)", items:{
+        type:"object", required:["a","b"], additionalProperties:false, properties:{
+          cid:{type:"string", description:"circuit ID"},
+          provider:{type:"string", description:"carrier name"},
+          type:{type:"string", description:"e.g. leased line / IP-VPN / Direct Connect"},
+          commit_rate:{type:"string", description:"contracted bandwidth, e.g. 1Gbps"},
+          status:{type:"string"},
+          a:{$ref:"#/definitions/endpoint"}, b:{$ref:"#/definitions/endpoint"}}}},
+      logical_links:{type:"array", description:"logical (L3) adjacencies between routing instances (VRFs) — Network TopoDraft extension, not a NetBox object. Rendered in the logical view connecting VRF compartments.", items:{
+        type:"object", required:["a","b"], additionalProperties:false, properties:{
+          link_id:{type:"string", description:"connection ID (VC / VIF / peering ID) — displayed as the link label on the diagram"},
+          vlan:{type:"string", description:"VLAN ID used by this adjacency (e.g. the VIF VLAN)"},
+          label:{type:"string", description:"e.g. 'OSPF area 0', 'eBGP'"},
+          description:{type:"string"},
+          a:{$ref:"#/definitions/logical_endpoint"}, b:{$ref:"#/definitions/logical_endpoint"}}}}
+    }
+  };
+  const example = {
+    devices:[
+      {name:"rt-hq-01", role:"router", site:"HQ", tenant:"NetOps", vrfs:["PROD","DEV"],
+       config_context:{bgp:{asn:65010, neighbors:[{peer:"169.254.10.2", remote_asn:64512}]}},
+       interfaces:[
+         {name:"Po1", type:"lag", description:"LAG to sw-hq-01"},
+         {name:"Gi0/0/1", lag:"Po1"}, {name:"Gi0/0/2", lag:"Po1"},
+         {name:"Gi0/0/3.100", ip_address:"10.10.100.1/30", vrf:"PROD", type:"virtual"}]},
+      {name:"rt-dc-01", role:"router", site:"DC", vrfs:["PROD"],
+       interfaces:[{name:"Gi0/0/3.100", ip_address:"10.10.100.2/30", vrf:"PROD", type:"virtual"}]},
+      {name:"sw-hq-01", role:"switch", site:"HQ"}
+    ],
+    provider_networks:[{name:"AWS Direct Connect", provider:"AWS"}],
+    cables:[{a:{device:"rt-hq-01", interface:"Po1"}, b:{device:"sw-hq-01"}, bandwidth:"2x1G LAG", status:"connected"}],
+    circuits:[{cid:"DX-001", provider:"Equinix", type:"Direct Connect", commit_rate:"1Gbps",
+               a:{site:"HQ", device:"rt-hq-01"}, b:{provider_network:"AWS Direct Connect"}}],
+    logical_links:[
+      {label:"eBGP", vlan:"100",
+       a:{device:"rt-hq-01", vrf:"PROD", interface:"Gi0/0/3.100"},
+       b:{device:"rt-dc-01", vrf:"PROD", interface:"Gi0/0/3.100"}},
+      {link_id:"dxvif-abc123",
+       a:{device:"rt-hq-01", vrf:"PROD"},
+       b:{provider_network:"AWS Direct Connect", id:"dxcon-xyz789"}}]
+  };
+  return `# Network TopoDraft import schema (for AI agents & external tools)
+
+Generate a JSON (or YAML) document that follows the schema below, and it can be loaded into Network TopoDraft via the Import button. The idea: draft the topology externally (e.g. with an AI agent), then fine-tune it in the editor.
+
+## Rules
+- Only the "devices" array is required (it may even be empty). Every other field is optional — omit fields instead of writing "" or null.
+- "name" values of devices and provider_networks must be UNIQUE; cables / circuits / logical_links reference them by name.
+- "position" is optional. If omitted, the editor auto-arranges nodes by site on import.
+- role / site / tenant / vrf / status / type are FREE TEXT (no fixed enum). Field naming follows NetBox conventions.
+- Subinterfaces use dotted names (Gi0/0/1.100). LAG membership: set "lag" on member interfaces to the parent interface name (e.g. Po1); give the parent interface type "lag".
+- VRF model: devices declare routing instances in "vrfs"; logical_links connect a {device, vrf} pair to another {device, vrf} pair. Omitting "vrf" on an endpoint means the global routing table. Endpoints on the two sides may have different VRFs (e.g. route leaking).
+- When a peer's VRF name is unknown (external tenants, provider attachments), put the known identifier in the endpoint "id" (tenant ID, VIF/VC ID). A per-connection identifier belongs in "link_id" and is displayed on the diagram.
+- "config_context" on a device may hold any JSON object with device settings (routing, BGP, policies …); the editor stores it and re-exports it unchanged.
+- Circuits and logical_links may terminate on a provider network via {"provider_network": "<name>"}.
+
+## JSON Schema (draft-07)
+\`\`\`json
+${JSON.stringify(schema, null, 2)}
+\`\`\`
+
+## Minimal valid example
+\`\`\`json
+${JSON.stringify(example, null, 2)}
+\`\`\``;
+}
+function genDrawio(){
+  const x = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  let id = 1;
+  const cells = [];
+  const groups = {};
+  devices.forEach(d=>{ const s=siteOf(d); if(s) (groups[s]=groups[s]||[]).push(d); });
+  for(const s in groups){
+    const ds = groups[s], PAD=26;
+    const x0=Math.min(...ds.map(d=>d.x))-PAD, y0=Math.min(...ds.map(d=>d.y))-PAD-12;
+    const w=Math.max(...ds.map(d=>d.x+NODE_W))+PAD-x0, h=Math.max(...ds.map(d=>d.y+NODE_H))+PAD-y0;
+    cells.push(`<mxCell id="s${++id}" value="${x(s)}" style="rounded=1;dashed=1;fillColor=none;strokeColor=#8899AA;verticalAlign=top;align=left;spacing=8;fontColor=#8899AA;" vertex="1" parent="1"><mxGeometry x="${x0}" y="${y0}" width="${w}" height="${h}" as="geometry"/></mxCell>`);
+  }
+  const FILL = {router:'#dae8fc', switch:'#d5e8d4', firewall:'#ffe6cc', cloud:'#e1d5e7', server:'#d0f0f0', generic:'#f5f5f5', pnet:'#fff2cc'};
+  const idOf = {};
+  devices.forEach(d=>{
+    const k = nodeIconKey(d);
+    idOf[d.id] = 'n'+(++id);
+    const vrfs = devVrfs(d);
+    const sub = isPn(d) ? (d.provider||'provider net') : [d.role, vrfs.length?('vrf: '+vrfs.join(',')):''].filter(Boolean).join(' · ');
+    const label = x(d.name) + (sub?`&#10;${x(sub)}`:'');
+    const extra = isPn(d) ? 'dashed=1;' : '';
+    cells.push(`<mxCell id="${idOf[d.id]}" value="${label}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=${FILL[k]};strokeColor=#666666;${extra}" vertex="1" parent="1"><mxGeometry x="${d.x}" y="${d.y}" width="${NODE_W}" height="${NODE_H}" as="geometry"/></mxCell>`);
+  });
+  links.forEach(l=>{
+    let st, lbl;
+    if(l.kind==='circuit'){
+      st = 'endArrow=none;dashed=1;strokeColor=#9673a6;strokeWidth=2;';
+      lbl = [l.cid,l.provider].filter(Boolean).join(' ');
+    } else if(l.kind==='logical'){
+      st = `endArrow=none;dashed=1;dashPattern=1 4;strokeColor=${vrfColor(logicalVrfOf(l))};strokeWidth=2;`;
+      lbl = linkLabelText(l);
+    } else {
+      st = 'endArrow=none;strokeColor=#666666;';
+      lbl = [l.label,l.type,l.bandwidth].filter(Boolean).join(' ');
+    }
+    cells.push(`<mxCell id="e${++id}" value="${x(lbl)}" style="${st}html=1;" edge="1" parent="1" source="${idOf[l.a.dev]}" target="${idOf[l.b.dev]}"><mxGeometry relative="1" as="geometry"/></mxCell>`);
+  });
+  return `<mxfile host="Network TopoDraft"><diagram name="topology"><mxGraphModel dx="800" dy="600" grid="1" gridSize="10" page="0"><root><mxCell id="0"/><mxCell id="1" parent="0"/>${cells.join('')}</root></mxGraphModel></diagram></mxfile>`;
+}
+
+/* ---------- modal (export / import / help) ---------- */
+const modal = $('#modal'), modalText = $('#modalText'), modalTabs = $('#modalTabs'), modalHelp = $('#modalHelp');
+let modalMode = 'export', curTab = 'json';
+let ccDevId = null, ccFmt = 'json';
+const TABS = [
+  {id:'json',   label:'JSON',     gen:genJSON,    file:'topology.json',        note:'note_json'},
+  {id:'yaml',   label:'YAML',     gen:genYAML,    file:'topology.yaml',        note:'note_yaml'},
+  {id:'md',     label:'Markdown', gen:genMarkdown,file:'topology.md',          note:'note_md'},
+  {id:'ai',     label:'For AI',   gen:genAI,      file:'topology-for-ai.txt',  note:'note_ai'},
+  {id:'schema', label:'Schema',   gen:genSchema,  file:'topodraft-schema.txt', note:'note_schema'},
+  {id:'drawio', label:'draw.io',  gen:genDrawio,  file:'topology.drawio',      note:'note_drawio'}
+];
+function showModalParts(mode){
+  modalText.style.display = mode==='help' ? 'none' : 'block';
+  modalHelp.style.display = mode==='help' ? 'block' : 'none';
+  $('#modalCopy').style.display = mode==='export' ? '' : 'none';
+  $('#modalFile').style.display = mode==='import' ? '' : 'none';
+  $('#modalMain').style.display = mode==='help' ? 'none' : '';
+}
+function openExport(tab){
+  modalMode = 'export'; curTab = tab || 'json';
+  $('#modalTitle').textContent = T('m_export');
+  modalTabs.innerHTML = TABS.map(t=>`<button class="mtab${t.id===curTab?' on':''}" data-tab="${t.id}">${t.label}</button>`).join('');
+  modalTabs.querySelectorAll('.mtab').forEach(b=> b.onclick = ()=>{ openExport(b.getAttribute('data-tab')); });
+  const t = TABS.find(x=>x.id===curTab);
+  modalText.value = t.gen();
+  modalText.readOnly = true;
+  $('#modalNote').textContent = T(t.note);
+  $('#modalMain').textContent = T('m_download');
+  showModalParts('export');
+  modal.style.display = 'flex';
+}
+function openImport(){
+  modalMode = 'import';
+  $('#modalTitle').textContent = T('m_import');
+  modalTabs.innerHTML = '';
+  modalText.value = '';
+  modalText.readOnly = false;
+  modalText.placeholder = T('m_import_ph');
+  $('#modalNote').textContent = T('m_import_note');
+  $('#modalMain').textContent = T('m_do_import');
+  showModalParts('import');
+  modal.style.display = 'flex';
+  modalText.focus();
+}
+function openHelp(){
+  modalMode = 'help';
+  $('#modalTitle').textContent = T('m_help');
+  modalTabs.innerHTML = '';
+  $('#modalNote').textContent = T('m_help_note');
+  modalHelp.innerHTML = T('help_html');
+  showModalParts('help');
+  modal.style.display = 'flex';
+}
+/* ---- config context editor ---- */
+function ccParse(text, fmt){
+  const s = (text||'').trim();
+  if(!s) return {obj:null};
+  try{
+    let o;
+    if(fmt==='yaml'){
+      if(typeof jsyaml==='undefined') return {err:T('t_yaml_na')};
+      o = jsyaml.load(s);
+    } else {
+      o = JSON.parse(s);
+    }
+    if(o==null || typeof o!=='object' || Array.isArray(o)) return {err:T('t_cc_obj')};
+    return {obj:o};
+  }catch(e){ return {err:e.message}; }
+}
+function ccSerialize(obj, fmt){
+  if(!obj || !Object.keys(obj).length) return '';
+  if(fmt==='yaml'){
+    if(typeof jsyaml==='undefined') return '';
+    return jsyaml.dump(obj, {lineWidth:120, noRefs:true});
+  }
+  return JSON.stringify(obj, null, 2);
+}
+function renderCcModal(obj){
+  const d = devById(ccDevId);
+  if(!d) return;
+  const cur = (obj!==undefined) ? obj : d.config_context;
+  $('#modalTitle').textContent = T('cc_modal') + ' — ' + (d.name||'');
+  modalTabs.innerHTML = ['json','yaml'].map(f=>`<button class="mtab${f===ccFmt?' on':''}" data-cf="${f}">${f.toUpperCase()}</button>`).join('');
+  modalTabs.querySelectorAll('.mtab').forEach(b=> b.onclick = ()=>{
+    const to = b.getAttribute('data-cf');
+    if(to===ccFmt) return;
+    if(to==='yaml' && typeof jsyaml==='undefined'){ toast(T('t_yaml_na')); return; }
+    const p = ccParse(modalText.value, ccFmt);
+    if(p.err){ toast(T('t_cc_err') + p.err); return; }
+    ccFmt = to;
+    renderCcModal(p.obj);
+  });
+  modalText.value = ccSerialize(cur, ccFmt);
+  modalText.readOnly = false;
+  modalText.placeholder = ccFmt==='json' ? '{\n  "bgp": { "asn": 65010 }\n}' : 'bgp:\n  asn: 65010';
+  $('#modalNote').textContent = T('m_cc_note');
+  $('#modalMain').textContent = T('m_save');
+  showModalParts('config');
+  modal.style.display = 'flex';
+  modalText.focus();
+}
+function openConfigCtx(devId){
+  const d = devById(devId);
+  if(!d || isPn(d)) return;
+  modalMode = 'config'; ccDevId = devId; ccFmt = 'json';
+  renderCcModal();
+}
+function closeModal(){ modal.style.display = 'none'; }
+$('#modalClose').onclick = closeModal;
+$('#btnHelp').onclick = openHelp;
+modal.addEventListener('mousedown', e=>{ if(e.target===modal) closeModal(); });
+$('#modalCopy').onclick = async ()=>{
+  try{ await navigator.clipboard.writeText(modalText.value); toast(T('t_clip')); }
+  catch{ modalText.select(); document.execCommand('copy'); toast(T('t_clip2')); }
+};
+$('#modalMain').onclick = ()=>{
+  if(modalMode==='export'){
+    const t = TABS.find(x=>x.id===curTab);
+    const blob = new Blob([modalText.value], {type:'text/plain;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = t.file; a.click();
+    URL.revokeObjectURL(a.href);
+  } else if(modalMode==='import'){
+    doImport(modalText.value);
+  } else if(modalMode==='config'){
+    const d = devById(ccDevId);
+    if(!d) { closeModal(); return; }
+    const p = ccParse(modalText.value, ccFmt);
+    if(p.err){ toast(T('t_cc_err') + p.err); return; }
+    d.config_context = p.obj;
+    pushHistory(); renderPanel(); closeModal();
+    toast(T('t_cc_saved'));
+  }
+};
+$('#modalFile').onclick = ()=> $('#fileInput').click();
+$('#fileInput').addEventListener('change', e=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{ modalText.value = rd.result; };
+  rd.readAsText(f);
+  e.target.value = '';
+});
+function doImport(text){
+  let obj = null;
+  try{ obj = JSON.parse(text); }
+  catch{
+    try{ if(typeof jsyaml!=='undefined') obj = jsyaml.load(text); }catch(e2){}
+  }
+  if(!obj){ toast(T('t_parse')); return; }
+  try{
+    importData(obj);
+    closeModal();
+    toast(T('t_imported').replace('{d}', devices.length).replace('{l}', links.length));
+  }catch(err){
+    toast(T('t_import_fail') + err.message);
+  }
+}
+$('#btnExport').onclick = ()=> openExport('json');
+$('#btnImport').onclick = openImport;
+
+/* =====================================================
+   templates
+   ===================================================== */
+const BUILTIN_TPLS = [
+  {name:'2-site redundant WAN', data:{
+    devices:[
+      {name:'rt-tokyo-01', role:'router', site:'Tokyo-HQ', position:{x:60,y:60},
+       interfaces:[{name:'Gi0/0/0', ip_address:'10.255.0.1/30', description:'WAN #1'},{name:'Gi0/0/1', description:'to sw'}]},
+      {name:'rt-tokyo-02', role:'router', site:'Tokyo-HQ', position:{x:300,y:60},
+       interfaces:[{name:'Gi0/0/0', ip_address:'10.255.0.5/30', description:'WAN #2'}]},
+      {name:'sw-tokyo-01', role:'switch', site:'Tokyo-HQ', position:{x:180,y:210}},
+      {name:'rt-osaka-01', role:'router', site:'Osaka-DC', position:{x:780,y:60},
+       interfaces:[{name:'Gi0/0/0', ip_address:'10.255.0.2/30', description:'WAN #1'}]},
+      {name:'rt-osaka-02', role:'router', site:'Osaka-DC', position:{x:1020,y:60},
+       interfaces:[{name:'Gi0/0/0', ip_address:'10.255.0.6/30', description:'WAN #2'}]},
+      {name:'sw-osaka-01', role:'switch', site:'Osaka-DC', position:{x:900,y:210}}
+    ],
+    cables:[
+      {a:{device:'rt-tokyo-01', interface:'Gi0/0/1'}, b:{device:'sw-tokyo-01', interface:'Gi1/0/49'}, type:'cat6', status:'connected'},
+      {a:{device:'rt-tokyo-02'}, b:{device:'sw-tokyo-01'}, type:'cat6', status:'connected'},
+      {a:{device:'rt-osaka-01'}, b:{device:'sw-osaka-01'}, type:'cat6', status:'connected'},
+      {a:{device:'rt-osaka-02'}, b:{device:'sw-osaka-01'}, type:'cat6', status:'connected'}
+    ],
+    circuits:[
+      {cid:'CID-0001', provider:'Carrier-A', type:'leased line', commit_rate:'1Gbps', status:'active',
+       a:{site:'Tokyo-HQ', device:'rt-tokyo-01', interface:'Gi0/0/0'}, b:{site:'Osaka-DC', device:'rt-osaka-01', interface:'Gi0/0/0'}},
+      {cid:'CID-0002', provider:'Carrier-B', type:'IP-VPN', commit_rate:'1Gbps', status:'active',
+       a:{site:'Tokyo-HQ', device:'rt-tokyo-02', interface:'Gi0/0/0'}, b:{site:'Osaka-DC', device:'rt-osaka-02', interface:'Gi0/0/0'}}
+    ]
+  }},
+  {name:'Site + cloud (DX, VRF logical)', data:{
+    devices:[
+      {name:'rt-hq-01', role:'router', site:'HQ', position:{x:120,y:60}, vrfs:['PROD'],
+       interfaces:[{name:'Gi0/0/0', description:'to DX'},
+                   {name:'Gi0/0/0.100', ip_address:'169.254.10.1/30', vrf:'PROD', type:'virtual', description:'DX VIF'}]},
+      {name:'fw-hq-01', role:'firewall', site:'HQ', position:{x:120,y:210}},
+      {name:'sw-hq-01', role:'switch', site:'HQ', position:{x:120,y:360}},
+      {name:'aws-tgw', role:'aws external_peer', site:'AWS', position:{x:820,y:60}}
+    ],
+    provider_networks:[{name:'AWS Direct Connect', provider:'AWS', description:'DX location: Equinix TY2', position:{x:470,y:60}}],
+    cables:[
+      {a:{device:'rt-hq-01'}, b:{device:'fw-hq-01'}, type:'cat6', status:'connected'},
+      {a:{device:'fw-hq-01'}, b:{device:'sw-hq-01'}, type:'cat6', status:'connected'}
+    ],
+    circuits:[
+      {cid:'DX-CID-01', provider:'Equinix', type:'Direct Connect', commit_rate:'1Gbps', status:'active',
+       a:{site:'HQ', device:'rt-hq-01', interface:'Gi0/0/0'}, b:{provider_network:'AWS Direct Connect'}},
+      {type:'hosted connection', status:'active',
+       a:{provider_network:'AWS Direct Connect'}, b:{site:'AWS', device:'aws-tgw'}}
+    ],
+    logical_links:[
+      {label:'eBGP over DX VIF', link_id:'dxvif-abc123',
+       a:{device:'rt-hq-01', vrf:'PROD', interface:'Gi0/0/0.100'}, b:{device:'aws-tgw', id:'tgw-attach-01'}}
+    ]
+  }}
+];
+const TPL_KEY = 'topodraft.templates.v1';
+let memTpls = [];
+function userTpls(){
+  try{
+    const v = localStorage.getItem(TPL_KEY);
+    return v ? JSON.parse(v) : memTpls;
+  }catch(e){ return memTpls; }
+}
+function saveUserTpls(list){
+  memTpls = list;
+  try{ localStorage.setItem(TPL_KEY, JSON.stringify(list)); }catch(e){}
+}
+function loadTplData(data, name){
+  importData(JSON.parse(JSON.stringify(data)));
+  toast(T('t_tpl_loaded') + name);
+}
+function renderTpls(){
+  const wrap = $('#tplList');
+  wrap.innerHTML = '';
+  const mk = (t, custom) => {
+    const d = document.createElement('div');
+    d.className = 'tpl-item';
+    d.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="${custom?'var(--acc)':'var(--tx3)'}" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 10v10"/></svg><span class="tn">${esc(t.name)}</span>` + (custom?'<button class="tpl-x" title="Delete template">×</button>':'');
+    d.onclick = e=>{
+      if(e.target.classList.contains('tpl-x')){
+        saveUserTpls(userTpls().filter(x=>x.name!==t.name || x.ts!==t.ts));
+        renderTpls();
+        toast(T('t_tpl_deleted'));
+        return;
+      }
+      loadTplData(t.data, t.name);
+    };
+    wrap.appendChild(d);
+  };
+  BUILTIN_TPLS.forEach(t=>mk(t,false));
+  const us = userTpls();
+  us.slice(0,3).forEach(t=>mk(t,true));
+  if(us.length>3){
+    const more = document.createElement('div');
+    more.style.cssText = 'font-size:10px;color:var(--tx3);font-family:var(--mono);padding:2px 4px';
+    more.textContent = T('tpl_more').replace('{n}', us.length-3);
+    wrap.appendChild(more);
+  }
+}
+$('#tplSave').onclick = saveCurrentTpl;
+$('#tplName').addEventListener('keydown', e=>{ if(e.key==='Enter') saveCurrentTpl(); e.stopPropagation(); });
+function saveCurrentTpl(){
+  const name = $('#tplName').value.trim();
+  if(!name){ toast(T('t_tpl_name')); $('#tplName').focus(); return; }
+  if(!devices.length){ toast(T('t_tpl_empty')); return; }
+  const list = userTpls().filter(t=>t.name!==name);
+  list.unshift({name, ts:Date.now(), data:exportData()});
+  saveUserTpls(list.slice(0,12));
+  $('#tplName').value = '';
+  renderTpls();
+  toast(T('t_tpl_saved') + name);
+}
+
+/* =====================================================
+   init — start with an empty canvas
+   ===================================================== */
+window.addEventListener('resize', render);
+applyLang();
+renderTpls();
+hist = [snapshotStr()]; hi = 0; updateUndoBtns();
+render();
+renderPanel();
+</script>
+</body>
+</html>
