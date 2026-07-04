@@ -12,8 +12,9 @@ import { BUILTIN_TEMPLATES, templateText } from './templates';
 
 const t = vscode.l10n.t;
 
-async function activeTopoText(): Promise<{ uri: vscode.Uri; text: string } | undefined> {
-  const uri = activeTopoUri();
+async function topoText(
+  uri: vscode.Uri | undefined = activeTopoUri(),
+): Promise<{ uri: vscode.Uri; text: string } | undefined> {
   if (!uri) {
     void vscode.window.showErrorMessage(
       t('Open a *.topo.json file first — this command works on the active topology document.'),
@@ -30,8 +31,9 @@ function basenameNoExt(uri: vscode.Uri): string {
 
 /* ---------- exports ---------- */
 
-async function runExport(kind: ExportKind): Promise<void> {
-  const active = await activeTopoText();
+/** Run an export against a specific document, or the active one (commands). */
+export async function runExport(kind: ExportKind, uri?: vscode.Uri): Promise<void> {
+  const active = await topoText(uri);
   if (!active) return;
   let result;
   try {
@@ -107,12 +109,12 @@ async function newTopologyFile(): Promise<void> {
   const builtinLabel: Record<string, string> = {
     empty: t('Empty topology'),
     'two-site-wan': t('2-site redundant WAN'),
-    'site-cloud-dx': t('Site + cloud (DX, VRF logical)'),
+    'site-cloud': t('Site + cloud (VRF logical)'),
   };
   const builtinDescription: Record<string, string> = {
     empty: t('A blank canvas'),
     'two-site-wan': t('Two sites, redundant carrier circuits'),
-    'site-cloud-dx': t('HQ with Direct Connect to a cloud peer, logical VRF link'),
+    'site-cloud': t('HQ connected to a cloud peer over a dedicated interconnect, logical VRF link'),
   };
   const picks: TemplatePick[] = BUILTIN_TEMPLATES.map((b) => ({
     label: builtinLabel[b.id] ?? b.label,
@@ -156,7 +158,7 @@ async function newTopologyFile(): Promise<void> {
 /* ---------- Save as Template ---------- */
 
 async function saveAsTemplate(): Promise<void> {
-  const active = await activeTopoText();
+  const active = await topoText();
   if (!active) return;
   let normalized: string;
   try {

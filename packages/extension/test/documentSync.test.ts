@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import type { UpdateMessage } from '@topodraft/protocol';
-import { DocumentSyncController, isEditMessage } from '../src/documentSync';
+import { DocumentSyncController, isEditMessage, isExportRequest } from '../src/documentSync';
 
 /** Minimal TextDocument stand-in: version bumps on every applied edit. */
 function fakeDoc(initial = 'v0', options?: { rejectEdits?: boolean; syncChangeEvent?: boolean }) {
@@ -100,5 +100,17 @@ describe('isEditMessage', () => {
     expect(isEditMessage({ type: 'edit', text: 'x' })).toBe(false);
     expect(isEditMessage({ type: 'ready' })).toBe(false);
     expect(isEditMessage(null)).toBe(false);
+  });
+});
+
+describe('isExportRequest', () => {
+  it('accepts the four known export kinds only', () => {
+    expect(isExportRequest({ type: 'export', kind: 'markdown' })).toBe(true);
+    expect(isExportRequest({ type: 'export', kind: 'for-ai' })).toBe(true);
+    expect(isExportRequest({ type: 'export', kind: 'schema' })).toBe(true);
+    expect(isExportRequest({ type: 'export', kind: 'drawio' })).toBe(true);
+    expect(isExportRequest({ type: 'export', kind: 'yaml' })).toBe(false); // ADR D2
+    expect(isExportRequest({ type: 'export' })).toBe(false);
+    expect(isExportRequest(null)).toBe(false);
   });
 });

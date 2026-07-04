@@ -519,6 +519,22 @@ describe('sync loop (webview side of plan §4.2)', () => {
   });
 });
 
+describe('toolbar export menu (v7 Export button)', () => {
+  it('posts an export request for the picked format and closes the menu', () => {
+    const h = harness();
+    const menu = h.root.querySelector('#exportMenu') as HTMLElement;
+    expect(menu.style.display).not.toBe('block');
+    (h.root.querySelector('#btnExport') as HTMLElement).click();
+    expect(menu.style.display).toBe('block');
+    (h.root.querySelector('[data-export="markdown"]') as HTMLElement).click();
+    expect(h.f.posted).toContainEqual({ type: 'export', kind: 'markdown' });
+    expect(menu.style.display).toBe('none');
+    (h.root.querySelector('#btnExport') as HTMLElement).click();
+    (h.root.querySelector('[data-export="drawio"]') as HTMLElement).click();
+    expect(h.f.posted).toContainEqual({ type: 'export', kind: 'drawio' });
+  });
+});
+
 describe('palette placement', () => {
   it('press on a palette item and release over the canvas adds the node there', () => {
     const h = harness();

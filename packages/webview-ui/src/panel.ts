@@ -175,8 +175,8 @@ function renderPn(panel: HTMLElement, api: EditorApi, t: Topology, pn: ProviderN
   panel.innerHTML = `
     ${datalists(t)}
     <div class="pn-title">${T('pn_title2')} <span class="badge">${T('pn_badge')}</span></div>
-    ${fld('name', pn.name, 'e.g. AWS Direct Connect')}
-    ${fld('provider', pn.provider, 'e.g. AWS / Oracle / Equinix')}
+    ${fld('name', pn.name, 'e.g. Cloud Interconnect')}
+    ${fld('provider', pn.provider, 'carrier / cloud provider')}
     ${fld('description', pn.description, '')}
     <div class="pn-sep"></div>
     <div class="pn-info">${T('pn_info')}</div>
@@ -341,7 +341,7 @@ function renderLogicalLink(
       return `<div class="ep-box" data-ep-side="${side}">
         <div class="ep-dev">${esc(ep.provider_network)} <span class="ep-site">${T('pn_title2')}${pn?.provider ? ' · ' + esc(pn.provider) : ''}</span></div>
         <div class="ep-lbl">${T('ep_id_pn')}</div>
-        <input data-epid="${side}" value="${esc(ep.id)}" placeholder="e.g. dxvif-xxxx / ocid1.vc…" spellcheck="false">
+        <input data-epid="${side}" value="${esc(ep.id)}" placeholder="e.g. vif-0001 / vc-42" spellcheck="false">
       </div>`;
     }
     const dev = ep.device !== undefined ? findDevice(t, ep.device) : undefined;
@@ -475,8 +475,8 @@ function renderPhysicalLink(
       `<div class="fld-row">${fld('bandwidth', (l as Cable).bandwidth, 'e.g. 10Gbps / 2x10G LAG')}${fld('status', (l as Cable).status, 'connected', 'dlStatus')}</div>` +
       fld('label', (l as Cable).label, '')
     : fld('cid', (l as Circuit).cid, 'circuit ID') +
-      fld('provider', (l as Circuit).provider, 'carrier (e.g. NTT Com)') +
-      `<div class="fld-row">${fld('type', (l as Circuit).type, 'leased line / DX …')}${fld('commit_rate', (l as Circuit).commit_rate, 'bandwidth, e.g. 1Gbps')}</div>` +
+      fld('provider', (l as Circuit).provider, 'carrier name') +
+      `<div class="fld-row">${fld('type', (l as Circuit).type, 'leased line / IP-VPN …')}${fld('commit_rate', (l as Circuit).commit_rate, 'bandwidth, e.g. 1Gbps')}</div>` +
       fld('status', (l as Circuit).status, 'active / provisioning', 'dlStatus');
   panel.innerHTML = `
     ${datalists(t)}

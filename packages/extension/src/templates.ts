@@ -104,9 +104,9 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
     },
   },
   {
-    id: 'site-cloud-dx',
-    label: 'Site + cloud (DX, VRF logical)',
-    description: 'HQ with Direct Connect to a cloud peer, logical VRF link',
+    id: 'site-cloud',
+    label: 'Site + cloud (VRF logical)',
+    description: 'HQ connected to a cloud peer over a dedicated interconnect, logical VRF link',
     topology: {
       version: 1,
       devices: [
@@ -116,12 +116,12 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
           site: 'HQ',
           vrfs: ['PROD'],
           interfaces: [
-            { name: 'Gi0/0/0', description: 'to DX' },
+            { name: 'Gi0/0/0', description: 'to interconnect' },
             {
               name: 'Gi0/0/0.100',
               ip_address: '169.254.10.1/30',
               type: 'virtual',
-              description: 'DX VIF',
+              description: 'Interconnect VIF',
               vrf: 'PROD',
             },
           ],
@@ -129,13 +129,13 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
         },
         { name: 'fw-hq-01', role: 'firewall', site: 'HQ', position: { x: 120, y: 210 } },
         { name: 'sw-hq-01', role: 'switch', site: 'HQ', position: { x: 120, y: 360 } },
-        { name: 'aws-tgw', role: 'aws external_peer', site: 'AWS', position: { x: 820, y: 60 } },
+        { name: 'cloud-gw-01', role: 'external_peer', site: 'Cloud', position: { x: 820, y: 60 } },
       ],
       provider_networks: [
         {
-          name: 'AWS Direct Connect',
-          provider: 'AWS',
-          description: 'DX location: Equinix TY2',
+          name: 'Cloud Interconnect',
+          provider: 'ExampleNet',
+          description: 'Interconnect location: colo-01',
           position: { x: 470, y: 60 },
         },
       ],
@@ -146,26 +146,26 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
       circuits: [
         {
           a: { site: 'HQ', device: 'rt-hq-01', interface: 'Gi0/0/0' },
-          b: { provider_network: 'AWS Direct Connect' },
-          cid: 'DX-CID-01',
-          provider: 'Equinix',
-          type: 'Direct Connect',
+          b: { provider_network: 'Cloud Interconnect' },
+          cid: 'IC-CID-01',
+          provider: 'ExampleNet',
+          type: 'dedicated interconnect',
           commit_rate: '1Gbps',
           status: 'active',
         },
         {
-          a: { provider_network: 'AWS Direct Connect' },
-          b: { site: 'AWS', device: 'aws-tgw' },
-          type: 'hosted connection',
+          a: { provider_network: 'Cloud Interconnect' },
+          b: { site: 'Cloud', device: 'cloud-gw-01' },
+          type: 'cloud-side interconnect',
           status: 'active',
         },
       ],
       logical_links: [
         {
           a: { device: 'rt-hq-01', vrf: 'PROD', interface: 'Gi0/0/0.100' },
-          b: { device: 'aws-tgw', id: 'tgw-attach-01' },
-          link_id: 'dxvif-abc123',
-          label: 'eBGP over DX VIF',
+          b: { device: 'cloud-gw-01', id: 'attach-01' },
+          link_id: 'vif-0001',
+          label: 'eBGP over interconnect VIF',
         },
       ],
     },

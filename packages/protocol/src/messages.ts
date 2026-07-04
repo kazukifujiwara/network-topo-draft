@@ -39,5 +39,17 @@ export interface ReadyMessage {
   type: 'ready';
 }
 
+/** The four v7 Export tabs that survive as commands (plan §4.4, ADR D2). */
+export type ExportKind = 'markdown' | 'for-ai' | 'schema' | 'drawio';
+
+/**
+ * Webview → Host: the toolbar Export menu was used; the host runs the
+ * corresponding export command against this editor's document.
+ */
+export interface ExportRequestMessage {
+  type: 'export';
+  kind: ExportKind;
+}
+
 export type HostToWebviewMessage = UpdateMessage;
-export type WebviewToHostMessage = EditMessage | ReadyMessage;
+export type WebviewToHostMessage = EditMessage | ReadyMessage | ExportRequestMessage;

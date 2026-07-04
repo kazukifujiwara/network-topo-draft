@@ -4,8 +4,9 @@
  * gone per ADR D2). Throws TopoParseError for invalid documents.
  */
 import { genDrawio, genForAi, genMarkdown, genSchemaDoc, parse } from '@topodraft/core';
+import type { ExportKind } from '@topodraft/protocol';
 
-export type ExportKind = 'markdown' | 'for-ai' | 'schema' | 'drawio';
+export type { ExportKind } from '@topodraft/protocol';
 
 export interface ExportResult {
   content: string;

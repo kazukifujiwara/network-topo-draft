@@ -10,7 +10,25 @@
  * - Updates caused by our own applied edit are flagged selfOriginated so the
  *   webview can suppress the echo (it is already showing that state).
  */
-import type { EditMessage, ReadyMessage, UpdateMessage } from '@topodraft/protocol';
+import type {
+  EditMessage,
+  ExportRequestMessage,
+  ReadyMessage,
+  UpdateMessage,
+} from '@topodraft/protocol';
+
+const EXPORT_KINDS = ['markdown', 'for-ai', 'schema', 'drawio'];
+
+export function isExportRequest(message: unknown): message is ExportRequestMessage {
+  const m = message as { type?: unknown; kind?: unknown } | null;
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    m?.type === 'export' &&
+    typeof m.kind === 'string' &&
+    EXPORT_KINDS.includes(m.kind)
+  );
+}
 
 export interface DocumentHost {
   getText(): string;

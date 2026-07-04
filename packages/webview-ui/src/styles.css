@@ -1012,3 +1012,42 @@ button {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* export dropdown (v7 Export button; generation runs on the host) */
+#exportWrap {
+  position: relative;
+}
+.tb-btn.primary {
+  background: var(--acc);
+  color: #0c1522;
+  font-weight: 600;
+}
+.tb-btn.primary:hover {
+  filter: brightness(1.1);
+  background: var(--acc);
+  color: #0c1522;
+}
+#exportMenu {
+  position: absolute;
+  right: 0;
+  top: 30px;
+  z-index: 70;
+  display: none;
+  background: var(--bg2);
+  border: 1px solid var(--line2);
+  border-radius: 9px;
+  padding: 5px;
+  min-width: 180px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+#exportMenu .ci {
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--tx);
+  cursor: pointer;
+  white-space: nowrap;
+}
+#exportMenu .ci:hover {
+  background: var(--bg3);
+}

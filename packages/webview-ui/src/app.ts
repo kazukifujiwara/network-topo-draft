@@ -148,6 +148,15 @@ export function createApp(root: HTMLElement, host: AppHost): App {
         <button class="tb-btn" id="btnGrid" title="${T('tt_grid')}">${T('tb_grid')}</button>
         <button class="tb-btn" id="btnFit" title="${T('tt_fit')}">${T('tb_fit')}</button>
         <div class="spacer"></div>
+        <div id="exportWrap">
+          <button class="tb-btn primary" id="btnExport" title="${T('tt_export')}">${T('tb_export')} ▾</button>
+          <div id="exportMenu">
+            <div class="ci" data-export="markdown">${T('ex_md')}</div>
+            <div class="ci" data-export="for-ai">${T('ex_ai')}</div>
+            <div class="ci" data-export="schema">${T('ex_schema')}</div>
+            <div class="ci" data-export="drawio">${T('ex_drawio')}</div>
+          </div>
+        </div>
       </div>
       <div id="main">
         <div id="palette"></div>
@@ -1072,6 +1081,25 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   $('#zoomIn').addEventListener('click', () => zoomCenter(1.2));
   $('#zoomOut').addEventListener('click', () => zoomCenter(1 / 1.2));
   $('#zoomReset').addEventListener('click', () => zoomCenter(1 / view.vt.k));
+
+  /* export menu (v7's Export button; generation runs on the host) */
+  const exportMenu = $('#exportMenu');
+  $('#btnExport').addEventListener('click', (e) => {
+    e.stopPropagation();
+    exportMenu.style.display = exportMenu.style.display === 'block' ? 'none' : 'block';
+  });
+  document.addEventListener('mousedown', (e) => {
+    if (!$('#exportWrap').contains(e.target as Node)) exportMenu.style.display = 'none';
+  });
+  exportMenu.querySelectorAll<HTMLElement>('[data-export]').forEach((item) =>
+    item.addEventListener('click', () => {
+      exportMenu.style.display = 'none';
+      host.postMessage({
+        type: 'export',
+        kind: item.getAttribute('data-export') as 'markdown' | 'for-ai' | 'schema' | 'drawio',
+      });
+    }),
+  );
 
   render();
   renderPanelNow();

@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Export button in the canvas toolbar (like v7): a dropdown offering
+  Markdown / For AI / Schema / draw.io, running the corresponding export
+  command against this editor's document.
+
+### Changed
+
+- Built-in templates no longer reference real vendor or service names
+  (AWS Direct Connect, Equinix, …) — replaced with generic equivalents
+  (Cloud Interconnect, ExampleNet, cloud-gw-01, …); a regression test keeps
+  shipped defaults vendor-neutral. Example placeholders in the property
+  panel were genericized the same way.
+
 - Phase 3 — periphery: semantic diagnostics in the Problems panel (core
   validate() with jsonc-parser path→range resolution; `Network TopoDraft:
   Validate` command); export commands (Markdown / for AI / import-schema /
