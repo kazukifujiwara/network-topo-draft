@@ -650,11 +650,45 @@ describe('multi-access network segments (spec §3.10)', () => {
   });
 });
 
-describe('New file button (toolbar)', () => {
-  it('asks the host to run the New Topology File command (template QuickPick)', () => {
+describe('New file menu (toolbar)', () => {
+  const ITEMS = [
+    { key: 'builtin:empty', label: 'Empty topology', description: 'A blank canvas' },
+    { key: 'user:file:///tpl/lab.topo.json', label: 'lab' },
+  ];
+
+  it('requests the template list on startup (with ready) and again on open', () => {
     const h = harness();
+    expect(h.f.posted).toContainEqual({ type: 'list-templates' });
+    const before = h.f.posted.filter((m) => m.type === 'list-templates').length;
     (h.root.querySelector('#btnNewFile') as HTMLElement).click();
-    expect(h.f.posted).toContainEqual({ type: 'new-file' });
+    expect(h.f.posted.filter((m) => m.type === 'list-templates')).toHaveLength(before + 1);
+  });
+
+  it('renders the host-supplied templates and posts new-file with the chosen key', () => {
+    const h = harness();
+    h.app.handleMessage({ type: 'templates', items: ITEMS });
+    (h.root.querySelector('#btnNewFile') as HTMLElement).click();
+    const menu = h.root.querySelector('#newMenu') as HTMLElement;
+    expect(menu.style.display).toBe('block');
+    const entries = menu.querySelectorAll('.ci');
+    expect([...entries].map((e) => e.textContent)).toEqual(['Empty topology', 'lab']);
+    (entries[1] as HTMLElement).click();
+    expect(h.f.posted).toContainEqual({
+      type: 'new-file',
+      template: 'user:file:///tpl/lab.topo.json',
+    });
+    expect(menu.style.display).toBe('none');
+  });
+
+  it('closes the menu on an outside click without creating anything', () => {
+    const h = harness();
+    h.app.handleMessage({ type: 'templates', items: ITEMS });
+    (h.root.querySelector('#btnNewFile') as HTMLElement).click();
+    const menu = h.root.querySelector('#newMenu') as HTMLElement;
+    expect(menu.style.display).toBe('block');
+    mouse(document.body, 'mousedown');
+    expect(menu.style.display).toBe('none');
+    expect(h.f.posted.filter((m) => m.type === 'new-file')).toHaveLength(0);
   });
 });
 

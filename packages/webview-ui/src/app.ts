@@ -50,7 +50,7 @@ import {
   vrfRowRect,
 } from '@topodraft/core';
 import type { TopoClipboard } from '@topodraft/core';
-import type { HostToWebviewMessage, WebviewToHostMessage } from '@topodraft/protocol';
+import type { HostToWebviewMessage, TemplateItem, WebviewToHostMessage } from '@topodraft/protocol';
 import type { EditorApi, InlineRenameTarget, LinkRef } from './api';
 import { linkRefKey, parseLinkRefKey } from './api';
 import type { NodeVM, SceneDom, ViewMode, ViewOptions } from './scene';
@@ -142,7 +142,10 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   root.innerHTML = `
     <div id="app">
       <div id="topbar">
-        <button class="tb-btn" id="btnNewFile" title="${T('tt_new')}">＋ ${T('tb_new')}</button>
+        <div id="newWrap">
+          <button class="tb-btn" id="btnNewFile" title="${T('tt_new')}">＋ ${T('tb_new')} ▾</button>
+          <div id="newMenu"></div>
+        </div>
         <div class="tb-sep"></div>
         <div class="tb-seg" title="${T('tt_seg')}">
           <button id="btnPhys">${T('tb_phys')}</button>
@@ -322,6 +325,11 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   };
 
   const handleMessage = (message: HostToWebviewMessage): void => {
+    if (message.type === 'templates') {
+      templates = message.items;
+      renderNewMenu();
+      return;
+    }
     if (message.type !== 'update') return;
     docVersion = message.docVersion;
     if (message.selfOriginated && message.text === lastSentText) {
@@ -667,7 +675,6 @@ export function createApp(root: HTMLElement, host: AppHost): App {
     host.postMessage({ type: 'agent-guide', ...(saveAs ? { saveAs: true } : {}) }),
   );
   $('#btnAgentGuide').addEventListener('click', () => guideModal.open());
-  $('#btnNewFile').addEventListener('click', () => host.postMessage({ type: 'new-file' }));
   const ctxMenu = createContextMenu(dom.app, api);
   buildPalette($('#palette'), api, {
     svgCenterWorld: () => {
@@ -1117,6 +1124,31 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   $('#zoomOut').addEventListener('click', () => zoomCenter(1 / 1.2));
   $('#zoomReset').addEventListener('click', () => zoomCenter(1 / view.vt.k));
 
+  /* ＋New template menu (host supplies the localized template list — a
+     QuickPick opened from a webview message is dismissed by the webview
+     re-taking focus, microsoft/vscode#214787, so the menu lives in here) */
+  let templates: TemplateItem[] = [];
+  const newMenu = $('#newMenu');
+  const renderNewMenu = (): void => {
+    newMenu.textContent = '';
+    for (const item of templates) {
+      const entry = document.createElement('div');
+      entry.className = 'ci';
+      entry.textContent = item.label;
+      if (item.description) entry.title = item.description;
+      entry.addEventListener('click', () => {
+        newMenu.style.display = 'none';
+        host.postMessage({ type: 'new-file', template: item.key });
+      });
+      newMenu.appendChild(entry);
+    }
+  };
+  $('#btnNewFile').addEventListener('click', (e) => {
+    e.stopPropagation();
+    host.postMessage({ type: 'list-templates' }); // refresh (user templates change)
+    newMenu.style.display = newMenu.style.display === 'block' ? 'none' : 'block';
+  });
+
   /* export menu (v7's Export button; generation runs on the host) */
   const exportMenu = $('#exportMenu');
   $('#btnExport').addEventListener('click', (e) => {
@@ -1125,6 +1157,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   });
   document.addEventListener('mousedown', (e) => {
     if (!$('#exportWrap').contains(e.target as Node)) exportMenu.style.display = 'none';
+    if (!$('#newWrap').contains(e.target as Node)) newMenu.style.display = 'none';
   });
   exportMenu.querySelectorAll<HTMLElement>('[data-export]').forEach((item) =>
     item.addEventListener('click', () => {
@@ -1139,6 +1172,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   render();
   renderPanelNow();
   host.postMessage({ type: 'ready' });
+  host.postMessage({ type: 'list-templates' });
 
   return {
     handleMessage,

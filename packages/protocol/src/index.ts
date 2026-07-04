@@ -6,6 +6,9 @@ export type {
   ExportRequestMessage,
   AgentGuideRequestMessage,
   NewFileRequestMessage,
+  TemplateItem,
+  ListTemplatesRequestMessage,
+  TemplatesMessage,
   HostToWebviewMessage,
   WebviewToHostMessage,
 } from './messages';

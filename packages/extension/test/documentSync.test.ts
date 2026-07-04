@@ -9,6 +9,7 @@ import {
   isAgentGuideRequest,
   isEditMessage,
   isExportRequest,
+  isListTemplatesRequest,
   isNewFileRequest,
 } from '../src/documentSync';
 
@@ -118,10 +119,20 @@ describe('isAgentGuideRequest', () => {
 });
 
 describe('isNewFileRequest', () => {
-  it('accepts only { type: "new-file" } shapes', () => {
+  it('accepts { type: "new-file" } with an optional string template key', () => {
     expect(isNewFileRequest({ type: 'new-file' })).toBe(true);
+    expect(isNewFileRequest({ type: 'new-file', template: 'builtin:empty' })).toBe(true);
+    expect(isNewFileRequest({ type: 'new-file', template: 42 })).toBe(false);
     expect(isNewFileRequest({ type: 'ready' })).toBe(false);
     expect(isNewFileRequest(null)).toBe(false);
+  });
+});
+
+describe('isListTemplatesRequest', () => {
+  it('accepts only { type: "list-templates" } shapes', () => {
+    expect(isListTemplatesRequest({ type: 'list-templates' })).toBe(true);
+    expect(isListTemplatesRequest({ type: 'new-file' })).toBe(false);
+    expect(isListTemplatesRequest(null)).toBe(false);
   });
 });
 

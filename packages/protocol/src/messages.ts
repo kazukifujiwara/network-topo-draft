@@ -62,17 +62,41 @@ export interface AgentGuideRequestMessage {
 }
 
 /**
- * Webview → Host: the toolbar's New button was pressed; the host runs the
- * New Topology File command (template QuickPick → save dialog → open).
+ * Webview → Host: a template was chosen in the toolbar's ＋New menu; the
+ * host runs the New Topology File command (save dialog → open). Without
+ * `template` the command shows its template QuickPick (palette path).
  */
 export interface NewFileRequestMessage {
   type: 'new-file';
+  /** TemplateItem.key ('builtin:<id>' or 'user:<uri>'). */
+  template?: string;
 }
 
-export type HostToWebviewMessage = UpdateMessage;
+/** One entry of the toolbar's ＋New template menu. */
+export interface TemplateItem {
+  /** 'builtin:<id>' or 'user:<uri>' — round-tripped in NewFileRequestMessage. */
+  key: string;
+  /** Localized display label (localization happens on the host). */
+  label: string;
+  description?: string;
+}
+
+/** Webview → Host: the ＋New menu was opened; reply with a TemplatesMessage. */
+export interface ListTemplatesRequestMessage {
+  type: 'list-templates';
+}
+
+/** Host → Webview: current template list for the ＋New menu. */
+export interface TemplatesMessage {
+  type: 'templates';
+  items: TemplateItem[];
+}
+
+export type HostToWebviewMessage = UpdateMessage | TemplatesMessage;
 export type WebviewToHostMessage =
   | EditMessage
   | ReadyMessage
   | ExportRequestMessage
   | AgentGuideRequestMessage
-  | NewFileRequestMessage;
+  | NewFileRequestMessage
+  | ListTemplatesRequestMessage;

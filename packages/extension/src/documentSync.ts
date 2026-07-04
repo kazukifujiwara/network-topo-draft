@@ -12,6 +12,7 @@
  */
 import type {
   AgentGuideRequestMessage,
+  ListTemplatesRequestMessage,
   NewFileRequestMessage,
   EditMessage,
   ExportRequestMessage,
@@ -62,10 +63,22 @@ export function isAgentGuideRequest(message: unknown): message is AgentGuideRequ
 }
 
 export function isNewFileRequest(message: unknown): message is NewFileRequestMessage {
+  const m = message as { type?: unknown; template?: unknown } | null;
   return (
     typeof message === 'object' &&
     message !== null &&
-    (message as { type?: unknown }).type === 'new-file'
+    m?.type === 'new-file' &&
+    (m.template === undefined || typeof m.template === 'string')
+  );
+}
+
+export function isListTemplatesRequest(
+  message: unknown,
+): message is ListTemplatesRequestMessage {
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    (message as { type?: unknown }).type === 'list-templates'
   );
 }
 

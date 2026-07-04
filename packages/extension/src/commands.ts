@@ -4,6 +4,7 @@
  * folder configured by `topodraft.templatesFolder` (O2: file-based).
  */
 import * as vscode from 'vscode';
+import type { TemplateItem } from '@topodraft/protocol';
 import { TopoParseError, parse, serialize } from '@topodraft/core';
 import { activeTopoUri } from './activeDocument';
 import { exportContent } from './exportContent';
@@ -104,12 +105,15 @@ async function listUserTemplates(): Promise<{ label: string; uri: vscode.Uri }[]
 /* ---------- New Topology File ---------- */
 
 interface TemplatePick extends vscode.QuickPickItem {
-  builtinId?: string;
-  userUri?: vscode.Uri;
+  key?: string;
 }
 
-async function newTopologyFile(): Promise<void> {
-  log('newFile: invoked');
+/**
+ * Templates offered by the ＋New menu and the command's QuickPick, in menu
+ * order: built-ins first, then the user's templates folder. Keys round-trip
+ * through NewFileRequestMessage.
+ */
+export async function listTemplateItems(): Promise<TemplateItem[]> {
   const builtinLabel: Record<string, string> = {
     empty: t('Empty topology'),
     'two-site-wan': t('2-site redundant WAN'),
@@ -122,40 +126,65 @@ async function newTopologyFile(): Promise<void> {
     'site-cloud': t('HQ connected to a cloud peer over a dedicated interconnect, logical VRF link'),
     'hsrp-segment': t('Two gateways sharing a /28 multi-access segment with an HSRP virtual IP'),
   };
-  const picks: TemplatePick[] = BUILTIN_TEMPLATES.map((b) => ({
+  const items: TemplateItem[] = BUILTIN_TEMPLATES.map((b) => ({
+    key: `builtin:${b.id}`,
     label: builtinLabel[b.id] ?? b.label,
     description: builtinDescription[b.id] ?? b.description,
-    builtinId: b.id,
   }));
-  const user = await listUserTemplates();
-  if (user.length) {
-    picks.push({ label: t('Your templates'), kind: vscode.QuickPickItemKind.Separator });
-    picks.push(...user.map((u) => ({ label: u.label, userUri: u.uri })));
+  for (const u of await listUserTemplates()) {
+    items.push({ key: `user:${u.uri.toString()}`, label: u.label });
   }
-  const pick = await vscode.window.showQuickPick(picks, {
-    placeHolder: t('Pick a template for the new topology'),
-    // The toolbar ＋New button triggers this command from a webview message;
-    // the webview re-takes focus right after the click, which dismisses a
-    // default QuickPick before it is even visible (microsoft/vscode#214787).
-    ignoreFocusOut: true,
-  });
-  if (!pick) return;
-  let content: string;
-  if (pick.builtinId !== undefined) {
-    const builtin = BUILTIN_TEMPLATES.find((b) => b.id === pick.builtinId);
-    if (!builtin) return;
-    content = templateText(builtin);
-  } else if (pick.userUri) {
-    content = new TextDecoder().decode(await vscode.workspace.fs.readFile(pick.userUri));
-  } else {
-    return;
+  return items;
+}
+
+async function templateContent(key: string): Promise<string | undefined> {
+  if (key.startsWith('builtin:')) {
+    const builtin = BUILTIN_TEMPLATES.find((b) => b.id === key.slice('builtin:'.length));
+    return builtin ? templateText(builtin) : undefined;
+  }
+  if (key.startsWith('user:')) {
+    try {
+      const uri = vscode.Uri.parse(key.slice('user:'.length), true);
+      return new TextDecoder().decode(await vscode.workspace.fs.readFile(uri));
+    } catch (e) {
+      log(`newFile: cannot read template ${key}: ${(e as Error).message}`);
+      return undefined;
+    }
+  }
+  return undefined;
+}
+
+async function newTopologyFile(templateKey?: string): Promise<void> {
+  log(`newFile: invoked${templateKey ? ` template=${templateKey}` : ''}`);
+  // The toolbar ＋New menu preselects a template; only the command-palette
+  // path (no argument) goes through the QuickPick. A QuickPick triggered
+  // from a webview message is dismissed by the webview re-taking focus
+  // (microsoft/vscode#214787), so the webview never relies on it.
+  let content = templateKey !== undefined ? await templateContent(templateKey) : undefined;
+  if (content === undefined) {
+    const items = await listTemplateItems();
+    const picks: TemplatePick[] = [];
+    for (const item of items) {
+      if (item.key.startsWith('user:') && !picks.some((x) => x.kind !== undefined)) {
+        picks.push({ label: t('Your templates'), kind: vscode.QuickPickItemKind.Separator });
+      }
+      picks.push({ label: item.label, description: item.description, key: item.key });
+    }
+    const pick = await vscode.window.showQuickPick(picks, {
+      placeHolder: t('Pick a template for the new topology'),
+      ignoreFocusOut: true,
+    });
+    if (!pick?.key) return;
+    content = await templateContent(pick.key);
+    if (content === undefined) return;
+    templateKey = pick.key;
   }
   const root = vscode.workspace.workspaceFolders?.[0]?.uri;
   const picked = await vscode.window.showSaveDialog({
     defaultUri: root ? vscode.Uri.joinPath(root, 'new.topo.json') : undefined,
     filters: { 'TopoDraft topology': ['topo.json', 'json'] },
   });
-  log(`newFile: template=${pick.builtinId ?? pick.userUri?.toString() ?? '?'} dialog=${picked?.toString() ?? 'cancelled'}`);
+  log(`newFile: template=${templateKey ?? '?'} dialog=${picked?.toString() ?? 'cancelled'}`);
   if (!picked) return;
   // native dialogs mishandle the compound ".topo.json" extension — normalize
   // instead of trusting the returned name (the editor/schema key off it)
@@ -267,7 +296,9 @@ export function registerCommands(): vscode.Disposable {
     vscode.commands.registerCommand('topodraft.exportForAi', () => runExport('for-ai')),
     vscode.commands.registerCommand('topodraft.exportSchema', () => runExport('schema')),
     vscode.commands.registerCommand('topodraft.exportDrawio', () => runExport('drawio')),
-    vscode.commands.registerCommand('topodraft.newFile', () => newTopologyFile()),
+    vscode.commands.registerCommand('topodraft.newFile', (template?: string) =>
+      newTopologyFile(typeof template === 'string' ? template : undefined),
+    ),
     vscode.commands.registerCommand('topodraft.saveAsTemplate', () => saveAsTemplate()),
     vscode.commands.registerCommand('topodraft.writeAgentGuide', (saveAs?: boolean) => writeAgentGuide(saveAs === true)),
   );

@@ -15,10 +15,11 @@ import {
   isAgentGuideRequest,
   isEditMessage,
   isExportRequest,
+  isListTemplatesRequest,
   isNewFileRequest,
   isReadyMessage,
 } from './documentSync';
-import { runExport } from './commands';
+import { listTemplateItems, runExport } from './commands';
 
 export class TopoEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = 'topodraft.editor';
@@ -103,7 +104,11 @@ export class TopoEditorProvider implements vscode.CustomTextEditorProvider {
       else if (isAgentGuideRequest(message)) {
         void vscode.commands.executeCommand('topodraft.writeAgentGuide', message.saveAs === true);
       } else if (isNewFileRequest(message)) {
-        void vscode.commands.executeCommand('topodraft.newFile');
+        void vscode.commands.executeCommand('topodraft.newFile', message.template);
+      } else if (isListTemplatesRequest(message)) {
+        void listTemplateItems().then((items) =>
+          webviewPanel.webview.postMessage({ type: 'templates', items }),
+        );
       }
     });
     webviewPanel.onDidDispose(() => {

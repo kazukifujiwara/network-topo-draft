@@ -16,7 +16,9 @@ describe('startup handshake', () => {
   it('posts ready exactly once so the host sends the initial update', () => {
     const f = fakeHost();
     createApp(mount(), f.host);
-    expect(f.posted).toEqual([{ type: 'ready' }]);
+    expect(f.posted.filter((m) => m.type === 'ready')).toHaveLength(1);
+    // the ＋New menu list is prefetched with the same handshake
+    expect(f.posted).toEqual([{ type: 'ready' }, { type: 'list-templates' }]);
   });
 });
 

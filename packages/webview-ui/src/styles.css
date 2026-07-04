@@ -1014,7 +1014,8 @@ button {
 }
 
 /* export dropdown (v7 Export button; generation runs on the host) */
-#exportWrap {
+#exportWrap,
+#newWrap {
   position: relative;
 }
 .tb-btn.primary {
@@ -1027,9 +1028,15 @@ button {
   background: var(--acc);
   color: #0c1522;
 }
+#newMenu {
+  left: 0;
+}
 #exportMenu {
-  position: absolute;
   right: 0;
+}
+#exportMenu,
+#newMenu {
+  position: absolute;
   top: 30px;
   z-index: 70;
   display: none;
@@ -1040,7 +1047,8 @@ button {
   min-width: 180px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
-#exportMenu .ci {
+#exportMenu .ci,
+#newMenu .ci {
   padding: 7px 10px;
   border-radius: 6px;
   font-size: 12px;
@@ -1048,7 +1056,8 @@ button {
   cursor: pointer;
   white-space: nowrap;
 }
-#exportMenu .ci:hover {
+#exportMenu .ci:hover,
+#newMenu .ci:hover {
   background: var(--bg3);
 }
 
