@@ -22,6 +22,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- The toolbar ＋ New button appeared to do nothing: the webview re-takes
+  focus right after the click, dismissing the template QuickPick before it
+  became visible (microsoft/vscode#214787). The picker now sets
+  `ignoreFocusOut`, and the command logs its progress to the TopoDraft
+  output channel.
 - Link endpoints around network-segment nodes in the logical view were
   misaligned: segments are drawn as pills (24px corner radius) but link
   anchors were computed against the square bounding box, so diagonal

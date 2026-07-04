@@ -109,6 +109,7 @@ interface TemplatePick extends vscode.QuickPickItem {
 }
 
 async function newTopologyFile(): Promise<void> {
+  log('newFile: invoked');
   const builtinLabel: Record<string, string> = {
     empty: t('Empty topology'),
     'two-site-wan': t('2-site redundant WAN'),
@@ -133,6 +134,10 @@ async function newTopologyFile(): Promise<void> {
   }
   const pick = await vscode.window.showQuickPick(picks, {
     placeHolder: t('Pick a template for the new topology'),
+    // The toolbar ＋New button triggers this command from a webview message;
+    // the webview re-takes focus right after the click, which dismisses a
+    // default QuickPick before it is even visible (microsoft/vscode#214787).
+    ignoreFocusOut: true,
   });
   if (!pick) return;
   let content: string;

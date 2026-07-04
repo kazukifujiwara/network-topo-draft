@@ -197,6 +197,28 @@ function defineTests(): void {
       await vscode.commands.executeCommand('topodraft.validate'); // must not throw
     });
 
+    g.it('new-file template picker survives the focus flip of a webview-button trigger', async () => {
+      // The toolbar ＋New button posts a message from the webview; the webview
+      // re-takes focus right after the click, which dismisses a default
+      // QuickPick before it is visible (microsoft/vscode#214787). The picker
+      // must set ignoreFocusOut so the command still works from the canvas.
+      await vscode.commands.executeCommand('vscode.open', wsFile('canonical.topo.json'));
+      await waitFor(() => activeInput() instanceof vscode.TabInputCustom);
+      let settled = false;
+      const done = vscode.commands.executeCommand('topodraft.newFile').then(
+        () => (settled = true),
+        () => (settled = true),
+      );
+      await sleep(700); // let the QuickPick open
+      // simulate the focus theft that dismisses a non-ignoreFocusOut picker
+      await vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
+      await sleep(700);
+      assert.strictEqual(settled, false, 'the template picker was dismissed by the focus change');
+      await vscode.commands.executeCommand('workbench.action.closeQuickOpen');
+      await waitFor(() => settled, 5_000);
+      await done;
+    });
+
     g.it('reopen commands switch between the text and topology editors', async () => {
       await vscode.commands.executeCommand('vscode.open', wsFile('canonical.topo.json'));
       await waitFor(() => activeInput() instanceof vscode.TabInputCustom);
