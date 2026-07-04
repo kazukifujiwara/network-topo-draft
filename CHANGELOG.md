@@ -20,8 +20,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   generic diagram tools) and name files `*.topo.json`, with a starter
   skeleton including `$schema`.
 
-### Added
-
 - New built-in template "Routed LAG pair": two routers uplinked to a switch
   pair over 2-member LAGs — a ready-made example of the `lag` /
   `type: "lag"` interface notation (vendor-neutral).
