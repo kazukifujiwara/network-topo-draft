@@ -7,11 +7,12 @@
  * CSP note: markup contains no style attributes; dynamic colors are applied
  * via CSSOM after insertion.
  */
-import type { Cable, Circuit, Device, LogicalLink, ProviderNetwork, Topology } from '@topodraft/core';
+import type { Cable, Circuit, Device, LogicalLink, Network, ProviderNetwork, Topology } from '@topodraft/core';
 import {
   allVrfs,
   deriveDeviceVrfs,
   findDevice,
+  findNetwork,
   findProviderNetwork,
   iconKey,
   setLogicalEndpointInterface,
@@ -115,6 +116,8 @@ export function renderPanel(panel: HTMLElement, api: EditorApi): void {
     if (device) return renderDevice(panel, api, t, device);
     const pn = findProviderNetwork(t, name);
     if (pn) return renderPn(panel, api, t, pn);
+    const network = findNetwork(t, name);
+    if (network) return renderNetwork(panel, api, t, network);
   }
   if (linkRef) {
     const link = (t[linkRef.col] ?? [])[linkRef.idx];
@@ -183,6 +186,50 @@ function renderPn(panel: HTMLElement, api: EditorApi, t: Topology, pn: ProviderN
     ${actionsRow()}`;
   bindRename(panel, api, pn.name);
   bindFields(panel, api, pn as unknown as Record<string, unknown>, { skip: ['name'] });
+  bindActions(panel, api);
+}
+
+/* ---------- network segment (spec §3.10) ---------- */
+
+function renderNetwork(panel: HTMLElement, api: EditorApi, t: Topology, n: Network): void {
+  panel.innerHTML = `
+    ${datalists(t)}
+    <div class="pn-title">${T('net_title')} <span class="badge">${T('net_badge')}</span></div>
+    ${fld('name', n.name, 'e.g. svc-seg-01')}
+    <div class="fld-row">
+      ${fld('prefix', n.prefix, '10.0.0.0/28')}
+      ${fld('vlan', n.vlan, 'VLAN ID')}
+    </div>
+    <div class="pn-sep"></div>
+    <div class="pn-title">${T('fhrp_title')}</div>
+    <div class="fld-row">
+      <div class="fld"><label>protocol</label>
+        <input data-fh="protocol" value="${esc(n.fhrp?.protocol)}" placeholder="hsrp / vrrp / glbp" spellcheck="false"></div>
+      <div class="fld"><label>group</label>
+        <input data-fh="group" value="${esc(n.fhrp?.group)}" placeholder="1" spellcheck="false"></div>
+    </div>
+    <div class="fld"><label>virtual_ip</label>
+      <input data-fh="virtual_ip" value="${esc(n.fhrp?.virtual_ip)}" placeholder="10.0.0.1/28" spellcheck="false"></div>
+    <div class="pn-sep"></div>
+    ${fld('description', n.description, '')}
+    <div class="pn-info">${T('net_info')}</div>
+    ${actionsRow()}`;
+  bindRename(panel, api, n.name);
+  bindFields(panel, api, n as unknown as Record<string, unknown>, { skip: ['name'] });
+  panel.querySelectorAll<HTMLInputElement>('input[data-fh]').forEach((inp) => {
+    const key = inp.getAttribute('data-fh') as 'protocol' | 'group' | 'virtual_ip';
+    inp.addEventListener('input', () => {
+      api.mutate((m) => {
+        const net = findNetwork(m, n.name);
+        if (!net) return;
+        net.fhrp = net.fhrp ?? {};
+        if (inp.value) net.fhrp[key] = inp.value;
+        else delete net.fhrp[key];
+        if (!Object.keys(net.fhrp).length) delete net.fhrp;
+      });
+    });
+    inp.addEventListener('change', () => api.commit());
+  });
   bindActions(panel, api);
 }
 

@@ -18,7 +18,7 @@ const LEGACY_FIXTURES = [
   'v6v7/two-site-wan',
 ] as const;
 
-const V1_FIXTURES = ['v1/canonical', 'v1/minimal'] as const;
+const V1_FIXTURES = ['v1/canonical', 'v1/minimal', 'v1/vrrp-segment'] as const;
 
 const ajv = new Ajv({ allErrors: true });
 const validateSchema = ajv.compile(topoJsonSchema as object);

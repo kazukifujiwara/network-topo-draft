@@ -34,6 +34,7 @@ describe('template inventory', () => {
       'empty',
       'two-site-wan',
       'site-cloud',
+      'hsrp-segment',
     ]);
   });
 

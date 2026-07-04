@@ -16,7 +16,8 @@
  */
 
 import type { LogicalEndpoint, PhysicalEndpoint, Topology } from './model';
-import { findDevice } from './model';
+import { findDevice, findNetwork } from './model';
+import { ipv4InCidr } from './cidr';
 
 export type DiagnosticSeverity = 'error' | 'warning' | 'info';
 
@@ -26,7 +27,8 @@ export type DiagnosticCode =
   | 'missing-lag-parent'
   | 'unknown-interface'
   | 'undeclared-vrf'
-  | 'missing-version';
+  | 'missing-version'
+  | 'ip-outside-prefix';
 
 export interface Diagnostic {
   severity: DiagnosticSeverity;
@@ -76,9 +78,22 @@ export function validate(topology: Topology): Diagnostic[] {
       seen.set(p.name, 'provider network');
     }
   });
+  (topology.networks ?? []).forEach((n, i) => {
+    if (seen.has(n.name)) {
+      diagnostics.push({
+        severity: 'error',
+        code: 'duplicate-name',
+        message: `Duplicate name "${n.name}" (already used by a ${seen.get(n.name)}); link references resolve to the first occurrence.`,
+        path: ['networks', i, 'name'],
+      });
+    } else {
+      seen.set(n.name, 'network');
+    }
+  });
 
   const deviceNames = new Set(topology.devices.map((d) => d.name));
   const pnNames = new Set((topology.provider_networks ?? []).map((p) => p.name));
+  const networkNames = new Set((topology.networks ?? []).map((n) => n.name));
 
   /* --- link endpoint checks --- */
   const checkEndpoint = (
@@ -88,6 +103,18 @@ export function validate(topology: Topology): Diagnostic[] {
     ep: PhysicalEndpoint | LogicalEndpoint,
   ): void => {
     const base = [collection, index, side];
+    const netRef = (ep as LogicalEndpoint).network;
+    if (netRef !== undefined) {
+      if (!networkNames.has(netRef)) {
+        diagnostics.push({
+          severity: 'error',
+          code: 'dangling-reference',
+          message: `Endpoint references network "${netRef}", which does not exist in networks[].`,
+          path: [...base, 'network'],
+        });
+      }
+      return;
+    }
     if (ep.provider_network !== undefined) {
       if (!pnNames.has(ep.provider_network)) {
         diagnostics.push({
@@ -103,7 +130,7 @@ export function validate(topology: Topology): Diagnostic[] {
       diagnostics.push({
         severity: 'error',
         code: 'dangling-reference',
-        message: 'Endpoint references neither a "device" nor a "provider_network".',
+        message: 'Endpoint references neither a "device", a "provider_network", nor a "network".',
         path: base,
       });
       return;
@@ -179,6 +206,54 @@ export function validate(topology: Topology): Diagnostic[] {
         });
       }
     });
+  });
+
+  /* --- W: IPs outside a segment's prefix (spec §3.10) --- */
+  (topology.networks ?? []).forEach((n, ni) => {
+    const prefix = (n.prefix ?? '').trim();
+    if (!prefix) return;
+    const vip = (n.fhrp?.virtual_ip ?? '').trim();
+    if (vip && ipv4InCidr(vip, prefix) === false) {
+      diagnostics.push({
+        severity: 'warning',
+        code: 'ip-outside-prefix',
+        message: `FHRP virtual IP "${vip}" is outside this network's prefix ${prefix}.`,
+        path: ['networks', ni, 'fhrp', 'virtual_ip'],
+      });
+    }
+  });
+  (topology.logical_links ?? []).forEach((l, li) => {
+    const sides: ['a' | 'b', 'a' | 'b'] = ['a', 'b'];
+    for (const side of sides) {
+      const other: 'a' | 'b' = side === 'a' ? 'b' : 'a';
+      const netName = l[other].network;
+      if (netName === undefined) continue;
+      const prefix = (findNetwork(topology, netName)?.prefix ?? '').trim();
+      if (!prefix) continue;
+      const ep = l[side];
+      if (ep.device === undefined) continue;
+      // effective IP: the endpoint's own, or its named interface's on the device
+      let ip = (ep.ip_address ?? '').trim();
+      let path: (string | number)[] = ['logical_links', li, side, 'ip_address'];
+      if (!ip && ep.interface !== undefined) {
+        const device = findDevice(topology, ep.device);
+        const ifIdx = (device?.interfaces ?? []).findIndex((f) => f.name === ep.interface);
+        const iface = ifIdx >= 0 ? device?.interfaces?.[ifIdx] : undefined;
+        if (iface?.ip_address) {
+          ip = iface.ip_address.trim();
+          const di = topology.devices.findIndex((d) => d.name === ep.device);
+          path = ['devices', di, 'interfaces', ifIdx, 'ip_address'];
+        }
+      }
+      if (ip && ipv4InCidr(ip, prefix) === false) {
+        diagnostics.push({
+          severity: 'warning',
+          code: 'ip-outside-prefix',
+          message: `IP "${ip}" on "${ep.device}" is outside the prefix ${prefix} of network "${netName}".`,
+          path,
+        });
+      }
+    }
   });
 
   return diagnostics;

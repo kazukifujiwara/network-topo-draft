@@ -87,12 +87,14 @@ function el(tag: string, attrs: Record<string, string | number> = {}): SVGElemen
 /* ---------- display model ---------- */
 
 export interface NodeVM {
-  kind: 'device' | 'pn';
+  kind: 'device' | 'pn' | 'network';
   name: string;
   x: number;
   y: number;
   h: number;
   sub: string;
+  /** third label line (segment VIP) */
+  extra?: string;
   icon: keyof typeof ICONS;
   site: string;
   /** compartment rows in the logical view ('' = global); [] otherwise */
@@ -156,6 +158,27 @@ export function buildNodes(topology: Topology, view: ViewOptions): Map<string, N
       site: '',
       rows: [],
     });
+  }
+  // multi-access segments are an L3 construct — logical view only (spec §3.10)
+  if (view.viewMode === 'logical') {
+    for (const n of topology.networks ?? []) {
+      if (map.has(n.name)) continue;
+      const vm: NodeVM = {
+        kind: 'network',
+        name: n.name,
+        x: n.position?.x ?? 0,
+        y: n.position?.y ?? 0,
+        h: NODE_H,
+        sub: [n.prefix, n.vlan ? 'vlan ' + n.vlan : ''].filter(Boolean).join(' · ') || 'segment',
+        icon: 'network',
+        site: '',
+        rows: [],
+      };
+      if (n.fhrp?.virtual_ip) {
+        vm.extra = `VIP ${n.fhrp.virtual_ip}${n.fhrp.protocol ? ' (' + n.fhrp.protocol + (n.fhrp.group ? ' ' + n.fhrp.group : '') + ')' : ''}`;
+      }
+      map.set(n.name, vm);
+    }
   }
   return map;
 }
@@ -380,10 +403,10 @@ export function renderScene(
     });
     g.appendChild(
       el('rect', {
-        class: 'node-box' + (n.kind === 'pn' ? ' pnbox' : ''),
+        class: 'node-box' + (n.kind === 'pn' ? ' pnbox' : n.kind === 'network' ? ' netbox' : ''),
         width: NODE_W,
         height: n.h,
-        rx: 9,
+        rx: n.kind === 'network' ? 24 : 9,
       }),
     );
     const ig = el('g', { transform: 'translate(11,13)' });
@@ -393,9 +416,14 @@ export function renderScene(
     const nm = el('text', { class: 'node-name', x: 44, y: 22 });
     nm.textContent = n.name || '(no name)';
     g.appendChild(nm);
-    const sub = el('text', { class: 'node-sub', x: 44, y: 37 });
+    const sub = el('text', { class: 'node-sub', x: 44, y: n.extra ? 33 : 37 });
     sub.textContent = n.sub;
     g.appendChild(sub);
+    if (n.extra) {
+      const extra = el('text', { class: 'node-vip', x: 44, y: 45 });
+      extra.textContent = n.extra;
+      g.appendChild(extra);
+    }
     if (view.viewMode === 'logical' && n.kind === 'device') {
       n.rows.forEach((v, idx) => {
         const rect = vrfRowRect(0, 0, idx);
@@ -487,10 +515,11 @@ export function renderScene(
   }
   const nDev = t.devices.length;
   const nPn = (t.provider_networks ?? []).length;
+  const nNet = (t.networks ?? []).length;
   const nc = (t.cables ?? []).length;
   const ni = (t.circuits ?? []).length;
   const nl = (t.logical_links ?? []).length;
   dom.counts.textContent =
-    `${nDev} ${T('st_devices')}${nPn ? ` · ${nPn} ${T('st_pn')}` : ''} · ${nc + ni + nl} ${T('st_links')} (${nc} cable / ${ni} circuit / ${nl} logical) · ${sitesList(t).length} ${T('st_sites')}` +
+    `${nDev} ${T('st_devices')}${nPn ? ` · ${nPn} ${T('st_pn')}` : ''}${nNet ? ` · ${nNet} ${T('st_networks')}` : ''} · ${nc + ni + nl} ${T('st_links')} (${nc} cable / ${ni} circuit / ${nl} logical) · ${sitesList(t).length} ${T('st_sites')}` +
     (edit.selectedNodes.size > 1 ? ` · ${edit.selectedNodes.size} ${T('st_sel')}` : '');
 }

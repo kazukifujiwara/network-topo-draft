@@ -23,6 +23,7 @@
   "version": 1,                    // required (fixed to 1 in v1). If missing, the file is read as legacy (§7)
   "devices": [ ... ],              // required (may be empty)
   "provider_networks": [ ... ],    // optional
+  "networks": [ ... ],             // optional (TopoDraft extension, §3.10)
   "cables": [ ... ],               // optional
   "circuits": [ ... ],             // optional
   "logical_links": [ ... ]         // optional (TopoDraft extension)
@@ -124,11 +125,12 @@ Logical connections between routing instances (VRFs). NetBox has no correspondin
 { "provider_network": "AWS Direct Connect" }
 ```
 
-**B. Logical endpoints (logical_links)** — one of the two shapes:
+**B. Logical endpoints (logical_links)** — one of the three shapes:
 
 ```jsonc
 { "device": "rt-hq-01", "vrf": "PROD", "id": "tenant-abc", "interface": "Gi0/0/0.100", "ip_address": "169.254.10.1/30" }
 { "provider_network": "AWS Direct Connect", "id": "dxcon-xyz789" }
+{ "network": "svc-seg-01" }                                          // attaches to a networks[] segment (§3.10)
 ```
 
 | Field | Description |
@@ -148,12 +150,38 @@ explicit devices[].vrfs  ∪  interfaces[].vrf  ∪  endpoint.vrf of logical_lin
 
 Therefore an agent that writes a vrf on a logical-link endpoint is not strictly required to also add it to `vrfs[]` (explicit declaration is nonetheless recommended; Diagnostics warns about "undeclared VRFs").
 
+### 3.10 networks[] — multi-access L3 segments [TopoDraft extension]
+
+A subnet shared by multiple devices (server segments, HSRP/VRRP gateway pairs, DMZs). NetBox's closest counterparts are Prefix and FHRPGroup (§8). Drawn **only in the logical view** as a segment node; the physical realization (switches, cables, VLANs) stays in the physical layer.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `name` | string **required** | Unique (shared namespace with devices / provider networks). Referenced by logical endpoints |
+| `prefix` | string | Subnet in CIDR (e.g. `"10.0.0.0/28"`) |
+| `vlan` | string | VLAN ID of the segment |
+| `fhrp` | object | First-hop redundancy: `protocol` (hsrp / vrrp / glbp …, free text), `group`, `virtual_ip` (CIDR) |
+| `description` | string | Free text |
+| `position` | object | Coordinates (optional) |
+
+**Attachment convention**: each attached device gets **one logical link** whose far endpoint is `{ "network": "<name>" }`. The device-side endpoint carries `vrf` / `interface` as usual; real IPs live on `devices[].interfaces[].ip_address`, while the shared virtual IP lives on the segment's `fhrp.virtual_ip`. Diagnostics warn when an attached IP or the virtual IP falls outside `prefix`.
+
+```jsonc
+"networks": [
+  { "name": "svc-seg", "prefix": "10.0.0.0/28", "vlan": "100",
+    "fhrp": { "protocol": "hsrp", "group": "1", "virtual_ip": "10.0.0.1/28" } }
+],
+"logical_links": [
+  { "a": { "device": "rt-01", "vrf": "PROD", "interface": "Gi0/1.100" }, "b": { "network": "svc-seg" } },
+  { "a": { "device": "rt-02", "vrf": "PROD", "interface": "Gi0/1.100" }, "b": { "network": "svc-seg" } }
+]
+```
+
 ## 4. Canonical Serialization Rules (guaranteed editor output)
 
 For stable git diffs and stable diff-based agent editing, the editor's save output follows the rules below. **Agents are encouraged to follow them too** when writing files (non-conforming files still load; the editor normalizes them on the next save).
 
 1. 2-space indentation, LF line endings, exactly one trailing newline
-2. Top-level key order: `$schema` → `version` → `devices` → `provider_networks` → `cables` → `circuits` → `logical_links`
+2. Top-level key order: `$schema` → `version` → `devices` → `provider_networks` → `networks` → `cables` → `circuits` → `logical_links`
 3. Keys inside each object follow the order of the tables in §3. `position` always comes **last** in its object
 4. Array order **preserves** the user's/agent's writing order — never re-sorted
 5. Empty fields (empty string / array / object) are not emitted (except inside `config_context`)
@@ -242,6 +270,7 @@ The editor performs no NetBox sync (ADR D5). Notes for agents bridging this file
 | `devices[].config_context` | **`local_context_data`** (the writable field). NetBox's `config_context` is computed and read-only | **Write to `local_context_data` when pushing.** The name here is unified as `config_context` for TopoDraft's convenience |
 | `provider_networks[]` | circuits.ProviderNetwork (requires Provider FK) | — |
 | `circuits[]` | Circuit + CircuitTermination | `commit_rate` in NetBox is an integer in kbps; here it is a free string such as `"1Gbps"` |
+| `networks[]` | **Prefix + FHRPGroup (TopoDraft extension)** | `prefix`/`vlan` map to Prefix (+VLAN); `fhrp` maps to FHRPGroup (protocol, group ID, virtual IPs); attachments correspond to IPAddress assignments |
 | `logical_links[]` | **No corresponding object (TopoDraft extension)** | When pushing, either design a representation on the agent side (tags / custom fields / L2VPN, …) or exclude them |
 | `position` | None | Never send to NetBox |
 
@@ -249,4 +278,5 @@ The editor performs no NetBox sync (ADR D5). Notes for agents bridging this file
 
 - Increment `version` **only for breaking changes** (field removal or meaning change); implement a read migration for the old version in `parse.ts` and add the corresponding golden fixture
 - Backward-compatible additions (new optional fields) may stay at `version: 1` with a schema extension (record the revision date in the schema file)
+  - 2026-07-05: `networks[]` (multi-access L3 segments with FHRP, §3.10) and the `{network}` logical endpoint shape added; `version` stays 1
 - The schema, this document, and fixtures must be updated **in the same PR** (plan §6.4 Definition of Done)

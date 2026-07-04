@@ -1,7 +1,10 @@
 /** Node icons and role colors, ported verbatim from the frozen v7 reference. */
 import type { IconKey } from '@topodraft/core';
 
-export const ICONS: Record<IconKey, string> = {
+/** Extra webview-only glyph keys beyond the core role classification. */
+export type GlyphKey = IconKey | 'network';
+
+export const ICONS: Record<GlyphKey, string> = {
   router:
     '<circle cx="12" cy="12" r="9"/><path d="M8 9.5h5m0 0-1.8-1.8M13 9.5l-1.8 1.8M16 14.5h-5m0 0 1.8-1.8M11 14.5l1.8 1.8"/>',
   switch:
@@ -15,10 +18,12 @@ export const ICONS: Record<IconKey, string> = {
   generic:
     '<path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/>',
   pnet: '<path d="M6.5 15.5a3.5 3.5 0 0 1-.5-6.96A4.8 4.8 0 0 1 15.3 7.4 3.6 3.6 0 0 1 15 14.5"/><path d="M4 19h16M7.5 15.5V19M12 14.5V19M16.5 14.5V19"/>',
+  network:
+    '<path d="M3 12h18"/><path d="M7 12v4.5M12 12V7.5M17 12v4.5"/><circle cx="7" cy="18" r="1.5"/><circle cx="12" cy="6" r="1.5"/><circle cx="17" cy="18" r="1.5"/>',
 };
 
 /** CSS custom-property color per icon key (values defined in styles.css). */
-export const ROLE_COLOR: Record<IconKey, string> = {
+export const ROLE_COLOR: Record<GlyphKey, string> = {
   router: 'var(--c-router)',
   switch: 'var(--c-switch)',
   firewall: 'var(--c-firewall)',
@@ -26,4 +31,5 @@ export const ROLE_COLOR: Record<IconKey, string> = {
   server: 'var(--c-server)',
   generic: 'var(--c-generic)',
   pnet: 'var(--c-pnet)',
+  network: 'var(--c-network)',
 };

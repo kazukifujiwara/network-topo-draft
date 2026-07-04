@@ -24,8 +24,10 @@ import type {
   ConfigContext,
   Device,
   DeviceInterface,
+  FhrpConfig,
   LogicalEndpoint,
   LogicalLink,
+  Network,
   PhysicalEndpoint,
   Position,
   ProviderNetwork,
@@ -70,6 +72,9 @@ export function normalize(value: unknown): Topology {
   const provider_networks = asArray(value.provider_networks)
     .map((raw, i) => normalizeProviderNetwork(raw, i))
     .filter((p): p is ProviderNetwork => p !== undefined);
+  const networks = asArray(value.networks)
+    .map((raw, i) => normalizeNetwork(raw, i))
+    .filter((n): n is Network => n !== undefined);
 
   const cables = asArray(value.cables)
     .filter(isPlainObject)
@@ -86,6 +91,7 @@ export function normalize(value: unknown): Topology {
   if (schema !== undefined) topology.$schema = schema;
   if (value.version === 1) topology.version = 1;
   if (provider_networks.length) topology.provider_networks = provider_networks;
+  if (networks.length) topology.networks = networks;
   if (cables.length) topology.cables = cables;
   if (circuits.length) topology.circuits = circuits;
   if (logical_links.length) topology.logical_links = logical_links;
@@ -191,6 +197,32 @@ function normalizeProviderNetwork(raw: unknown, index: number): ProviderNetwork 
   return p;
 }
 
+function normalizeNetwork(raw: unknown, index: number): Network | undefined {
+  if (!isPlainObject(raw)) return undefined;
+  const n: Network = {
+    name: nonEmptyString(raw.name) ?? `net-${index + 1}`,
+  };
+  const prefix = nonEmptyString(raw.prefix);
+  const vlan = nonEmptyString(raw.vlan);
+  const description = nonEmptyString(raw.description);
+  if (prefix !== undefined) n.prefix = prefix;
+  if (vlan !== undefined) n.vlan = vlan;
+  if (isPlainObject(raw.fhrp)) {
+    const fhrp: FhrpConfig = {};
+    const protocol = nonEmptyString(raw.fhrp.protocol);
+    const group = nonEmptyString(raw.fhrp.group);
+    const virtual_ip = nonEmptyString(raw.fhrp.virtual_ip);
+    if (protocol !== undefined) fhrp.protocol = protocol;
+    if (group !== undefined) fhrp.group = group;
+    if (virtual_ip !== undefined) fhrp.virtual_ip = virtual_ip;
+    if (Object.keys(fhrp).length) n.fhrp = fhrp;
+  }
+  if (description !== undefined) n.description = description;
+  const position = normalizePosition(raw.position);
+  if (position) n.position = position;
+  return n;
+}
+
 function normalizePhysicalEndpoint(raw: unknown, keepSite: boolean): PhysicalEndpoint {
   if (!isPlainObject(raw)) return {};
   const pn = nonEmptyString(raw.provider_network);
@@ -266,6 +298,8 @@ function normalizeLogicalEndpoint(
     if (id !== undefined) ep.id = id;
     return ep;
   }
+  const net = nonEmptyString(raw.network);
+  if (net !== undefined) return { network: net };
   const ep: LogicalEndpoint = {};
   const device = nonEmptyString(raw.device);
   // v3 back-compat: a single top-level "vrf" on the link applies to both ends.
@@ -323,6 +357,7 @@ function reorderTopology(t: Topology): Topology {
   if (t.version !== undefined) out.version = t.version;
   out.devices = t.devices;
   if (t.provider_networks) out.provider_networks = t.provider_networks;
+  if (t.networks) out.networks = t.networks;
   if (t.cables) out.cables = t.cables;
   if (t.circuits) out.circuits = t.circuits;
   if (t.logical_links) out.logical_links = t.logical_links;

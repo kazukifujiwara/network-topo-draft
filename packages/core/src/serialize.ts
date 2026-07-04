@@ -3,7 +3,7 @@
  *
  * 1. 2-space indentation, LF, exactly one trailing newline
  * 2. Top-level key order: $schema → version → devices → provider_networks →
- *    cables → circuits → logical_links
+ *    networks → cables → circuits → logical_links
  * 3. Keys inside each object follow the §3 tables; `position` always last
  * 4. Array order is preserved — never re-sorted
  * 5. Empty fields (empty string / array / object) are not emitted
@@ -20,8 +20,10 @@ import type {
   Circuit,
   Device,
   DeviceInterface,
+  FhrpConfig,
   LogicalEndpoint,
   LogicalLink,
+  Network,
   PhysicalEndpoint,
   Position,
   ProviderNetwork,
@@ -49,6 +51,8 @@ export function toCanonical(topology: Topology): Topology {
   out.devices = topology.devices.map((d) => canonicalDevice(d));
   const pns = (topology.provider_networks ?? []).map((p) => canonicalProviderNetwork(p));
   if (pns.length) out.provider_networks = pns;
+  const networks = (topology.networks ?? []).map((n) => canonicalNetwork(n));
+  if (networks.length) out.networks = networks;
   const cables = (topology.cables ?? []).map((c) => canonicalCable(c));
   if (cables.length) out.cables = cables;
   const circuits = (topology.circuits ?? []).map((c) => canonicalCircuit(c, topology));
@@ -112,6 +116,23 @@ function canonicalProviderNetwork(p: ProviderNetwork): ProviderNetwork {
   return out;
 }
 
+function canonicalNetwork(n: Network): Network {
+  const out = { name: n.name ?? '' } as Network;
+  put(out, 'prefix', n.prefix);
+  put(out, 'vlan', n.vlan);
+  if (n.fhrp) {
+    const fhrp = {} as FhrpConfig;
+    put(fhrp, 'protocol', n.fhrp.protocol);
+    put(fhrp, 'group', n.fhrp.group);
+    put(fhrp, 'virtual_ip', n.fhrp.virtual_ip);
+    if (Object.keys(fhrp).length) out.fhrp = fhrp;
+  }
+  put(out, 'description', n.description);
+  const position = roundPosition(n.position);
+  if (position) out.position = position;
+  return out;
+}
+
 function canonicalCableEndpoint(ep: PhysicalEndpoint): PhysicalEndpoint {
   if (ep.provider_network) return { provider_network: ep.provider_network };
   const out: PhysicalEndpoint = {};
@@ -138,6 +159,7 @@ function canonicalLogicalEndpoint(ep: LogicalEndpoint): LogicalEndpoint {
     put(out, 'id', ep.id?.trim());
     return out;
   }
+  if (ep.network) return { network: ep.network };
   const out: LogicalEndpoint = {};
   put(out, 'device', ep.device);
   put(out, 'vrf', ep.vrf?.trim());

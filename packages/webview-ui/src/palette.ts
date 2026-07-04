@@ -17,6 +17,7 @@ const SUBTITLE: Record<string, string> = {
   external_peer: 'external_peer',
   server: 'server',
   __pn__: 'provider_network',
+  __network__: 'network (L3)',
   '': '(no role)',
 };
 
@@ -29,7 +30,7 @@ export function buildPalette(
   for (const t of NODE_ROLES) {
     const d = document.createElement('div');
     d.className = 'pal-item';
-    const key = t.role === '__pn__' ? 'pnet' : iconKey(t.role);
+    const key = t.role === '__pn__' ? 'pnet' : t.role === '__network__' ? 'network' : iconKey(t.role);
     d.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[key]}</svg>
       <div><div class="pl">${T(t.labelKey)}</div><div class="ps">${SUBTITLE[t.role] ?? ''}</div></div>`;
     (d.firstChild as SVGElement).style.stroke = ROLE_COLOR[key];

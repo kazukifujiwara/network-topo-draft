@@ -14,10 +14,11 @@ import type {
   Circuit,
   Device,
   LogicalLink,
+  Network,
   ProviderNetwork,
   Topology,
 } from './model';
-import { deepClone, findDevice, iconKey, siteOf } from './model';
+import { deepClone, findDevice, findNetwork, iconKey, siteOf } from './model';
 import { snap } from './geometry';
 
 /* ---------- naming ---------- */
@@ -25,6 +26,7 @@ import { snap } from './geometry';
 function allNodeNames(topology: Topology): Set<string> {
   const s = new Set<string>(topology.devices.map((d) => d.name));
   for (const p of topology.provider_networks ?? []) s.add(p.name);
+  for (const n of topology.networks ?? []) s.add(n.name);
   return s;
 }
 
@@ -73,6 +75,15 @@ export function addProviderNetwork(topology: Topology, x: number, y: number): Ad
   return { topology: next, name };
 }
 
+/** Add a multi-access segment (spec §3.10) at (x, y). */
+export function addNetwork(topology: Topology, x: number, y: number): AddResult {
+  const name = uniqueName(topology, 'seg-01');
+  const next = deepClone(topology);
+  next.networks = next.networks ?? [];
+  next.networks.push({ name, position: { x: snap(x), y: snap(y) } });
+  return { topology: next, name };
+}
+
 export function addCable(topology: Topology, cable: Cable): Topology {
   const next = deepClone(topology);
   next.cables = next.cables ?? [];
@@ -107,9 +118,14 @@ export function deleteNodes(topology: Topology, names: string[]): Topology {
     next.provider_networks = next.provider_networks.filter((p) => !doomed.has(p.name));
     if (!next.provider_networks.length) delete next.provider_networks;
   }
-  const attached = (ep: { device?: string; provider_network?: string }): boolean =>
+  if (next.networks) {
+    next.networks = next.networks.filter((n) => !doomed.has(n.name));
+    if (!next.networks.length) delete next.networks;
+  }
+  const attached = (ep: { device?: string; provider_network?: string; network?: string }): boolean =>
     (ep.device !== undefined && doomed.has(ep.device)) ||
-    (ep.provider_network !== undefined && doomed.has(ep.provider_network));
+    (ep.provider_network !== undefined && doomed.has(ep.provider_network)) ||
+    (ep.network !== undefined && doomed.has(ep.network));
   if (next.cables) {
     next.cables = next.cables.filter((l) => !attached(l.a) && !attached(l.b));
     if (!next.cables.length) delete next.cables;
@@ -181,6 +197,19 @@ export function renameProviderNetwork(
   for (const l of next.logical_links ?? []) {
     if (l.a.provider_network === oldName) l.a.provider_network = newName;
     if (l.b.provider_network === oldName) l.b.provider_network = newName;
+  }
+  return next;
+}
+
+/** Rename a networks[] segment and update logical endpoint references. */
+export function renameNetwork(topology: Topology, oldName: string, newName: string): Topology {
+  const next = deepClone(topology);
+  const network = findNetwork(next, oldName);
+  if (!network || oldName === newName) return next;
+  network.name = newName;
+  for (const l of next.logical_links ?? []) {
+    if (l.a.network === oldName) l.a.network = newName;
+    if (l.b.network === oldName) l.b.network = newName;
   }
   return next;
 }
@@ -279,6 +308,7 @@ function ensureInterface(device: Device, name: string) {
 export interface TopoClipboard {
   devices: Device[];
   provider_networks: ProviderNetwork[];
+  networks: Network[];
   cables: Cable[];
   circuits: Circuit[];
   logical_links: LogicalLink[];
@@ -288,14 +318,16 @@ export function makeClipboard(topology: Topology, names: string[]): TopoClipboar
   const wanted = new Set(names);
   const devices = topology.devices.filter((d) => wanted.has(d.name));
   const provider_networks = (topology.provider_networks ?? []).filter((p) => wanted.has(p.name));
-  const copied = new Set([...devices, ...provider_networks].map((n) => n.name));
-  const inside = (ep: { device?: string; provider_network?: string }): boolean => {
-    const ref = ep.provider_network ?? ep.device;
+  const networks = (topology.networks ?? []).filter((n) => wanted.has(n.name));
+  const copied = new Set([...devices, ...provider_networks, ...networks].map((n) => n.name));
+  const inside = (ep: { device?: string; provider_network?: string; network?: string }): boolean => {
+    const ref = ep.network ?? ep.provider_network ?? ep.device;
     return ref !== undefined && copied.has(ref);
   };
   return deepClone({
     devices,
     provider_networks,
+    networks,
     cables: (topology.cables ?? []).filter((l) => inside(l.a) && inside(l.b)),
     circuits: (topology.circuits ?? []).filter((l) => inside(l.a) && inside(l.b)),
     logical_links: (topology.logical_links ?? []).filter((l) => inside(l.a) && inside(l.b)),
@@ -322,7 +354,8 @@ export function pasteClipboard(
 ): PasteResult {
   const next = deepClone(topology);
   const clip = deepClone(clipboard);
-  const nodes = [...clip.devices, ...clip.provider_networks];
+  clip.networks = clip.networks ?? []; // older clipboards may predate networks
+  const nodes = [...clip.devices, ...clip.provider_networks, ...clip.networks];
   if (!nodes.length) return { topology: next, renames: new Map() };
   const minX = Math.min(...nodes.map((n) => n.position?.x ?? 0));
   const minY = Math.min(...nodes.map((n) => n.position?.y ?? 0));
@@ -345,12 +378,20 @@ export function pasteClipboard(
     next.provider_networks = next.provider_networks ?? [];
     next.provider_networks.push(p);
   }
-  const remap = (ep: { device?: string; provider_network?: string }): void => {
+  for (const n of clip.networks) {
+    place(n);
+    next.networks = next.networks ?? [];
+    next.networks.push(n);
+  }
+  const remap = (ep: { device?: string; provider_network?: string; network?: string }): void => {
     if (ep.device !== undefined && renames.has(ep.device)) {
       ep.device = renames.get(ep.device) as string;
     }
     if (ep.provider_network !== undefined && renames.has(ep.provider_network)) {
       ep.provider_network = renames.get(ep.provider_network) as string;
+    }
+    if (ep.network !== undefined && renames.has(ep.network)) {
+      ep.network = renames.get(ep.network) as string;
     }
   };
   for (const l of clip.cables) {

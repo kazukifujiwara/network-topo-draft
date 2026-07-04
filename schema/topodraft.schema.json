@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "TopoDraft topology (*.topo.json, format v1)",
-  "description": "File format v1 of TopoDraft. Normative specification: docs/topodraft-file-format-v1.md. Revision: 2026-07-04.",
+  "description": "File format v1 of TopoDraft. Normative specification: docs/topodraft-file-format-v1.md. Revision: 2026-07-05.",
   "type": "object",
   "required": [
     "version",
@@ -110,6 +110,19 @@
             "id": {
               "type": "string",
               "description": "attachment / VC identifier on the provider network"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "network"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "network": {
+              "type": "string",
+              "description": "attaches this link to a multi-access segment (must match networks[].name)"
             }
           }
         }
@@ -225,6 +238,56 @@
           "provider": {
             "type": "string",
             "description": "e.g. AWS / Oracle / Equinix"
+          },
+          "description": {
+            "type": "string"
+          },
+          "position": {
+            "$ref": "#/definitions/position"
+          }
+        }
+      }
+    },
+    "networks": {
+      "type": "array",
+      "description": "multi-access L3 segments (TopoDraft extension; ≈ NetBox Prefix + FHRPGroup). Devices attach via logical_links whose far endpoint is { \"network\": \"<name>\" }. Rendered in the logical view only.",
+      "items": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "UNIQUE — referenced by logical_links endpoints"
+          },
+          "prefix": {
+            "type": "string",
+            "description": "subnet in CIDR, e.g. 10.0.0.0/28"
+          },
+          "vlan": {
+            "type": "string",
+            "description": "VLAN ID of the segment"
+          },
+          "fhrp": {
+            "type": "object",
+            "description": "first-hop redundancy (HSRP / VRRP / GLBP …) on this segment",
+            "additionalProperties": false,
+            "properties": {
+              "protocol": {
+                "type": "string",
+                "description": "e.g. hsrp / vrrp / glbp (free text)"
+              },
+              "group": {
+                "type": "string",
+                "description": "group / VRID"
+              },
+              "virtual_ip": {
+                "type": "string",
+                "description": "virtual IP (CIDR), e.g. 10.0.0.1/28"
+              }
+            }
           },
           "description": {
             "type": "string"

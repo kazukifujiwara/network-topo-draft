@@ -35,6 +35,7 @@ function epStr(e: (PhysicalEndpoint & LogicalEndpoint) | undefined): string {
   if (e.provider_network) {
     return ['PN: ' + e.provider_network, e.id ? 'id:' + e.id : ''].filter(Boolean).join(' / ');
   }
+  if (e.network) return 'NET: ' + e.network;
   return [
     e.site,
     e.device,
@@ -74,6 +75,22 @@ export function genMarkdown(topology: Topology, options?: MarkdownOptions): stri
       mdTable(
         ['name', 'provider', 'description'],
         d.provider_networks.map((p) => [p.name, p.provider, p.description]),
+      ) +
+      '\n';
+  }
+  if (d.networks) {
+    md +=
+      '## Networks (L3 segments)\n\n' +
+      mdTable(
+        ['name', 'prefix', 'vlan', 'fhrp', 'virtual_ip', 'description'],
+        d.networks.map((n) => [
+          n.name,
+          n.prefix,
+          n.vlan,
+          [n.fhrp?.protocol, n.fhrp?.group ? 'grp ' + n.fhrp.group : ''].filter(Boolean).join(' '),
+          n.fhrp?.virtual_ip,
+          n.description,
+        ]),
       ) +
       '\n';
   }

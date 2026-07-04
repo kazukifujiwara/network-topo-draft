@@ -7,17 +7,19 @@
  * can self-correct from the Problems panel alone (e.g. "ip" → "ip_address").
  */
 
-const TOP_LEVEL = ['$schema', 'version', 'devices', 'provider_networks', 'cables', 'circuits', 'logical_links'];
+const TOP_LEVEL = ['$schema', 'version', 'devices', 'provider_networks', 'networks', 'cables', 'circuits', 'logical_links'];
 const DEVICE = ['name', 'device_type', 'role', 'site', 'tenant', 'platform', 'vrfs', 'interfaces', 'config_context', 'position'];
 const INTERFACE = ['name', 'ip_address', 'type', 'description', 'lag', 'vrf'];
 const PROVIDER_NETWORK = ['name', 'provider', 'description', 'position'];
+const NETWORK = ['name', 'prefix', 'vlan', 'fhrp', 'description', 'position'];
+const FHRP = ['protocol', 'group', 'virtual_ip'];
 const POSITION = ['x', 'y'];
 const CABLE = ['a', 'b', 'type', 'bandwidth', 'status', 'label'];
 const CIRCUIT = ['a', 'b', 'cid', 'provider', 'type', 'commit_rate', 'status'];
 // top-level `vrf` on a logical link is valid legacy input (v3) — not unknown
 const LOGICAL_LINK = ['a', 'b', 'link_id', 'vlan', 'label', 'description', 'vrf'];
 const PHYSICAL_ENDPOINT = ['site', 'device', 'interface', 'provider_network'];
-const LOGICAL_ENDPOINT = ['device', 'vrf', 'id', 'interface', 'ip_address', 'provider_network'];
+const LOGICAL_ENDPOINT = ['device', 'vrf', 'id', 'interface', 'ip_address', 'provider_network', 'network'];
 
 export interface UnknownFieldFinding {
   /** JSON path to the unknown property (its key), e.g. ['logical_links', 0, 'a', 'ip'] */
@@ -43,7 +45,19 @@ function levenshtein(a: string, b: string): number {
   return prev[b.length] ?? 0;
 }
 
-/** Closest valid field: prefix matches win (ip → ip_address), then small typos. */
+function isSubsequence(needle: string, haystack: string): boolean {
+  let i = 0;
+  for (const c of haystack) {
+    if (c === needle[i]) i++;
+    if (i === needle.length) return true;
+  }
+  return i === needle.length;
+}
+
+/**
+ * Closest valid field: prefix matches win (ip → ip_address), then common
+ * abbreviations as a UNIQUE subsequence (vip → virtual_ip), then small typos.
+ */
 export function suggestField(field: string, known: string[]): string | undefined {
   const lower = field.toLowerCase();
   const prefix = known
@@ -54,6 +68,10 @@ export function suggestField(field: string, known: string[]): string | undefined
     })
     .sort((x, y) => x.length - y.length)[0];
   if (prefix) return prefix;
+  if (lower.length >= 3) {
+    const subsequence = known.filter((k) => isSubsequence(lower, k.toLowerCase()));
+    if (subsequence.length === 1) return subsequence[0];
+  }
   let best: string | undefined;
   let bestDist = 3; // allow up to 2 edits
   for (const k of known) {
@@ -105,6 +123,13 @@ export function findUnknownFields(value: unknown): UnknownFieldFinding[] {
   checkArray(value.provider_networks, ['provider_networks'], (pn, p) => {
     check(pn, PROVIDER_NETWORK, p);
     if (isPlainObject(pn)) check(pn.position, POSITION, [...p, 'position']);
+  });
+  checkArray(value.networks, ['networks'], (n, p) => {
+    check(n, NETWORK, p);
+    if (isPlainObject(n)) {
+      check(n.fhrp, FHRP, [...p, 'fhrp']);
+      check(n.position, POSITION, [...p, 'position']);
+    }
   });
   const checkLinks = (
     key: 'cables' | 'circuits' | 'logical_links',

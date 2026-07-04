@@ -16,7 +16,7 @@ export const topoJsonSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
   title: 'TopoDraft topology (*.topo.json, format v1)',
   description:
-    'File format v1 of TopoDraft. Normative specification: docs/topodraft-file-format-v1.md. Revision: 2026-07-04.',
+    'File format v1 of TopoDraft. Normative specification: docs/topodraft-file-format-v1.md. Revision: 2026-07-05.',
   type: 'object',
   required: ['version', 'devices'],
   additionalProperties: false,
@@ -95,6 +95,18 @@ export const topoJsonSchema = {
             id: {
               type: 'string',
               description: 'attachment / VC identifier on the provider network',
+            },
+          },
+        },
+        {
+          type: 'object',
+          required: ['network'],
+          additionalProperties: false,
+          properties: {
+            network: {
+              type: 'string',
+              description:
+                'attaches this link to a multi-access segment (must match networks[].name)',
             },
           },
         },
@@ -178,6 +190,33 @@ export const topoJsonSchema = {
         properties: {
           name: { type: 'string', description: 'UNIQUE — referenced by circuits/logical_links' },
           provider: { type: 'string', description: 'e.g. AWS / Oracle / Equinix' },
+          description: { type: 'string' },
+          position: { $ref: '#/definitions/position' },
+        },
+      },
+    },
+    networks: {
+      type: 'array',
+      description:
+        'multi-access L3 segments (TopoDraft extension; ≈ NetBox Prefix + FHRPGroup). Devices attach via logical_links whose far endpoint is { "network": "<name>" }. Rendered in the logical view only.',
+      items: {
+        type: 'object',
+        required: ['name'],
+        additionalProperties: false,
+        properties: {
+          name: { type: 'string', description: 'UNIQUE — referenced by logical_links endpoints' },
+          prefix: { type: 'string', description: 'subnet in CIDR, e.g. 10.0.0.0/28' },
+          vlan: { type: 'string', description: 'VLAN ID of the segment' },
+          fhrp: {
+            type: 'object',
+            description: 'first-hop redundancy (HSRP / VRRP / GLBP …) on this segment',
+            additionalProperties: false,
+            properties: {
+              protocol: { type: 'string', description: 'e.g. hsrp / vrrp / glbp (free text)' },
+              group: { type: 'string', description: 'group / VRID' },
+              virtual_ip: { type: 'string', description: 'virtual IP (CIDR), e.g. 10.0.0.1/28' },
+            },
+          },
           description: { type: 'string' },
           position: { $ref: '#/definitions/position' },
         },
@@ -295,6 +334,14 @@ const EXAMPLE = {
       commit_rate: '1Gbps',
     },
   ],
+  networks: [
+    {
+      name: 'svc-seg',
+      prefix: '10.20.0.0/28',
+      vlan: '20',
+      fhrp: { protocol: 'vrrp', group: '1', virtual_ip: '10.20.0.1/28' },
+    },
+  ],
   logical_links: [
     {
       a: { device: 'rt-hq-01', vrf: 'PROD', interface: 'Gi0/0/3.100' },
@@ -307,6 +354,9 @@ const EXAMPLE = {
       b: { provider_network: 'AWS Direct Connect', id: 'dxcon-xyz789' },
       link_id: 'dxvif-abc123',
     },
+    // multi-access segment: each attached device gets one link to the network
+    { a: { device: 'rt-hq-01', vrf: 'PROD' }, b: { network: 'svc-seg' } },
+    { a: { device: 'rt-dc-01', vrf: 'PROD' }, b: { network: 'svc-seg' } },
   ],
 };
 
@@ -331,6 +381,7 @@ Generate a JSON document that follows the schema below and save it as a \`*.topo
 - When a peer's VRF name is unknown (external tenants, provider attachments), put the known identifier in the endpoint "id" (tenant ID, VIF/VC ID). A per-connection identifier belongs in "link_id" and is displayed on the diagram.
 - "config_context" on a device may hold any JSON object with device settings (routing, BGP, policies …); the editor stores it and re-exports it unchanged.
 - Circuits and logical_links may terminate on a provider network via {"provider_network": "<name>"}.
+- Multi-access segments (a subnet shared by 3+ devices, HSRP/VRRP gateways): define an entry in "networks" (prefix in CIDR, optional vlan and fhrp {protocol, group, virtual_ip}) and give each attached device ONE logical_link whose far endpoint is {"network": "<name>"}. Device-side real IPs stay on interfaces[].ip_address; the virtual IP lives on the network's fhrp.virtual_ip.
 
 ## JSON Schema (draft-07)
 \`\`\`json

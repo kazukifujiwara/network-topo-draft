@@ -113,11 +113,13 @@ async function newTopologyFile(): Promise<void> {
     empty: t('Empty topology'),
     'two-site-wan': t('2-site redundant WAN'),
     'site-cloud': t('Site + cloud (VRF logical)'),
+    'hsrp-segment': t('Gateway pair + segment (HSRP)'),
   };
   const builtinDescription: Record<string, string> = {
     empty: t('A blank canvas'),
     'two-site-wan': t('Two sites, redundant carrier circuits'),
     'site-cloud': t('HQ connected to a cloud peer over a dedicated interconnect, logical VRF link'),
+    'hsrp-segment': t('Two gateways sharing a /28 multi-access segment with an HSRP virtual IP'),
   };
   const picks: TemplatePick[] = BUILTIN_TEMPLATES.map((b) => ({
     label: builtinLabel[b.id] ?? b.label,

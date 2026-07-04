@@ -535,6 +535,90 @@ describe('toolbar export menu (v7 Export button)', () => {
   });
 });
 
+describe('multi-access network segments (spec §3.10)', () => {
+  const SEG_TOPO = {
+    version: 1,
+    devices: [
+      {
+        name: 'rt-1',
+        role: 'router',
+        vrfs: ['PROD'],
+        interfaces: [{ name: 'Gi0.100', ip_address: '10.0.0.2/28', vrf: 'PROD' }],
+        position: { x: 100, y: 100 },
+      },
+    ],
+    networks: [
+      {
+        name: 'seg-1',
+        prefix: '10.0.0.0/28',
+        vlan: '100',
+        fhrp: { protocol: 'hsrp', group: '1', virtual_ip: '10.0.0.1/28' },
+        position: { x: 500, y: 100 },
+      },
+    ],
+  };
+
+  it('renders segments in the logical view only, with prefix and VIP labels', () => {
+    const h = harness(SEG_TOPO);
+    expect(h.root.querySelector('[data-node="seg-1"]')).toBeNull(); // physical view
+    (h.root.querySelector('#btnLogi') as HTMLElement).click();
+    const node = h.root.querySelector('[data-node="seg-1"]') as Element;
+    expect(node).not.toBeNull();
+    expect(node.querySelector('.node-box')?.classList.contains('netbox')).toBe(true);
+    expect(node.textContent).toContain('10.0.0.0/28 · vlan 100');
+    expect(node.textContent).toContain('VIP 10.0.0.1/28 (hsrp 1)');
+  });
+
+  it('dragging from a VRF compartment onto a segment attaches with a {network} endpoint', () => {
+    const h = harness(SEG_TOPO);
+    (h.root.querySelector('#btnLogi') as HTMLElement).click();
+    h.app.api.selectOnly('rt-1');
+    mouse(h.root.querySelector('[data-vrfport="rt-1"][data-vrfname="PROD"]') as Element, 'mousedown');
+    mouse(h.root.querySelector('[data-node="seg-1"]') as Element, 'mousemove');
+    mouse(h.root.querySelector('[data-node="seg-1"]') as Element, 'mouseup');
+    const t = h.lastTopo();
+    expect(t.logical_links?.[0]).toEqual({
+      a: { device: 'rt-1', vrf: 'PROD' },
+      b: { network: 'seg-1' },
+    });
+  });
+
+  it('adding a segment from the palette switches to the logical view', () => {
+    const h = harness(SEG_TOPO); // starts in physical view
+    mouse(h.root.querySelector('[data-pal-role="__network__"]') as Element, 'mousedown');
+    mouse(h.app.dom.svg, 'mousemove', { clientX: 300, clientY: 300 });
+    mouse(h.app.dom.svg, 'mouseup', { clientX: 300, clientY: 300 });
+    expect(h.app.getView().viewMode).toBe('logical');
+    const t = h.lastTopo();
+    expect(t.networks?.map((n) => n.name)).toContain('seg-01');
+  });
+
+  it('the segment panel edits prefix and fhrp with commit-on-change', () => {
+    const h = harness(SEG_TOPO);
+    (h.root.querySelector('#btnLogi') as HTMLElement).click();
+    h.app.api.selectOnly('seg-1');
+    expect(h.root.querySelector('#panel .pn-title')?.textContent).toContain('Network segment');
+    setInput(h.root, '#panel input[data-fh="virtual_ip"]', '10.0.0.14/28');
+    expect(h.lastTopo().networks?.[0]?.fhrp?.virtual_ip).toBe('10.0.0.14/28');
+    h.ack();
+    setInput(h.root, '#panel input[data-f="prefix"]', '10.0.0.0/27');
+    expect(h.lastTopo().networks?.[0]?.prefix).toBe('10.0.0.0/27');
+  });
+
+  it('renaming a segment follows attachment references', () => {
+    const h = harness({
+      ...SEG_TOPO,
+      logical_links: [{ a: { device: 'rt-1', vrf: 'PROD' }, b: { network: 'seg-1' } }],
+    });
+    (h.root.querySelector('#btnLogi') as HTMLElement).click();
+    h.app.api.selectOnly('seg-1');
+    setInput(h.root, '#panel input[data-f="name"]', 'svc-seg');
+    const t = h.lastTopo();
+    expect(t.networks?.[0]?.name).toBe('svc-seg');
+    expect(t.logical_links?.[0]?.b.network).toBe('svc-seg');
+  });
+});
+
 describe('AI guide button (toolbar)', () => {
   it('opens the explanation dialog; confirming posts the request and closes', () => {
     const h = harness();

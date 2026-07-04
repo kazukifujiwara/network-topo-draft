@@ -47,6 +47,28 @@ export interface ProviderNetwork {
   position?: Position;
 }
 
+/** First-hop redundancy (HSRP/VRRP/GLBP …) on a network segment (spec §3.10). */
+export interface FhrpConfig {
+  protocol?: string;
+  group?: string;
+  virtual_ip?: string;
+}
+
+/**
+ * networks[] — multi-access L3 segments (TopoDraft extension, spec §3.10;
+ * ≈ NetBox Prefix + FHRPGroup). Devices attach via logical_links whose far
+ * endpoint is { network: name }. Rendered in the logical view only.
+ */
+export interface Network {
+  name: string;
+  /** CIDR, e.g. "10.0.0.0/28" */
+  prefix?: string;
+  vlan?: string;
+  fhrp?: FhrpConfig;
+  description?: string;
+  position?: Position;
+}
+
 /** Physical endpoint for cables/circuits (spec §3.8-A). */
 export interface PhysicalEndpoint {
   site?: string;
@@ -63,6 +85,8 @@ export interface LogicalEndpoint {
   interface?: string;
   ip_address?: string;
   provider_network?: string;
+  /** attaches this link to a networks[] segment (spec §3.10) */
+  network?: string;
 }
 
 export interface Cable {
@@ -104,6 +128,7 @@ export interface Topology {
   version?: 1;
   devices: Device[];
   provider_networks?: ProviderNetwork[];
+  networks?: Network[];
   cables?: Cable[];
   circuits?: Circuit[];
   logical_links?: LogicalLink[];
@@ -121,6 +146,10 @@ export function findProviderNetwork(
   name: string,
 ): ProviderNetwork | undefined {
   return (topology.provider_networks ?? []).find((p) => p.name === name);
+}
+
+export function findNetwork(topology: Topology, name: string): Network | undefined {
+  return (topology.networks ?? []).find((n) => n.name === name);
 }
 
 /** Trimmed site of a device; '' when unset. */

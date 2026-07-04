@@ -21,6 +21,7 @@ import {
   addCircuit,
   addDevice,
   addLogicalLink,
+  addNetwork,
   addProviderNetwork,
   alignCol,
   alignRow,
@@ -31,12 +32,14 @@ import {
   distributeH,
   distributeV,
   findDevice,
+  findNetwork,
   logAnchor,
   makeClipboard,
   needsAutoLayout,
   parse,
   pasteClipboard as corePasteClipboard,
   renameDevice,
+  renameNetwork,
   renameProviderNetwork,
   renameSite,
   serialize,
@@ -308,6 +311,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
     const names = new Set([
       ...model.devices.map((d) => d.name),
       ...(model.provider_networks ?? []).map((p) => p.name),
+      ...(model.networks ?? []).map((n) => n.name),
     ]);
     sel = new Set([...sel].filter((n) => names.has(n)));
     if (selLink && selLink.idx >= (model[selLink.col] ?? []).length) selLink = null;
@@ -402,7 +406,9 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   const nodePosition = (name: string): { x: number; y: number } | null => {
     if (!model) return null;
     const node =
-      findDevice(model, name) ?? (model.provider_networks ?? []).find((p) => p.name === name);
+      findDevice(model, name) ??
+      (model.provider_networks ?? []).find((p) => p.name === name) ??
+      (model.networks ?? []).find((n) => n.name === name);
     if (!node) return null;
     node.position = node.position ?? { x: 0, y: 0 };
     return node.position;
@@ -455,6 +461,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
       sel = new Set([
         ...model.devices.map((d) => d.name),
         ...(model.provider_networks ?? []).map((p) => p.name),
+        ...(model.networks ?? []).map((n) => n.name),
       ]);
       selLink = null;
       render();
@@ -477,11 +484,14 @@ export function createApp(root: HTMLElement, host: AppHost): App {
     renameNode: (oldName, newName) => {
       if (!editable() || !newName.trim() || oldName === newName) return;
       const fresh = newName.trim();
-      const isDevice = findDevice(model as Topology, oldName) !== undefined;
+      const m = model as Topology;
+      const op = findDevice(m, oldName)
+        ? renameDevice
+        : findNetwork(m, oldName)
+          ? renameNetwork
+          : renameProviderNetwork;
       if (sel.delete(oldName)) sel.add(fresh);
-      api.apply((t) =>
-        isDevice ? renameDevice(t, oldName, fresh) : renameProviderNetwork(t, oldName, fresh),
-      );
+      api.apply((t) => op(t, oldName, fresh));
     },
     renameSite: (oldSite, newSite) => {
       if (oldSite === newSite) return;
@@ -553,10 +563,18 @@ export function createApp(root: HTMLElement, host: AppHost): App {
       const result =
         role === '__pn__'
           ? addProviderNetwork(model as Topology, x, y)
-          : addDevice(model as Topology, role, x, y);
+          : role === '__network__'
+            ? addNetwork(model as Topology, x, y)
+            : addDevice(model as Topology, role, x, y);
       model = result.topology;
       sel = new Set([result.name]);
       selLink = null;
+      if (role === '__network__' && view.viewMode !== 'logical') {
+        // segments only exist in the logical view (spec §3.10)
+        view.viewMode = 'logical';
+        persist();
+        toast(T('t_seg_logical'));
+      }
       render();
       renderPanelNow();
       commit();
@@ -675,7 +693,9 @@ export function createApp(root: HTMLElement, host: AppHost): App {
       const ep = (n: NodeVM, vrf: string): LogicalLink['a'] =>
         n.kind === 'pn'
           ? { provider_network: n.name }
-          : { device: n.name, ...(vrf ? { vrf } : {}) };
+          : n.kind === 'network'
+            ? { network: n.name }
+            : { device: n.name, ...(vrf ? { vrf } : {}) };
       api.apply((t) => addLogicalLink(t, { a: ep(a, fromVrf), b: ep(b, toVrf) }));
       api.selectLink({ col: 'logical_links', idx: ((model as Topology).logical_links ?? []).length - 1 });
       toast(

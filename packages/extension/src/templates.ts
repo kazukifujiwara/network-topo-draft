@@ -176,6 +176,62 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
       ],
     },
   },
+  {
+    id: 'hsrp-segment',
+    label: 'Gateway pair + segment (HSRP)',
+    description: 'Two gateways sharing a /28 multi-access segment with an HSRP virtual IP',
+    topology: {
+      $schema: 'https://raw.githubusercontent.com/kazukifujiwara/network-topo-draft/main/schema/topodraft.schema.json',
+      version: 1,
+      devices: [
+        {
+          name: 'rt-gw-01',
+          role: 'router',
+          site: 'HQ',
+          interfaces: [
+            { name: 'Vlan100', ip_address: '10.0.0.2/28', description: 'gateway (hsrp active)' },
+          ],
+          position: { x: 250, y: 60 },
+        },
+        {
+          name: 'rt-gw-02',
+          role: 'router',
+          site: 'HQ',
+          interfaces: [
+            { name: 'Vlan100', ip_address: '10.0.0.3/28', description: 'gateway (hsrp standby)' },
+          ],
+          position: { x: 690, y: 60 },
+        },
+        { name: 'sw-01', role: 'switch', site: 'HQ', position: { x: 470, y: 210 } },
+        {
+          name: 'srv-01',
+          role: 'server',
+          site: 'HQ',
+          interfaces: [{ name: 'eth0', ip_address: '10.0.0.10/28' }],
+          position: { x: 470, y: 360 },
+        },
+      ],
+      networks: [
+        {
+          name: 'seg-svc-01',
+          prefix: '10.0.0.0/28',
+          vlan: '100',
+          fhrp: { protocol: 'hsrp', group: '1', virtual_ip: '10.0.0.1/28' },
+          position: { x: 470, y: 60 },
+        },
+      ],
+      cables: [
+        { a: { device: 'rt-gw-01' }, b: { device: 'sw-01' }, type: 'cat6', status: 'connected' },
+        { a: { device: 'rt-gw-02' }, b: { device: 'sw-01' }, type: 'cat6', status: 'connected' },
+        { a: { device: 'srv-01' }, b: { device: 'sw-01' }, type: 'cat6', status: 'connected' },
+      ],
+      logical_links: [
+        { a: { device: 'rt-gw-01', interface: 'Vlan100' }, b: { network: 'seg-svc-01' } },
+        { a: { device: 'rt-gw-02', interface: 'Vlan100' }, b: { network: 'seg-svc-01' } },
+        { a: { device: 'srv-01', interface: 'eth0' }, b: { network: 'seg-svc-01' } },
+      ],
+    },
+  },
 ];
 
 /** Canonical file text for a builtin template. */

@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Multi-access L3 segments (format spec §3.10, backward-compatible —
+  `version` stays 1): new top-level `networks[]` (name, prefix, vlan,
+  `fhrp { protocol, group, virtual_ip }`, description, position) and a
+  third logical-endpoint shape `{ "network": "<name>" }`. Segments render
+  as pill nodes in the logical view only — the physical view is untouched.
+  Palette item, property panel, rename-with-references, clipboard support,
+  draw.io/Markdown/for-AI export, schema + agent guide updated, and new
+  `ip-outside-prefix` diagnostics (attached interface/endpoint IPs and the
+  FHRP virtual IP are checked against the prefix). New built-in template:
+  "Gateway pair + segment (HSRP)".
+
 - ✨ AI Guide button in the canvas toolbar (next to Export): explains what
   the agent guide is for and writes AGENTS.md on confirmation — the same
   contract as the command-palette command, now discoverable from the editor.

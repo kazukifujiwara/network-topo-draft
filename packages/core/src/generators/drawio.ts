@@ -89,10 +89,22 @@ export function genDrawio(topology: Topology): string {
       `<mxCell id="${nodeId}" value="${label}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=${FILL.pnet};strokeColor=#666666;dashed=1;" vertex="1" parent="1"><mxGeometry x="${p.x}" y="${p.y}" width="${NODE_W}" height="${NODE_H}" as="geometry"/></mxCell>`,
     );
   }
+  for (const net of d.networks ?? []) {
+    const nodeId = 'n' + ++id;
+    if (!(net.name in idOf)) idOf[net.name] = nodeId;
+    const sub = [net.prefix, net.vlan ? 'vlan ' + net.vlan : ''].filter(Boolean).join(' · ');
+    const vip = net.fhrp?.virtual_ip ? 'VIP ' + net.fhrp.virtual_ip : '';
+    const label =
+      x(net.name) + (sub ? `&#10;${x(sub)}` : '') + (vip ? `&#10;${x(vip)}` : '');
+    const p = net.position ?? { x: 0, y: 0 };
+    cells.push(
+      `<mxCell id="${nodeId}" value="${label}" style="rounded=1;arcSize=50;whiteSpace=wrap;html=1;fillColor=#d5e8f4;strokeColor=#4a6a86;" vertex="1" parent="1"><mxGeometry x="${p.x}" y="${p.y}" width="${NODE_W}" height="${NODE_H}" as="geometry"/></mxCell>`,
+    );
+  }
 
   /* edges */
-  const endId = (ep: { device?: string; provider_network?: string }): string | undefined =>
-    idOf[ep.provider_network ?? ep.device ?? ''];
+  const endId = (ep: { device?: string; provider_network?: string; network?: string }): string | undefined =>
+    idOf[ep.network ?? ep.provider_network ?? ep.device ?? ''];
   const edge = (a: string, b: string, style: string, label: string): void => {
     cells.push(
       `<mxCell id="e${++id}" value="${x(label)}" style="${style}html=1;" edge="1" parent="1" source="${a}" target="${b}"><mxGeometry relative="1" as="geometry"/></mxCell>`,

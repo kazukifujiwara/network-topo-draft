@@ -4,9 +4,11 @@ export type {
   ConfigContext,
   Device,
   DeviceInterface,
+  FhrpConfig,
   IconKey,
   LogicalEndpoint,
   LogicalLink,
+  Network,
   PhysicalEndpoint,
   Position,
   ProviderNetwork,
@@ -17,6 +19,7 @@ export {
   deepClone,
   deriveDeviceVrfs,
   findDevice,
+  findNetwork,
   findProviderNetwork,
   iconKey,
   siteOf,
@@ -26,6 +29,7 @@ export {
 export { TopoParseError, normalize, parse } from './parse';
 export type { UnknownFieldFinding } from './unknownFields';
 export { findUnknownFields, suggestField } from './unknownFields';
+export { ipv4InCidr, parseIpv4 } from './cidr';
 export { serialize, toCanonical } from './serialize';
 export type { Diagnostic, DiagnosticCode, DiagnosticSeverity } from './validate';
 export { validate } from './validate';
@@ -55,6 +59,7 @@ export {
   addCircuit,
   addDevice,
   addLogicalLink,
+  addNetwork,
   addProviderNetwork,
   alignCol,
   alignRow,
@@ -69,6 +74,7 @@ export {
   needsAutoLayout,
   pasteClipboard,
   renameDevice,
+  renameNetwork,
   renameProviderNetwork,
   renameSite,
   setLogicalEndpointInterface,

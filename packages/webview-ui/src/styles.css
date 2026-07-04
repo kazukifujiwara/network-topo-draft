@@ -1115,3 +1115,18 @@ button {
   justify-content: flex-end;
   padding: 0 14px 14px;
 }
+
+/* multi-access network segments (logical view) */
+:root {
+  --c-network: #6fb3e0;
+}
+.node-box.netbox {
+  stroke: var(--c-network);
+  stroke-dasharray: none;
+  fill: #17222c;
+}
+.node-vip {
+  fill: var(--c-network);
+  font-size: 9px;
+  font-family: var(--mono);
+}

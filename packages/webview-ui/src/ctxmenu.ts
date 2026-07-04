@@ -15,6 +15,7 @@ export const NODE_ROLES: { role: string; labelKey: StringKey }[] = [
   { role: 'external_peer', labelKey: 'pal_extpeer' },
   { role: 'server', labelKey: 'pal_server' },
   { role: '__pn__', labelKey: 'pal_pn' },
+  { role: '__network__', labelKey: 'pal_networkseg' },
   { role: '', labelKey: 'pal_generic' },
 ];
 
@@ -85,7 +86,7 @@ export function createContextMenu(container: HTMLElement, api: EditorApi) {
           label(T('cm_role'));
           const row = document.createElement('div');
           row.className = 'roles';
-          for (const rt of NODE_ROLES.filter((r) => r.role !== '__pn__')) {
+          for (const rt of NODE_ROLES.filter((r) => !r.role.startsWith('__'))) {
             const b = document.createElement('button');
             const key = iconKey(rt.role);
             b.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[key]}</svg>`;
