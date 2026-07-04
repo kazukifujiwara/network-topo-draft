@@ -51,5 +51,17 @@ export interface ExportRequestMessage {
   kind: ExportKind;
 }
 
+/**
+ * Webview → Host: the toolbar's AI-guide dialog was confirmed; the host
+ * writes the agent guide (AGENTS.md) into the workspace.
+ */
+export interface AgentGuideRequestMessage {
+  type: 'agent-guide';
+}
+
 export type HostToWebviewMessage = UpdateMessage;
-export type WebviewToHostMessage = EditMessage | ReadyMessage | ExportRequestMessage;
+export type WebviewToHostMessage =
+  | EditMessage
+  | ReadyMessage
+  | ExportRequestMessage
+  | AgentGuideRequestMessage;

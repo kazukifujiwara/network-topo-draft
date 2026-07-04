@@ -10,7 +10,13 @@
 import * as vscode from 'vscode';
 import { buildWebviewHtml } from './webviewHtml';
 import { getNonce } from './sync';
-import { DocumentSyncController, isEditMessage, isExportRequest, isReadyMessage } from './documentSync';
+import {
+  DocumentSyncController,
+  isAgentGuideRequest,
+  isEditMessage,
+  isExportRequest,
+  isReadyMessage,
+} from './documentSync';
 import { runExport } from './commands';
 
 export class TopoEditorProvider implements vscode.CustomTextEditorProvider {
@@ -93,6 +99,9 @@ export class TopoEditorProvider implements vscode.CustomTextEditorProvider {
       if (isReadyMessage(message)) controller.handleReady();
       else if (isEditMessage(message)) void controller.handleEdit(message);
       else if (isExportRequest(message)) void runExport(message.kind, document.uri);
+      else if (isAgentGuideRequest(message)) {
+        void vscode.commands.executeCommand('topodraft.writeAgentGuide');
+      }
     });
     webviewPanel.onDidDispose(() => {
       changeSub.dispose();

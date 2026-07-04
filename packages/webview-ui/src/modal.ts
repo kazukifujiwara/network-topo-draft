@@ -8,6 +8,44 @@ import type { ConfigContext } from '@topodraft/core';
 import type { EditorApi } from './api';
 import { T } from './strings';
 
+/**
+ * Explains what the AI agent guide is for, then hands off to the host,
+ * which writes AGENTS.md (the same as the command-palette command).
+ */
+export function createAgentGuideModal(container: HTMLElement, onConfirm: () => void) {
+  const overlay = document.createElement('div');
+  overlay.id = 'guideModal';
+  overlay.innerHTML = `
+    <div id="guideBox">
+      <div class="g-head"><b>${T('gm_title')}</b><button id="guideClose" title="×">×</button></div>
+      <div class="g-body">${T('gm_body')}</div>
+      <div class="g-foot">
+        <button class="m-btn" id="guideCancel">${T('m_cancel')}</button>
+        <button class="m-btn primary" id="guideWrite">${T('gm_write')}</button>
+      </div>
+    </div>`;
+  container.appendChild(overlay);
+  const close = (): void => {
+    overlay.style.display = 'none';
+  };
+  overlay.querySelector('#guideClose')?.addEventListener('click', close);
+  overlay.querySelector('#guideCancel')?.addEventListener('click', close);
+  overlay.querySelector('#guideWrite')?.addEventListener('click', () => {
+    close();
+    onConfirm();
+  });
+  overlay.addEventListener('mousedown', (e) => {
+    if (e.target === overlay) close();
+  });
+  return {
+    open: (): void => {
+      overlay.style.display = 'flex';
+    },
+    close,
+    isOpen: () => overlay.style.display === 'flex',
+  };
+}
+
 export function createConfigContextModal(container: HTMLElement, api: EditorApi) {
   const overlay = document.createElement('div');
   overlay.id = 'modal';

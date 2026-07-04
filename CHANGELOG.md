@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- ✨ AI Guide button in the canvas toolbar (next to Export): explains what
+  the agent guide is for and writes AGENTS.md on confirmation — the same
+  contract as the command-palette command, now discoverable from the editor.
+
 - Agent interop, driven by a real transcript of an AI agent failing to
   discover the format:
   - unknown-field diagnostics on the raw text with did-you-mean suggestions

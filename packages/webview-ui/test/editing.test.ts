@@ -535,6 +535,27 @@ describe('toolbar export menu (v7 Export button)', () => {
   });
 });
 
+describe('AI guide button (toolbar)', () => {
+  it('opens the explanation dialog; confirming posts the request and closes', () => {
+    const h = harness();
+    const modal = h.root.querySelector('#guideModal') as HTMLElement;
+    expect(modal.style.display).not.toBe('flex');
+    (h.root.querySelector('#btnAgentGuide') as HTMLElement).click();
+    expect(modal.style.display).toBe('flex');
+    expect(modal.textContent).toContain('AGENTS.md');
+    (h.root.querySelector('#guideWrite') as HTMLElement).click();
+    expect(h.f.posted).toContainEqual({ type: 'agent-guide' });
+    expect(modal.style.display).toBe('none');
+  });
+
+  it('cancelling posts nothing', () => {
+    const h = harness();
+    (h.root.querySelector('#btnAgentGuide') as HTMLElement).click();
+    (h.root.querySelector('#guideCancel') as HTMLElement).click();
+    expect(h.f.posted.some((m) => m.type === 'agent-guide')).toBe(false);
+  });
+});
+
 describe('palette placement', () => {
   it('press on a palette item and release over the canvas adds the node there', () => {
     const h = harness();

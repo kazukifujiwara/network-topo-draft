@@ -4,7 +4,12 @@
  */
 import { describe, expect, it } from 'vitest';
 import type { UpdateMessage } from '@topodraft/protocol';
-import { DocumentSyncController, isEditMessage, isExportRequest } from '../src/documentSync';
+import {
+  DocumentSyncController,
+  isAgentGuideRequest,
+  isEditMessage,
+  isExportRequest,
+} from '../src/documentSync';
 
 /** Minimal TextDocument stand-in: version bumps on every applied edit. */
 function fakeDoc(initial = 'v0', options?: { rejectEdits?: boolean; syncChangeEvent?: boolean }) {
@@ -100,6 +105,14 @@ describe('isEditMessage', () => {
     expect(isEditMessage({ type: 'edit', text: 'x' })).toBe(false);
     expect(isEditMessage({ type: 'ready' })).toBe(false);
     expect(isEditMessage(null)).toBe(false);
+  });
+});
+
+describe('isAgentGuideRequest', () => {
+  it('accepts only { type: "agent-guide" } shapes', () => {
+    expect(isAgentGuideRequest({ type: 'agent-guide' })).toBe(true);
+    expect(isAgentGuideRequest({ type: 'export', kind: 'markdown' })).toBe(false);
+    expect(isAgentGuideRequest(null)).toBe(false);
   });
 });
 

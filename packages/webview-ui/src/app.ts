@@ -52,7 +52,7 @@ import type { NodeVM, SceneDom, ViewMode, ViewOptions } from './scene';
 import { buildNodes, displayTopology, renderScene, sceneBounds } from './scene';
 import { renderPanel } from './panel';
 import { createContextMenu } from './ctxmenu';
-import { createConfigContextModal } from './modal';
+import { createAgentGuideModal, createConfigContextModal } from './modal';
 import { buildPalette } from './palette';
 import { T, fmt } from './strings';
 import './styles.css';
@@ -148,6 +148,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
         <button class="tb-btn" id="btnGrid" title="${T('tt_grid')}">${T('tb_grid')}</button>
         <button class="tb-btn" id="btnFit" title="${T('tt_fit')}">${T('tb_fit')}</button>
         <div class="spacer"></div>
+        <button class="tb-btn" id="btnAgentGuide" title="${T('tt_agent_guide')}">✨ ${T('tb_agent_guide')}</button>
         <div id="exportWrap">
           <button class="tb-btn primary" id="btnExport" title="${T('tt_export')}">${T('tb_export')} ▾</button>
           <div id="exportMenu">
@@ -640,6 +641,10 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   /* ---------- sub-modules ---------- */
 
   const configModal = createConfigContextModal($('#canvasWrap'), api);
+  const guideModal = createAgentGuideModal($('#canvasWrap'), () =>
+    host.postMessage({ type: 'agent-guide' }),
+  );
+  $('#btnAgentGuide').addEventListener('click', () => guideModal.open());
   const ctxMenu = createContextMenu(dom.app, api);
   buildPalette($('#palette'), api, {
     svgCenterWorld: () => {
@@ -997,6 +1002,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
     if (e.key === 'Escape') {
       ctxMenu.hide();
       configModal.close();
+      guideModal.close();
       api.clearSelection();
       return;
     }

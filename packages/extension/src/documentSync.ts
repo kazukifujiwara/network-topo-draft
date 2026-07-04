@@ -11,6 +11,7 @@
  *   webview can suppress the echo (it is already showing that state).
  */
 import type {
+  AgentGuideRequestMessage,
   EditMessage,
   ExportRequestMessage,
   ReadyMessage,
@@ -48,6 +49,14 @@ export function isEditMessage(message: unknown): message is EditMessage {
     m?.type === 'edit' &&
     typeof m.text === 'string' &&
     typeof m.baseVersion === 'number'
+  );
+}
+
+export function isAgentGuideRequest(message: unknown): message is AgentGuideRequestMessage {
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    (message as { type?: unknown }).type === 'agent-guide'
   );
 }
 

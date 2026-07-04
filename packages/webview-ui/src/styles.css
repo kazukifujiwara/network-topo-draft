@@ -1051,3 +1051,67 @@ button {
 #exportMenu .ci:hover {
   background: var(--bg3);
 }
+
+/* AI agent guide modal */
+#guideModal {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  background: rgba(8, 11, 14, 0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#guideBox {
+  width: 520px;
+  max-width: 92%;
+  background: var(--bg1);
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+}
+#guideBox .g-head {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+#guideBox .g-head button {
+  margin-left: auto;
+  background: transparent;
+  border: 0;
+  color: var(--tx3);
+  font-size: 18px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+#guideBox .g-head button:hover {
+  background: var(--bg3);
+  color: var(--tx);
+}
+#guideBox .g-body {
+  padding: 14px;
+  color: var(--tx2);
+  font-size: 12.5px;
+  line-height: 1.9;
+}
+#guideBox .g-body p {
+  margin-bottom: 10px;
+}
+#guideBox .g-body code {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--bg3);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+#guideBox .g-foot {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 0 14px 14px;
+}

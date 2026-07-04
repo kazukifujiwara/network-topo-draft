@@ -4,6 +4,7 @@ export type {
   ReadyMessage,
   ExportKind,
   ExportRequestMessage,
+  AgentGuideRequestMessage,
   HostToWebviewMessage,
   WebviewToHostMessage,
 } from './messages';

@@ -30,6 +30,14 @@ const EN = {
   ex_ai: 'For AI',
   ex_schema: 'Schema (for AI agents)',
   ex_drawio: 'draw.io',
+  tb_agent_guide: 'AI Guide',
+  tt_agent_guide: 'Teach AI agents how to edit this file (writes AGENTS.md)',
+  gm_title: 'AI Agent Guide',
+  gm_body:
+    '<p>Coding agents (Claude Code, Copilot, …) can edit this <b>*.topo.json</b> file as text while the canvas follows. To do that reliably they need to know the file format first.</p>' +
+    '<p>This writes an <b>AGENTS.md</b> file into the workspace root containing the editing rules, the full JSON Schema, and an example — the place most coding agents read automatically <b>before</b> they edit. Once written, just ask your agent things like <i>“assign IP addresses to Tenant-001”</i> and it will use the right fields (e.g. <code>ip_address</code>).</p>' +
+    '<p>Safe to run again anytime: only the TopoDraft section between its markers is updated; the rest of your AGENTS.md is untouched.</p>',
+  gm_write: 'Write AGENTS.md',
   empty_hint: 'The canvas is empty<br><b>Drag a node from the left palette</b> — or edit the JSON as text',
   err_invalid: 'Invalid JSON',
   t_snap_on: 'Grid snap ON — positions snap to a 10px grid',
@@ -160,6 +168,14 @@ const JA: Record<StringKey, string> = {
   ex_ai: 'AI向け',
   ex_schema: 'スキーマ (AIエージェント用)',
   ex_drawio: 'draw.io',
+  tb_agent_guide: 'AIガイド',
+  tt_agent_guide: 'AIエージェントにこのファイルの編集方法を教える (AGENTS.md を書き出し)',
+  gm_title: 'AIエージェント用ガイド',
+  gm_body:
+    '<p>コーディングエージェント(Claude Code、Copilot など)は、この <b>*.topo.json</b> をテキストとして編集でき、キャンバスが追従します。そのためには、エージェントが先にファイル形式を知っている必要があります。</p>' +
+    '<p>このボタンは、編集ルール・JSON Schema 全文・サンプルをまとめた <b>AGENTS.md</b> をワークスペース直下に書き出します。多くのエージェントは編集の<b>前に</b>この場所を自動で読みます。書き出した後は「Tenant-001 に IP をアサインして」のように普通に依頼するだけで、正しいフィールド名(例: <code>ip_address</code>)で編集してくれます。</p>' +
+    '<p>何度実行しても安全です: マーカーで囲まれた TopoDraft のセクションだけが更新され、AGENTS.md のそれ以外の内容には触れません。</p>',
+  gm_write: 'AGENTS.md に書き出す',
   empty_hint: 'キャンバスは空です<br><b>左のパレットからノードをドラッグ</b>するか、テキストとしてJSONを編集してください',
   err_invalid: 'JSONが不正です',
   t_snap_on: 'グリッドスナップ ON — 10pxグリッドに吸着します',
