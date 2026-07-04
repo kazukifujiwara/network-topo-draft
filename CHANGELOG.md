@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Agent interop, driven by a real transcript of an AI agent failing to
+  discover the format:
+  - unknown-field diagnostics on the raw text with did-you-mean suggestions
+    (`"ip"` → did you mean `"ip_address"`?) and a note that unknown fields
+    are dropped on save — the reactive self-correction path (spec §7)
+  - `TopoDraft: Write AI Agent Guide (AGENTS.md)` writes the complete,
+    offline-usable format contract (workflow rules + JSON Schema + example)
+    into the workspace file agent harnesses read automatically — the
+    proactive path; regeneration is idempotent via marker comments
+  - built-in templates and New File output now embed the live `$schema` URL
+    (O3 resolved: raw.githubusercontent.com main-branch URL, verified
+    reachable), so any tool can fetch the contract from the file itself
+
 - VSIX packaging (`npm run package`, vsce with `--no-dependencies` since
   everything is esbuild-bundled): 13-file / ~67 KB artifact with dist
   bundles, schema, en/ja localization, and a Marketplace-facing extension

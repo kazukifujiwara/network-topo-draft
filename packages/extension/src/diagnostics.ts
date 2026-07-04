@@ -11,7 +11,7 @@
  */
 import { findNodeAtLocation, parseTree } from 'jsonc-parser';
 import type { Node } from 'jsonc-parser';
-import { parse, validate } from '@topodraft/core';
+import { findUnknownFields, parse, validate } from '@topodraft/core';
 import type { DiagnosticSeverity, Topology } from '@topodraft/core';
 
 export interface OffsetDiagnostic {
@@ -44,20 +44,41 @@ export function computeOffsetDiagnostics(text: string): OffsetDiagnostic[] {
   } catch {
     return [];
   }
-  const diagnostics = validate(topology);
-  if (!diagnostics.length) return [];
+  const semantic = validate(topology);
+  // unknown fields are checked on the RAW value: parse() silently drops them,
+  // and they would be lost on the next save (format spec §7)
+  const unknown = findUnknownFields(JSON.parse(text));
+  if (!semantic.length && !unknown.length) return [];
   const root = parseTree(text);
-  return diagnostics.map((d) => {
+
+  const out: OffsetDiagnostic[] = unknown.map((f) => {
+    const valueNode = root ? resolveNode(root, f.path) : undefined;
+    // highlight the whole `"key": value` property, not just the value
+    const node = valueNode?.parent?.type === 'property' ? valueNode.parent : valueNode;
+    const atRoot = !node || node === root;
+    return {
+      severity: 'warning' as const,
+      code: 'unknown-field',
+      message:
+        `Unknown field "${f.field}"` +
+        (f.suggestion ? ` — did you mean "${f.suggestion}"?` : '') +
+        ' Unknown fields are dropped when the editor saves. See the JSON Schema (topodraft.schema.json) or run "TopoDraft: Write AI Agent Guide (AGENTS.md)".',
+      start: node && !atRoot ? node.offset : (root?.offset ?? 0),
+      length: node && !atRoot ? node.length : 1,
+    };
+  });
+  for (const d of semantic) {
     const node = root ? resolveNode(root, d.path) : undefined;
     // whole-document diagnostics (missing-version) mark the opening brace
     // instead of highlighting the entire file
     const atRoot = !node || node === root;
-    return {
+    out.push({
       severity: d.severity,
       code: d.code,
       message: d.message,
       start: node && !atRoot ? node.offset : (root?.offset ?? 0),
       length: node && !atRoot ? node.length : 1,
-    };
-  });
+    });
+  }
+  return out;
 }

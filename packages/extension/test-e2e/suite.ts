@@ -179,6 +179,18 @@ function defineTests(): void {
       await replaceAll(uri, doc.getText().split('rt-unsaved-rename').join('rt-hq-01'));
     });
 
+    g.it('writes an idempotent AGENTS.md so agents learn the format up front', async () => {
+      await vscode.commands.executeCommand('topodraft.writeAgentGuide');
+      const uri = wsFile('AGENTS.md');
+      const first = new TextDecoder().decode(await vscode.workspace.fs.readFile(uri));
+      assert.ok(first.includes('topodraft:agent-guide:begin'));
+      assert.ok(first.includes('ip_address'));
+      assert.ok(first.includes('JSON Schema'));
+      await vscode.commands.executeCommand('topodraft.writeAgentGuide');
+      const second = new TextDecoder().decode(await vscode.workspace.fs.readFile(uri));
+      assert.strictEqual(second, first, 'regeneration must be idempotent');
+    });
+
     g.it('validate command runs against the active topology document', async () => {
       await vscode.commands.executeCommand('vscode.open', wsFile('canonical.topo.json'));
       await waitFor(() => activeInput() instanceof vscode.TabInputCustom);

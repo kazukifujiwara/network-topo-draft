@@ -37,6 +37,14 @@ describe('template inventory', () => {
     ]);
   });
 
+  it('every template carries the live $schema URL so agents can discover the contract (O3)', () => {
+    for (const template of BUILTIN_TEMPLATES) {
+      expect(JSON.parse(templateText(template)).$schema).toBe(
+        'https://raw.githubusercontent.com/kazukifujiwara/network-topo-draft/main/schema/topodraft.schema.json',
+      );
+    }
+  });
+
   it('uses generic names — no real vendor or service names ship in defaults', () => {
     const banned =
       /(aws|azure|gcp|oci\b|oracle|equinix|direct\s*connect|fastconnect|megaport|ntt|tgw|dxvif)/i;

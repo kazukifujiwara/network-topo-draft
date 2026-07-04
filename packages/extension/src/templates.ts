@@ -19,13 +19,18 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
     id: 'empty',
     label: 'Empty topology',
     description: 'A blank canvas',
-    topology: { version: 1, devices: [] },
+    topology: {
+      $schema: 'https://raw.githubusercontent.com/kazukifujiwara/network-topo-draft/main/schema/topodraft.schema.json',
+      version: 1,
+      devices: [],
+    },
   },
   {
     id: 'two-site-wan',
     label: '2-site redundant WAN',
     description: 'Two sites, redundant carrier circuits',
     topology: {
+      $schema: 'https://raw.githubusercontent.com/kazukifujiwara/network-topo-draft/main/schema/topodraft.schema.json',
       version: 1,
       devices: [
         {
@@ -108,6 +113,7 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
     label: 'Site + cloud (VRF logical)',
     description: 'HQ connected to a cloud peer over a dedicated interconnect, logical VRF link',
     topology: {
+      $schema: 'https://raw.githubusercontent.com/kazukifujiwara/network-topo-draft/main/schema/topodraft.schema.json',
       version: 1,
       devices: [
         {

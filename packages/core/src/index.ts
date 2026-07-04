@@ -24,6 +24,8 @@ export {
 } from './model';
 
 export { TopoParseError, normalize, parse } from './parse';
+export type { UnknownFieldFinding } from './unknownFields';
+export { findUnknownFields, suggestField } from './unknownFields';
 export { serialize, toCanonical } from './serialize';
 export type { Diagnostic, DiagnosticCode, DiagnosticSeverity } from './validate';
 export { validate } from './validate';

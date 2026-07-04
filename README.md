@@ -74,8 +74,14 @@ Extension Development Host opens on `fixtures/`; open any `*.topo.json` there.
   automatically (ADR D11).
 - **Problems panel**: semantic diagnostics (duplicate names, dangling
   references, missing LAG parents, unknown interfaces, undeclared VRFs,
-  missing version) with ranges pointing at the offending text — the loop AI
-  agents use to self-correct. `TopoDraft: Validate` runs it on demand.
+  missing version, and misspelled fields with did-you-mean suggestions —
+  `"ip"` → `"ip_address"`) with ranges pointing at the offending text — the
+  loop AI agents use to self-correct. `TopoDraft: Validate` runs it on demand.
+- **Teach your agents the format up front**: `TopoDraft: Write AI Agent
+  Guide (AGENTS.md)` drops the full file-format contract (rules + JSON
+  Schema + example) into the workspace where coding agents (Claude Code,
+  Copilot, …) discover it automatically. New files also carry a `$schema`
+  URL pointing at the published schema.
 - **Commands**: `New Topology File` (built-in templates + your own — any
   `*.topo.json` under `topodraft.templatesFolder`, default
   `.topodraft/templates`), `Save as Template`, and `Export as Markdown /

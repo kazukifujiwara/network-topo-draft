@@ -83,6 +83,26 @@ describe('computeOffsetDiagnostics', () => {
     }
   });
 
+  it("flags unknown fields on the raw text with a did-you-mean (the 'ip' agent mistake)", () => {
+    const text = JSON.stringify(
+      {
+        version: 1,
+        devices: [{ name: 'a' }],
+        logical_links: [{ a: { device: 'a', ip: '10.0.0.1/30' }, b: { device: 'a' } }],
+      },
+      null,
+      2,
+    );
+    const ds = computeOffsetDiagnostics(text);
+    const unknown = ds.filter((d) => d.code === 'unknown-field');
+    expect(unknown).toHaveLength(1);
+    expect(unknown[0]?.severity).toBe('warning');
+    expect(unknown[0]?.message).toContain('did you mean "ip_address"?');
+    expect(unknown[0]?.message).toContain('dropped');
+    // the range covers the whole `"ip": "..."` property
+    expect(at(text, unknown[0] as { start: number; length: number })).toBe('"ip": "10.0.0.1/30"');
+  });
+
   it('covers warning-severity rules with ranges (unknown-interface, missing-lag-parent)', () => {
     const text = JSON.stringify(
       {

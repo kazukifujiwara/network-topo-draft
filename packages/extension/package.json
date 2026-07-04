@@ -40,6 +40,11 @@
         "category": "TopoDraft"
       },
       {
+        "command": "topodraft.writeAgentGuide",
+        "title": "%command.writeAgentGuide%",
+        "category": "TopoDraft"
+      },
+      {
         "command": "topodraft.validate",
         "title": "%command.validate%",
         "category": "TopoDraft"

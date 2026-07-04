@@ -11,6 +11,7 @@ import type { ExportKind } from './exportContent';
 import { BUILTIN_TEMPLATES, templateText } from './templates';
 import { log } from './log';
 import { ensureTopoJsonPath } from './uriUtils';
+import { upsertAgentGuide } from './agentGuide';
 
 const t = vscode.l10n.t;
 
@@ -215,6 +216,31 @@ async function saveAsTemplate(): Promise<void> {
   );
 }
 
+/* ---------- AI agent guide (AGENTS.md) ---------- */
+
+async function writeAgentGuide(): Promise<void> {
+  const root = vscode.workspace.workspaceFolders?.[0]?.uri;
+  if (!root) {
+    void vscode.window.showErrorMessage(
+      t('Open a workspace folder first — the agent guide is written to its AGENTS.md.'),
+    );
+    return;
+  }
+  const target = vscode.Uri.joinPath(root, 'AGENTS.md');
+  let existing: string | null = null;
+  try {
+    existing = new TextDecoder().decode(await vscode.workspace.fs.readFile(target));
+  } catch {
+    // file does not exist yet
+  }
+  await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(upsertAgentGuide(existing)));
+  log(`agentGuide: wrote ${target.fsPath}`);
+  void vscode.window.showInformationMessage(
+    t('Wrote the AI agent guide to {0} — coding agents pick it up automatically.', 'AGENTS.md'),
+  );
+  await vscode.window.showTextDocument(target, { preview: true });
+}
+
 export function registerCommands(): vscode.Disposable {
   return vscode.Disposable.from(
     vscode.commands.registerCommand('topodraft.exportMarkdown', () => runExport('markdown')),
@@ -223,5 +249,6 @@ export function registerCommands(): vscode.Disposable {
     vscode.commands.registerCommand('topodraft.exportDrawio', () => runExport('drawio')),
     vscode.commands.registerCommand('topodraft.newFile', () => newTopologyFile()),
     vscode.commands.registerCommand('topodraft.saveAsTemplate', () => saveAsTemplate()),
+    vscode.commands.registerCommand('topodraft.writeAgentGuide', () => writeAgentGuide()),
   );
 }

@@ -19,5 +19,7 @@
   "Overwrite": "上書き",
   "Saved template \"{0}\" to {1}.": "テンプレート「{0}」を {1} に保存しました。",
   "TopoDraft: no problems found.": "TopoDraft: 問題は見つかりませんでした。",
-  "TopoDraft: {0} problem(s) — see the Problems panel.": "TopoDraft: {0} 件の問題があります — 「問題」パネルを確認してください。"
+  "TopoDraft: {0} problem(s) — see the Problems panel.": "TopoDraft: {0} 件の問題があります — 「問題」パネルを確認してください。",
+  "Open a workspace folder first — the agent guide is written to its AGENTS.md.": "先にワークスペースフォルダを開いてください — エージェントガイドはその AGENTS.md に書き出されます。",
+  "Wrote the AI agent guide to {0} — coding agents pick it up automatically.": "AIエージェント用ガイドを {0} に書き出しました — コーディングエージェントが自動的に読み込みます。"
 }

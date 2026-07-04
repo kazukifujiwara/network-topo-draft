@@ -10,5 +10,6 @@
   "command.exportDrawio": "draw.io 図としてエクスポート",
   "command.openAsText": "テキストとして開く",
   "command.openInTopologyEditor": "トポロジエディタで開く",
-  "config.templatesFolder": "「新しいトポロジファイル」コマンドが参照するユーザーテンプレート (*.topo.json) のフォルダ。絶対パスでなければワークスペース相対。"
+  "config.templatesFolder": "「新しいトポロジファイル」コマンドが参照するユーザーテンプレート (*.topo.json) のフォルダ。絶対パスでなければワークスペース相対。",
+  "command.writeAgentGuide": "AIエージェント用ガイドを書き出す (AGENTS.md)"
 }
