@@ -47,15 +47,25 @@ npm run typecheck
 npm run build          # bundles the extension host + webview (esbuild)
 ```
 
-### Trying the editor (Phase 1: read-only viewer)
+### Trying the editor (Phase 2: full canvas editing)
 
 Open this repo in VSCode and press **F5** ("Run TopoDraft Extension"). The
-Extension Development Host opens on `fixtures/`; open any `*.topo.json` there
-— it renders in the topology viewer (physical/logical views, pan/zoom/fit).
-Edit the file as text in a split (`Network TopoDraft: Open as Text`) and the
-canvas follows. While the JSON is mid-edit/invalid, the last good canvas stays
-visible under an error bar and recovers automatically (ADR D11). Editing on
-the canvas arrives in Phase 2.
+Extension Development Host opens on `fixtures/`; open any `*.topo.json` there.
+
+- **Draw**: drag node types from the palette, connect via the ◦ ports shown on
+  hover (same-site → cable, cross-site or provider network → circuit; in the
+  logical view, drag between VRF compartments for logical links).
+- **Edit**: property panels for devices / provider networks / links, VRF chips,
+  interface cards, a JSON Config Context modal, right-click context menus,
+  double-click rename (references follow automatically), copy/paste/duplicate,
+  align/distribute, arrow-key nudge.
+- **Undo/redo is plain VSCode** (`Ctrl/Cmd+Z`): every canvas commit is one
+  `WorkspaceEdit` on the text document — there is no editor-internal history.
+- **Agent-friendly**: edit the JSON as text in a split (`Network TopoDraft:
+  Open as Text`) and the canvas follows. Canvas edits computed against a stale
+  document version are discarded, never overwriting agent edits. While the
+  JSON is mid-edit/invalid, the canvas dims, editing pauses, and everything
+  resumes automatically (ADR D11).
 
 ## Testing policy
 

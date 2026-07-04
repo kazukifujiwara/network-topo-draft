@@ -100,6 +100,45 @@ function defineTests(): void {
       assert.strictEqual(doc.getText(), valid);
     });
 
+    g.it('canvas edits go through WorkspaceEdit and Ctrl+Z undoes them (ADR D6)', async () => {
+      const uri = wsFile('canonical.topo.json');
+      await vscode.commands.executeCommand('vscode.openWith', uri, VIEW_TYPE);
+      await waitFor(() => activeInput() instanceof vscode.TabInputCustom);
+      const doc = await vscode.workspace.openTextDocument(uri);
+      const original = doc.getText();
+      // what the webview would send after a canvas rename (serialized model)
+      const modified = original.split('rt-hq-01').join('rt-canvas-renamed');
+      const outcome = await vscode.commands.executeCommand(
+        'topodraft.__test.simulateCanvasEdit',
+        uri,
+        modified,
+        doc.version,
+      );
+      assert.strictEqual(outcome, 'applied');
+      assert.strictEqual(doc.getText(), modified);
+      // undo is VSCode's document history — no editor-internal undo exists
+      await vscode.commands.executeCommand('undo');
+      await waitFor(() => doc.getText() === original);
+      await vscode.commands.executeCommand('redo');
+      await waitFor(() => doc.getText() === modified);
+    });
+
+    g.it('discards canvas edits computed against a stale version (plan §4.2 race guard)', async () => {
+      const uri = wsFile('site-cloud.topo.json');
+      await vscode.commands.executeCommand('vscode.openWith', uri, VIEW_TYPE);
+      await waitFor(() => activeInput() instanceof vscode.TabInputCustom);
+      const doc = await vscode.workspace.openTextDocument(uri);
+      const before = doc.getText();
+      const outcome = await vscode.commands.executeCommand(
+        'topodraft.__test.simulateCanvasEdit',
+        uri,
+        '{"version":1,"devices":[{"name":"stale-canvas"}]}\n',
+        doc.version - 1,
+      );
+      assert.strictEqual(outcome, 'discarded-stale');
+      assert.strictEqual(doc.getText(), before);
+    });
+
     g.it('reopen commands switch between the text and topology editors', async () => {
       await vscode.commands.executeCommand('vscode.open', wsFile('canonical.topo.json'));
       await waitFor(() => activeInput() instanceof vscode.TabInputCustom);

@@ -47,7 +47,7 @@ export {
   vrfRows,
 } from './geometry';
 
-export type { AddResult } from './operations';
+export type { AddResult, PasteResult, TopoClipboard } from './operations';
 export {
   addCable,
   addCircuit,
@@ -57,11 +57,15 @@ export {
   alignCol,
   alignRow,
   autoLayout,
+  convertCableToCircuit,
+  convertCircuitToCable,
   deleteLink,
   deleteNodes,
   distributeH,
   distributeV,
+  makeClipboard,
   needsAutoLayout,
+  pasteClipboard,
   renameDevice,
   renameProviderNetwork,
   renameSite,

@@ -1,7 +1,12 @@
 /**
- * Read-only canvas rendering, ported from v7 `render()` minus everything
- * edit-related (selection, ports, drag ghosts, guides). Geometry and VRF
- * derivation come from @topodraft/core; this module only builds SVG.
+ * Canvas rendering, ported from v7 `render()`. Since Phase 2 it also draws
+ * the editing affordances: selection outlines, hover ports (node edges in
+ * the physical view, VRF compartment ports in the logical view), link hit
+ * areas, and compartment drop highlighting during link drags.
+ *
+ * Geometry and VRF derivation come from @topodraft/core; this module only
+ * builds SVG. Dynamic colors go through CSSOM (style.*) so the webview CSP
+ * needs no 'unsafe-inline'.
  */
 import type { Cable, Circuit, LogicalLink, Topology } from '@topodraft/core';
 import {
@@ -41,6 +46,20 @@ export interface ViewOptions {
   gridOn: boolean;
 }
 
+/** Editing affordances drawn on top of the base scene (Phase 2). */
+export interface EditVisuals {
+  selectedNodes: ReadonlySet<string>;
+  /** linkRefKey ('cables:0') of the selected link, if any. */
+  selectedLink: string | null;
+  hoverNode: string | null;
+  /** '<node>|<vrf>' of the hovered compartment (extra top/bottom ports). */
+  hoverRow: string | null;
+  /** '<node>|<vrf>' of the compartment highlighted as a drop target. */
+  dropRow: string | null;
+  /** While dragging a new link every compartment shows its ports. */
+  linkDragging: boolean;
+}
+
 export interface SceneDom {
   svg: SVGSVGElement;
   world: SVGGElement;
@@ -66,7 +85,7 @@ function el(tag: string, attrs: Record<string, string | number> = {}): SVGElemen
 
 /* ---------- display model ---------- */
 
-interface NodeVM {
+export interface NodeVM {
   kind: 'device' | 'pn';
   name: string;
   x: number;
@@ -79,10 +98,12 @@ interface NodeVM {
   rows: string[];
 }
 
-type LinkKind = 'cable' | 'circuit' | 'logical';
+export type LinkKind = 'cable' | 'circuit' | 'logical';
 
 interface LinkVM {
   kind: LinkKind;
+  /** stable DOM reference: 'cables:0' */
+  refKey: string;
   aName: string | undefined;
   bName: string | undefined;
   aVrf: string;
@@ -94,16 +115,17 @@ interface LinkVM {
 
 /**
  * Positions are required for drawing: files without them get the initial
- * auto-placement (plan §3) — ephemeral only, never written back in Phase 1.
+ * auto-placement (plan §3) — ephemeral only, never written back.
  */
 export function displayTopology(topology: Topology): Topology {
   return needsAutoLayout(topology) ? autoLayout(topology) : topology;
 }
 
-function buildNodes(topology: Topology, view: ViewOptions): Map<string, NodeVM> {
+/** Node view-models by name (first occurrence wins, like reference lookups). */
+export function buildNodes(topology: Topology, view: ViewOptions): Map<string, NodeVM> {
   const map = new Map<string, NodeVM>();
   for (const d of topology.devices) {
-    if (map.has(d.name)) continue; // references resolve to the first occurrence
+    if (map.has(d.name)) continue;
     const rows =
       view.viewMode === 'logical'
         ? vrfRows(deriveDeviceVrfs(topology, d.name), view.showGlobal)
@@ -153,11 +175,17 @@ function linkLabel(kind: LinkKind, raw: Cable | Circuit | LogicalLink): string {
 
 function buildLinks(topology: Topology): LinkVM[] {
   const out: LinkVM[] = [];
-  const push = (kind: LinkKind, raw: Cable | Circuit | LogicalLink): void => {
+  const push = (
+    kind: LinkKind,
+    col: 'cables' | 'circuits' | 'logical_links',
+    idx: number,
+    raw: Cable | Circuit | LogicalLink,
+  ): void => {
     const a = raw.a ?? {};
     const b = raw.b ?? {};
     out.push({
       kind,
+      refKey: `${col}:${idx}`,
       aName: a.provider_network ?? a.device,
       bName: b.provider_network ?? b.device,
       aVrf: ('vrf' in a ? (a.vrf ?? '') : '').trim(),
@@ -168,9 +196,9 @@ function buildLinks(topology: Topology): LinkVM[] {
     });
   };
   // v7 held one links[] in cables → circuits → logical order after import
-  for (const c of topology.cables ?? []) push('cable', c);
-  for (const c of topology.circuits ?? []) push('circuit', c);
-  for (const l of topology.logical_links ?? []) push('logical', l);
+  (topology.cables ?? []).forEach((c, i) => push('cable', 'cables', i, c));
+  (topology.circuits ?? []).forEach((c, i) => push('circuit', 'circuits', i, c));
+  (topology.logical_links ?? []).forEach((l, i) => push('logical', 'logical_links', i, l));
   return out;
 }
 
@@ -192,9 +220,23 @@ export function sceneBounds(
   };
 }
 
+const NO_EDIT: EditVisuals = {
+  selectedNodes: new Set(),
+  selectedLink: null,
+  hoverNode: null,
+  hoverRow: null,
+  dropRow: null,
+  linkDragging: false,
+};
+
 /* ---------- render ---------- */
 
-export function renderScene(dom: SceneDom, topology: Topology | null, view: ViewOptions): void {
+export function renderScene(
+  dom: SceneDom,
+  topology: Topology | null,
+  view: ViewOptions,
+  edit: EditVisuals = NO_EDIT,
+): void {
   dom.lyGrid.style.display = view.gridOn ? '' : 'none';
   dom.lySites.textContent = '';
   dom.lyLinks.textContent = '';
@@ -233,7 +275,7 @@ export function renderScene(dom: SceneDom, topology: Topology | null, view: View
     g.appendChild(
       el('rect', { class: 'site-rect', x: x0, y: y0, width: x1 - x0, height: y1 - y0, rx: 12 }),
     );
-    const lbl = el('text', { class: 'site-label', x: x0 + 12, y: y0 + 18 });
+    const lbl = el('text', { class: 'site-label', x: x0 + 12, y: y0 + 18, 'data-site': s });
     lbl.textContent = '⌖ ' + s;
     g.appendChild(lbl);
     dom.lySites.appendChild(g);
@@ -275,17 +317,27 @@ export function renderScene(dom: SceneDom, topology: Topology | null, view: View
       p2 = anchor(b.x, b.y, NODE_W, b.h, ac.x, ac.y);
     }
     const seg = linkSegment(p1, p2, i, pairTotal.get(key) ?? 1);
-    const g = el('g', { class: 'link' + (physInLogical ? ' dim' : '') });
+    const selected = edit.selectedLink === l.refKey;
+    const g = el('g', {
+      class: 'link' + (selected ? ' selected' : '') + (physInLogical ? ' dim' : ''),
+      'data-link': l.refKey,
+    });
+    g.appendChild(el('path', { class: 'link-hit', d: seg.d }));
     const line = el('path', {
-      class: 'link-line ' + (l.kind === 'circuit' ? 'circuit' : l.kind === 'logical' ? 'logical' : ''),
+      class:
+        'link-line ' + (l.kind === 'circuit' ? 'circuit' : l.kind === 'logical' ? 'logical' : ''),
       d: seg.d,
     });
-    if (l.kind === 'logical') (line as SVGElement).style.stroke = vrfColor(logicalVrfOf(l));
+    if (l.kind === 'logical' && !selected) {
+      (line as SVGElement).style.stroke = vrfColor(logicalVrfOf(l));
+    }
     g.appendChild(line);
     const txt = l.label;
     if (txt) {
       const tEl = el('text', { class: 'link-label', x: seg.lx, y: seg.ly, 'text-anchor': 'middle' });
-      if (l.kind === 'logical') (tEl as SVGElement).style.fill = vrfColor(logicalVrfOf(l));
+      if (l.kind === 'logical' && !selected) {
+        (tEl as SVGElement).style.fill = vrfColor(logicalVrfOf(l));
+      }
       tEl.textContent = txt;
       g.appendChild(tEl);
     }
@@ -316,10 +368,22 @@ export function renderScene(dom: SceneDom, topology: Topology | null, view: View
   }
 
   /* nodes */
+  const singleSelection = edit.selectedNodes.size === 1;
   for (const n of nodes.values()) {
-    const g = el('g', { class: 'node', 'data-node': n.name, transform: `translate(${n.x},${n.y})` });
+    const selected = edit.selectedNodes.has(n.name);
+    const showPorts = (selected && singleSelection) || edit.hoverNode === n.name;
+    const g = el('g', {
+      class: 'node' + (selected ? ' selected' : ''),
+      'data-node': n.name,
+      transform: `translate(${n.x},${n.y})`,
+    });
     g.appendChild(
-      el('rect', { class: 'node-box' + (n.kind === 'pn' ? ' pnbox' : ''), width: NODE_W, height: n.h, rx: 9 }),
+      el('rect', {
+        class: 'node-box' + (n.kind === 'pn' ? ' pnbox' : ''),
+        width: NODE_W,
+        height: n.h,
+        rx: 9,
+      }),
     );
     const ig = el('g', { transform: 'translate(11,13)' });
     ig.innerHTML = `<g fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" transform="scale(1.08)">${ICONS[n.icon]}</g>`;
@@ -335,14 +399,17 @@ export function renderScene(dom: SceneDom, topology: Topology | null, view: View
       n.rows.forEach((v, idx) => {
         const rect = vrfRowRect(0, 0, idx);
         const col = v ? vrfColor(v) : 'var(--line2)';
+        const dropping = edit.dropRow === `${n.name}|${v}`;
         const row = el('rect', {
-          class: 'vrf-row',
+          class: 'vrf-row' + (dropping ? ' drop' : ''),
           x: rect.x,
           y: rect.y,
           width: rect.w,
           height: rect.h,
           rx: 5,
           'stroke-opacity': v ? 0.9 : 0.6,
+          'data-vrfrow': n.name,
+          'data-vrfname': v,
         });
         (row as SVGElement).style.stroke = col;
         g.appendChild(row);
@@ -350,7 +417,45 @@ export function renderScene(dom: SceneDom, topology: Topology | null, view: View
         (tEl as SVGElement).style.fill = v ? col : 'var(--tx3)';
         tEl.textContent = v || 'global';
         g.appendChild(tEl);
+        if (showPorts || edit.linkDragging) {
+          const rcy = rect.y + rect.h / 2;
+          const pts: [number, number][] = [
+            [rect.x, rcy],
+            [rect.x + rect.w, rcy],
+          ];
+          if (edit.hoverRow === `${n.name}|${v}`) {
+            pts.push([NODE_W / 2, rect.y], [NODE_W / 2, rect.y + rect.h]);
+          }
+          for (const [px, py] of pts) {
+            g.appendChild(
+              el('circle', {
+                class: 'port',
+                cx: px,
+                cy: py,
+                r: 4,
+                'data-vrfport': n.name,
+                'data-vrfname': v,
+              }),
+            );
+          }
+        }
       });
+    }
+    /* node-edge ports: physical view for all; logical view for PN and for
+       devices with no visible compartments (v7) */
+    if (
+      showPorts &&
+      (view.viewMode !== 'logical' || n.kind === 'pn' || n.rows.length === 0)
+    ) {
+      const edgePts: [number, number][] = [
+        [NODE_W / 2, 0],
+        [NODE_W, n.h / 2],
+        [NODE_W / 2, n.h],
+        [0, n.h / 2],
+      ];
+      for (const [px, py] of edgePts) {
+        g.appendChild(el('circle', { class: 'port', cx: px, cy: py, r: 4.5, 'data-port': n.name }));
+      }
     }
     dom.lyNodes.appendChild(g);
   }
@@ -385,5 +490,6 @@ export function renderScene(dom: SceneDom, topology: Topology | null, view: View
   const ni = (t.circuits ?? []).length;
   const nl = (t.logical_links ?? []).length;
   dom.counts.textContent =
-    `${nDev} devices${nPn ? ` · ${nPn} provider nets` : ''} · ${nc + ni + nl} links (${nc} cable / ${ni} circuit / ${nl} logical) · ${sitesList(t).length} sites`;
+    `${nDev} devices${nPn ? ` · ${nPn} provider nets` : ''} · ${nc + ni + nl} links (${nc} cable / ${ni} circuit / ${nl} logical) · ${sitesList(t).length} sites` +
+    (edit.selectedNodes.size > 1 ? ` · ${edit.selectedNodes.size} selected` : '');
 }

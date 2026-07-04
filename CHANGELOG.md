@@ -8,6 +8,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Phase 2 — canvas editing with the text document as the single source of
+  truth: every canvas commit (drag mouseup, panel field change, 400ms nudge
+  debounce) serializes the model and is applied as one `WorkspaceEdit`, so
+  undo/redo is VSCode's regular document history (ADR D6). Edits computed
+  against a stale document version are discarded (agent-race guard) and
+  self-originated updates are echo-suppressed (plan §4.2).
+- Ported v7 editing UI: node palette with drag placement, port-drag link
+  creation (cable/circuit/logical kind rules), selection (click / shift /
+  marquee / Ctrl+A), drag with grid snap and alignment guides, property
+  panels (device, provider network, multi-select, physical and logical links
+  with endpoint IP write-through), VRF chips, interface cards, Config Context
+  JSON modal, context menus (rename, role change, cable⇄circuit conversion,
+  paste here, clear canvas), inline rename with reference-following
+  (ADR D10), copy/paste/duplicate with unique renaming, align/distribute,
+  keyboard shortcuts without Ctrl+K (ADR D14).
+- Core operations: `makeClipboard` / `pasteClipboard` (reference remapping),
+  `convertCableToCircuit` / `convertCircuitToCable`.
+- E2E: undo/redo delegation and the stale-edit discard verified through the
+  real WorkspaceEdit path via a test-only hook.
+
 - Phase 1 — read-only viewer: opening a `*.topo.json` launches the Network
   TopoDraft custom editor (`topodraft.editor`, default for the pattern).
   Physical/logical views with VRF compartments, site frames, link labels,

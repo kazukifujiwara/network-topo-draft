@@ -269,6 +269,154 @@ function ensureInterface(device: Device, name: string) {
   return f;
 }
 
+/* ---------- clipboard / paste / duplicate (v7 copySel/pasteClip) ---------- */
+
+/**
+ * A self-contained copy of nodes plus the links BETWEEN them (links to
+ * outside nodes are not copied — v7 behavior). Survives later edits or
+ * deletion of the originals.
+ */
+export interface TopoClipboard {
+  devices: Device[];
+  provider_networks: ProviderNetwork[];
+  cables: Cable[];
+  circuits: Circuit[];
+  logical_links: LogicalLink[];
+}
+
+export function makeClipboard(topology: Topology, names: string[]): TopoClipboard {
+  const wanted = new Set(names);
+  const devices = topology.devices.filter((d) => wanted.has(d.name));
+  const provider_networks = (topology.provider_networks ?? []).filter((p) => wanted.has(p.name));
+  const copied = new Set([...devices, ...provider_networks].map((n) => n.name));
+  const inside = (ep: { device?: string; provider_network?: string }): boolean => {
+    const ref = ep.provider_network ?? ep.device;
+    return ref !== undefined && copied.has(ref);
+  };
+  return deepClone({
+    devices,
+    provider_networks,
+    cables: (topology.cables ?? []).filter((l) => inside(l.a) && inside(l.b)),
+    circuits: (topology.circuits ?? []).filter((l) => inside(l.a) && inside(l.b)),
+    logical_links: (topology.logical_links ?? []).filter((l) => inside(l.a) && inside(l.b)),
+  });
+}
+
+export interface PasteResult {
+  topology: Topology;
+  /** old name → new (unique) name of every pasted node */
+  renames: Map<string, string>;
+}
+
+/**
+ * Paste a clipboard: every node gets a fresh unique name, pasted links are
+ * re-pointed at the new names, and positions shift so the clipboard's
+ * top-left lands at (atX, atY) (v7 pasteClip).
+ */
+export function pasteClipboard(
+  topology: Topology,
+  clipboard: TopoClipboard,
+  atX: number,
+  atY: number,
+  snapOn = true,
+): PasteResult {
+  const next = deepClone(topology);
+  const clip = deepClone(clipboard);
+  const nodes = [...clip.devices, ...clip.provider_networks];
+  if (!nodes.length) return { topology: next, renames: new Map() };
+  const minX = Math.min(...nodes.map((n) => n.position?.x ?? 0));
+  const minY = Math.min(...nodes.map((n) => n.position?.y ?? 0));
+  const renames = new Map<string, string>();
+  const place = (n: Device | ProviderNetwork): void => {
+    const fresh = uniqueName(next, n.name || 'node');
+    renames.set(n.name, fresh);
+    n.name = fresh;
+    n.position = {
+      x: snap(atX + (n.position?.x ?? 0) - minX, snapOn),
+      y: snap(atY + (n.position?.y ?? 0) - minY, snapOn),
+    };
+  };
+  for (const d of clip.devices) {
+    place(d);
+    next.devices.push(d);
+  }
+  for (const p of clip.provider_networks) {
+    place(p);
+    next.provider_networks = next.provider_networks ?? [];
+    next.provider_networks.push(p);
+  }
+  const remap = (ep: { device?: string; provider_network?: string }): void => {
+    if (ep.device !== undefined && renames.has(ep.device)) {
+      ep.device = renames.get(ep.device) as string;
+    }
+    if (ep.provider_network !== undefined && renames.has(ep.provider_network)) {
+      ep.provider_network = renames.get(ep.provider_network) as string;
+    }
+  };
+  for (const l of clip.cables) {
+    remap(l.a);
+    remap(l.b);
+    next.cables = next.cables ?? [];
+    next.cables.push(l);
+  }
+  for (const l of clip.circuits) {
+    remap(l.a);
+    remap(l.b);
+    next.circuits = next.circuits ?? [];
+    next.circuits.push(l);
+  }
+  for (const l of clip.logical_links) {
+    remap(l.a);
+    remap(l.b);
+    next.logical_links = next.logical_links ?? [];
+    next.logical_links.push(l);
+  }
+  return { topology: next, renames };
+}
+
+/* ---------- cable ⇄ circuit conversion (v7 context menu) ---------- */
+
+/**
+ * Convert a cable to a circuit (or back), keeping the fields both shapes
+ * share (a, b, type, status). Fields the target shape cannot hold are lost —
+ * exactly what v7's unified in-memory link lost on its next export. The link
+ * is appended to the end of the target collection.
+ */
+export function convertCableToCircuit(topology: Topology, index: number): Topology {
+  const next = deepClone(topology);
+  const cable = (next.cables ?? [])[index];
+  if (!cable) return next;
+  (next.cables as Cable[]).splice(index, 1);
+  if (!next.cables?.length) delete next.cables;
+  const circuit: Circuit = { a: cable.a, b: cable.b };
+  if (cable.type !== undefined) circuit.type = cable.type;
+  if (cable.status !== undefined) circuit.status = cable.status;
+  next.circuits = next.circuits ?? [];
+  next.circuits.push(circuit);
+  return next;
+}
+
+export function convertCircuitToCable(topology: Topology, index: number): Topology {
+  const next = deepClone(topology);
+  const circuit = (next.circuits ?? [])[index];
+  if (!circuit) return next;
+  (next.circuits as Circuit[]).splice(index, 1);
+  if (!next.circuits?.length) delete next.circuits;
+  const strip = (ep: Circuit['a']): Cable['a'] =>
+    ep.provider_network !== undefined
+      ? { provider_network: ep.provider_network }
+      : {
+          ...(ep.device !== undefined ? { device: ep.device } : {}),
+          ...(ep.interface !== undefined ? { interface: ep.interface } : {}),
+        };
+  const cable: Cable = { a: strip(circuit.a), b: strip(circuit.b) };
+  if (circuit.type !== undefined) cable.type = circuit.type;
+  if (circuit.status !== undefined) cable.status = circuit.status;
+  next.cables = next.cables ?? [];
+  next.cables.push(cable);
+  return next;
+}
+
 /* ---------- arrange (v7 alignRow/alignCol/distH/distV) ---------- */
 
 type Node = Device | ProviderNetwork;

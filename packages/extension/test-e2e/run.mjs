@@ -31,6 +31,8 @@ writeFileSync(join(workspace, 'plain.json'), '{"not":"topodraft"}\n');
 await runTests({
   extensionDevelopmentPath,
   extensionTestsPath: suiteOut,
+  // enables the topodraft.__test.simulateCanvasEdit hook (see topoEditor.ts)
+  extensionTestsEnv: { TOPODRAFT_E2E: '1' },
   launchArgs: [
     workspace,
     '--disable-extensions',
