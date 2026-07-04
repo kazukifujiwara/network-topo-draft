@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "Canvas UI for the Network TopoDraft custom editor (read-only viewer since Phase 1)",
+  "description": "Canvas UI for the TopoDraft custom editor (read-only viewer since Phase 1)",
   "exports": {
     ".": "./src/index.ts"
   },

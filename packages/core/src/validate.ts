@@ -45,7 +45,7 @@ export function validate(topology: Topology): Diagnostic[] {
       severity: 'info',
       code: 'missing-version',
       message:
-        'File has no "version" field (legacy Network TopoDraft export); saving will add "version": 1.',
+        'File has no "version" field (legacy TopoDraft export); saving will add "version": 1.',
       path: [],
     });
   }

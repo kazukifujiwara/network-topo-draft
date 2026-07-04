@@ -145,7 +145,7 @@ async function newTopologyFile(): Promise<void> {
   const root = vscode.workspace.workspaceFolders?.[0]?.uri;
   const picked = await vscode.window.showSaveDialog({
     defaultUri: root ? vscode.Uri.joinPath(root, 'new.topo.json') : undefined,
-    filters: { 'Network TopoDraft topology': ['topo.json', 'json'] },
+    filters: { 'TopoDraft topology': ['topo.json', 'json'] },
   });
   log(`newFile: template=${pick.builtinId ?? pick.userUri?.toString() ?? '?'} dialog=${picked?.toString() ?? 'cancelled'}`);
   if (!picked) return;

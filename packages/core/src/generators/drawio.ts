@@ -127,5 +127,5 @@ export function genDrawio(topology: Topology): string {
     );
   }
 
-  return `<mxfile host="Network TopoDraft"><diagram name="topology"><mxGraphModel dx="800" dy="600" grid="1" gridSize="10" page="0"><root><mxCell id="0"/><mxCell id="1" parent="0"/>${cells.join('')}</root></mxGraphModel></diagram></mxfile>`;
+  return `<mxfile host="TopoDraft"><diagram name="topology"><mxGraphModel dx="800" dy="600" grid="1" gridSize="10" page="0"><root><mxCell id="0"/><mxCell id="1" parent="0"/>${cells.join('')}</root></mxGraphModel></diagram></mxfile>`;
 }

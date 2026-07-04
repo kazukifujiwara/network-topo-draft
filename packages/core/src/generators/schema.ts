@@ -14,9 +14,9 @@
 
 export const topoJsonSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Network TopoDraft topology (*.topo.json, format v1)',
+  title: 'TopoDraft topology (*.topo.json, format v1)',
   description:
-    'File format v1 of Network TopoDraft. Normative specification: docs/topodraft-file-format-v1.md. Revision: 2026-07-04.',
+    'File format v1 of TopoDraft. Normative specification: docs/topodraft-file-format-v1.md. Revision: 2026-07-04.',
   type: 'object',
   required: ['version', 'devices'],
   additionalProperties: false,
@@ -221,7 +221,7 @@ export const topoJsonSchema = {
     logical_links: {
       type: 'array',
       description:
-        'logical (L3) adjacencies between routing instances (VRFs) — Network TopoDraft extension, not a NetBox object. Rendered in the logical view connecting VRF compartments.',
+        'logical (L3) adjacencies between routing instances (VRFs) — TopoDraft extension, not a NetBox object. Rendered in the logical view connecting VRF compartments.',
       items: {
         type: 'object',
         required: ['a', 'b'],
@@ -316,9 +316,9 @@ const EXAMPLE = {
  * the extension reality — JSON only, the file itself is the import).
  */
 export function genSchemaDoc(): string {
-  return `# Network TopoDraft import schema (for AI agents & external tools)
+  return `# TopoDraft import schema (for AI agents & external tools)
 
-Generate a JSON document that follows the schema below and save it as a \`*.topo.json\` file — Network TopoDraft opens it directly in the editor. The idea: draft the topology externally (e.g. with an AI agent), then fine-tune it in the editor.
+Generate a JSON document that follows the schema below and save it as a \`*.topo.json\` file — TopoDraft opens it directly in the editor. The idea: draft the topology externally (e.g. with an AI agent), then fine-tune it in the editor.
 
 ## Rules
 - JSON only. Set "version": 1 (required). "$schema" pointing at the published topodraft.schema.json is optional but recommended.

@@ -1,7 +1,7 @@
-# Network TopoDraft File Format Specification v1 (`*.topo.json`)
+# TopoDraft File Format Specification v1 (`*.topo.json`)
 
 - Status: Draft v1.0 (2026-07)
-- Role: the canonical file format of the Network TopoDraft VSCode extension. **This document and the JSON Schema (`schema/topodraft.schema.json`) are the contract for AI agents (GitHub Copilot / Claude Code / NetBox-MCP-driven agents, etc.) that read and write these files directly** — and the only normative specification
+- Role: the canonical file format of the TopoDraft VSCode extension. **This document and the JSON Schema (`schema/topodraft.schema.json`) are the contract for AI agents (GitHub Copilot / Claude Code / NetBox-MCP-driven agents, etc.) that read and write these files directly** — and the only normative specification
 - Related: `topodraft-vscode-plan.md` (development plan / ADRs)
 
 ---
@@ -9,8 +9,8 @@
 ## 1. Basic Principles
 
 1. **JSON only.** YAML is not supported (ADR D2)
-2. File names match `*.topo.json` (e.g. `dallas-dc.topo.json`). VSCode associates this pattern with the Network TopoDraft editor and schema validation
-3. Field names **follow NetBox naming**. Elements with no NetBox counterpart are explicitly marked as "Network TopoDraft extensions" in §8
+2. File names match `*.topo.json` (e.g. `dallas-dc.topo.json`). VSCode associates this pattern with the TopoDraft editor and schema validation
+3. Field names **follow NetBox naming**. Elements with no NetBox counterpart are explicitly marked as "TopoDraft extensions" in §8
 4. **Every field except `devices` is optional.** Do not write empty strings / arrays / objects — omit the field entirely (exception: the contents of `config_context` are preserved verbatim)
 5. `position` is editor metadata with no network meaning. When omitted, nodes are auto-arranged on open
 6. Device names and provider-network names are **unique within a file**. Links reference them by name (there are no stable IDs)
@@ -25,7 +25,7 @@
   "provider_networks": [ ... ],    // optional
   "cables": [ ... ],               // optional
   "circuits": [ ... ],             // optional
-  "logical_links": [ ... ]         // optional (Network TopoDraft extension)
+  "logical_links": [ ... ]         // optional (TopoDraft extension)
 }
 ```
 
@@ -43,7 +43,7 @@
 | `platform` | string | OS (e.g. `"IOS-XE 17.12"`) |
 | `vrfs` | string[] | VRF (routing instance) names defined on the device. Drawn as compartments in the logical view |
 | `interfaces` | object[] | §3.2 |
-| `config_context` | object | Free-form structured settings for the device (§3.3; Network TopoDraft-extension semantics, see §8) |
+| `config_context` | object | Free-form structured settings for the device (§3.3; TopoDraft-extension semantics, see §8) |
 | `position` | `{x:number, y:number}` | Canvas coordinates. Optional |
 
 ### 3.2 interfaces[] (under devices)
@@ -103,7 +103,7 @@ Links attached to a provider network are always **circuits** (never cables).
 | `commit_rate` | string | Contracted bandwidth (e.g. `"1Gbps"`) |
 | `status` | string | active / provisioning, … |
 
-### 3.7 logical_links[] — logical (L3) adjacencies [Network TopoDraft extension]
+### 3.7 logical_links[] — logical (L3) adjacencies [TopoDraft extension]
 
 Logical connections between routing instances (VRFs). NetBox has no corresponding object (§8).
 
@@ -239,10 +239,10 @@ The editor performs no NetBox sync (ADR D5). Notes for agents bridging this file
 | `devices[].vrfs` / `interfaces[].vrf` | VRF (requires RD etc.) / Interface.vrf | VRFs are name-only here; no RD |
 | `interfaces[].lag` | Interface.lag (self-referential FK) | Same naming convention |
 | `interfaces[].ip_address` | IPAddress (separate object) + assigned interface | Flattened here as an interface attribute |
-| `devices[].config_context` | **`local_context_data`** (the writable field). NetBox's `config_context` is computed and read-only | **Write to `local_context_data` when pushing.** The name here is unified as `config_context` for Network TopoDraft's convenience |
+| `devices[].config_context` | **`local_context_data`** (the writable field). NetBox's `config_context` is computed and read-only | **Write to `local_context_data` when pushing.** The name here is unified as `config_context` for TopoDraft's convenience |
 | `provider_networks[]` | circuits.ProviderNetwork (requires Provider FK) | — |
 | `circuits[]` | Circuit + CircuitTermination | `commit_rate` in NetBox is an integer in kbps; here it is a free string such as `"1Gbps"` |
-| `logical_links[]` | **No corresponding object (Network TopoDraft extension)** | When pushing, either design a representation on the agent side (tags / custom fields / L2VPN, …) or exclude them |
+| `logical_links[]` | **No corresponding object (TopoDraft extension)** | When pushing, either design a representation on the agent side (tags / custom fields / L2VPN, …) or exclude them |
 | `position` | None | Never send to NetBox |
 
 ## 9. Versioning Policy

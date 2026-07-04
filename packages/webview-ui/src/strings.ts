@@ -47,7 +47,7 @@ const EN = {
   st_sel: 'selected',
   pn_paused:
     'The document has a JSON error — the canvas shows the last valid state and editing is paused until the text parses again.',
-  home_title: 'Network TopoDraft',
+  home_title: 'TopoDraft',
   home_info:
     '<b>Physical</b> shows cables and carrier circuits; <b>Logical</b> shows VRF compartments connected by logical links.<br><br>Drag from a node\'s <b>◦ port</b> to connect. <b>Shift</b>+click or <b>Shift</b>+drag to multi-select. Double-click renames. Right-click for the context menu.<br><br><b>Ctrl/Cmd+C/V/D</b> copy · paste · duplicate — <b>Del</b> delete — <b>arrows</b> nudge — undo/redo is VSCode\'s regular <b>Ctrl/Cmd+Z</b>.',
   sel_title: 'Selection',
@@ -177,7 +177,7 @@ const JA: Record<StringKey, string> = {
   st_sel: '選択中',
   pn_paused:
     'ドキュメントにJSONエラーがあります — キャンバスは最後の正常な状態を表示しており、テキストが解析できるようになるまで編集は一時停止します。',
-  home_title: 'Network TopoDraft',
+  home_title: 'TopoDraft',
   home_info:
     '<b>物理</b>はケーブルとキャリア回線、<b>論理</b>は論理リンクで接続されたVRF区画を表示します。<br><br>ノードの<b>◦ ポート</b>からドラッグして接続。<b>Shift</b>+クリック / <b>Shift</b>+ドラッグで複数選択。ダブルクリックで名前変更。右クリックでコンテキストメニュー。<br><br><b>Ctrl/Cmd+C/V/D</b> コピー・貼り付け・複製 — <b>Del</b> 削除 — <b>矢印</b> 微調整 — 元に戻す/やり直すは VSCode 標準の <b>Ctrl/Cmd+Z</b> です。',
   sel_title: '選択',

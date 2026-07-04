@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "Network TopoDraft — a graphical network-topology editor for *.topo.json files (VSCode extension monorepo)",
+  "description": "TopoDraft — Network Topology as Code: a graphical network-topology editor for *.topo.json files (VSCode extension monorepo)",
   "engines": {
     "node": ">=20"
   },

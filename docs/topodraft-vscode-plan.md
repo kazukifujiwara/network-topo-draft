@@ -1,4 +1,4 @@
-# Network TopoDraft VSCode Extension — Development Plan
+# TopoDraft VSCode Extension — Development Plan
 
 - Status: Draft v1.0 (2026-07)
 - Audience: implementer (Claude Code) and reviewer (Kazuki)
@@ -8,10 +8,10 @@
 
 ## 1. Purpose and Goals
 
-Provide the same topology-editing experience as the standalone HTML version of Network TopoDraft (v7) as a VSCode custom editor.
+Provide the same topology-editing experience as the standalone HTML version of TopoDraft (v7) as a VSCode custom editor.
 
 **Goals**
-1. Opening a `*.topo.json` file in VSCode launches the Network TopoDraft graphical editor
+1. Opening a `*.topo.json` file in VSCode launches the TopoDraft graphical editor
 2. AI agents (GitHub Copilot / Claude Code, etc.) can **edit the same file directly as text** and the canvas follows (and vice versa)
 3. NetBox integration is delegated to AI agents (NetBox MCP / API); the extension itself does not implement it. As the foundation for that, the file format and JSON Schema are rigorously defined and published with NetBox-compatible naming
 4. A test regime that detects regressions on every feature addition is in place from day one
@@ -25,7 +25,7 @@ Provide the same topology-editing experience as the standalone HTML version of N
 | D1 | Adopt the `CustomTextEditor` API; the text document is the source of truth | Bidirectional sync between agent edits and canvas edits is built on VSCode's standard TextDocument machinery. We do NOT use `CustomEditor` (custom document model) |
 | D2 | Target files are `*.topo.json` only. **YAML is removed entirely** in the extension (file format, import/export, and the Config Context YAML tab) | Making JSON canonical avoids comment loss and unstable key order. Also removes the js-yaml dependency and slims the bundle |
 | D3 | Layout (`position`) stays in the **same file** as the topology | Portability and simple file management take priority (Kazuki's decision). Diff noise is mitigated by deterministic serialization (D12) |
-| D4 | Field names follow NetBox naming as a rule | Carries over the existing v7 format. Elements with no NetBox counterpart — `logical_links`, and `config_context` (which in NetBox is a computed value; the writable field is `local_context_data`) — are explicitly documented as "Network TopoDraft extensions" in the format spec |
+| D4 | Field names follow NetBox naming as a rule | Carries over the existing v7 format. Elements with no NetBox counterpart — `logical_links`, and `config_context` (which in NetBox is a computed value; the writable field is `local_context_data`) — are explicitly documented as "TopoDraft extensions" in the format spec |
 | D5 | **NetBox sync is out of scope for the extension** | Delegated to AI agents using NetBox MCP / API. The extension carries no auth, conflict resolution, or version-difference logic. In exchange, the JSON Schema becomes the contract with agents (see format spec) |
 | D6 | Undo/Redo is **fully delegated** to VSCode's document edit stack. The standalone version's internal snapshot history (150 entries) is removed | Dual history management always breaks. Webview edits are applied as `WorkspaceEdit`s; Ctrl+Z is left to standard VSCode behavior |
 | D7 | The standalone HTML version is **frozen at v7**. The extension extracts core logic into a new pure-TypeScript package | No further maintenance of the standalone version. However, read compatibility with v3–v7 exports is preserved (→ golden files in the test strategy) |
@@ -35,7 +35,7 @@ Provide the same topology-editing experience as the standalone HTML version of N
 | D11 | Invalid-JSON resilience: while the document fails to parse, the canvas switches to a read-only error view and the Webview **never writes back**. It resumes automatically once the JSON is valid again | Prevents the editor from crashing on an agent's mid-edit state, and prevents overwriting (destroying) agent edits with a stale canvas state. The most important safety requirement |
 | D12 | Deterministic serialization: identical content always produces byte-identical JSON output | Stable git diffs, reviewability, and stable diff-based agent edits. Rules are defined in format spec §4 |
 | D13 | i18n moves to `vscode.l10n`, following the VSCode display language (en/ja bundled). The standalone version's in-app toggle is removed | Standard Marketplace practice. The existing STR dictionary (en/ja) ports over to l10n format |
-| D14 | Keybinding redesign: the standalone version's Ctrl+K (command palette) is removed; all actions are registered as VSCode commands under the `Network TopoDraft: ...` namespace. Webview-internal shortcuts (Ctrl+C/V etc.) avoid collisions via focus conditions (`when` clauses) | Ctrl+K collides head-on with VSCode's chord prefix |
+| D14 | Keybinding redesign: the standalone version's Ctrl+K (command palette) is removed; all actions are registered as VSCode commands under the `TopoDraft: ...` namespace. Webview-internal shortcuts (Ctrl+C/V etc.) avoid collisions via focus conditions (`when` clauses) | Ctrl+K collides head-on with VSCode's chord prefix |
 
 ## 3. Non-goals
 
@@ -111,10 +111,10 @@ TextDocument (truth) ──(update: full text + docVersion)──▶ Webview
 
 | Command | Behavior |
 | --- | --- |
-| `Network TopoDraft: New Topology File` | Pick a template → create and open a new `*.topo.json` |
-| `Network TopoDraft: Export as Markdown / For AI / Import Schema / draw.io` | Invoke core generators; output to a new editor or file save (replaces the standalone Export tabs; a JSON tab is unnecessary — the file itself is the JSON) |
-| `Network TopoDraft: Validate` | Run validate explicitly (normally automatic on edit) |
-| `Network TopoDraft: Open as Text / Open in Topology Editor` | Convenience wrappers over `workbench.action.reopenWithEditor` |
+| `TopoDraft: New Topology File` | Pick a template → create and open a new `*.topo.json` |
+| `TopoDraft: Export as Markdown / For AI / Import Schema / draw.io` | Invoke core generators; output to a new editor or file save (replaces the standalone Export tabs; a JSON tab is unnecessary — the file itself is the JSON) |
+| `TopoDraft: Validate` | Run validate explicitly (normally automatic on edit) |
+| `TopoDraft: Open as Text / Open in Topology Editor` | Convenience wrappers over `workbench.action.reopenWithEditor` |
 
 ### 4.5 `package.json` contributions (essentials)
 
@@ -122,7 +122,7 @@ TextDocument (truth) ──(update: full text + docVersion)──▶ Webview
 {
   "customEditors": [{
     "viewType": "topodraft.editor",
-    "displayName": "Network TopoDraft Editor",
+    "displayName": "TopoDraft Editor",
     "selector": [{ "filenamePattern": "*.topo.json" }],
     "priority": "default"
   }],

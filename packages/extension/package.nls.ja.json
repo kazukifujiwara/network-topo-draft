@@ -1,6 +1,6 @@
 {
-  "extension.description": "*.topo.json のグラフィカルなネットワーク構成図エディタ。AIエージェントがテキストとして編集すると、キャンバスが追従します。",
-  "editor.displayName": "Network TopoDraft エディタ",
+  "extension.description": "ネットワークトポロジを as Code で: *.topo.json の物理/論理構成図(VRF・ケーブル・回線)をキャンバスで描き、AIエージェントが同じファイルをテキストとして編集するとキャンバスが追従します。NetBox準拠の命名、JSON Schema同梱、Markdown/draw.ioエクスポート対応。",
+  "editor.displayName": "TopoDraft エディタ",
   "command.newFile": "新しいトポロジファイル",
   "command.saveAsTemplate": "テンプレートとして保存",
   "command.validate": "検証",

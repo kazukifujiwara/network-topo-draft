@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   panel were genericized the same way.
 
 - Phase 3 — periphery: semantic diagnostics in the Problems panel (core
-  validate() with jsonc-parser path→range resolution; `Network TopoDraft:
+  validate() with jsonc-parser path→range resolution; `TopoDraft:
   Validate` command); export commands (Markdown / for AI / import-schema /
   draw.io); `New Topology File` with built-in templates plus file-based user
   templates (`topodraft.templatesFolder`, O2 ruling) and `Save as Template`;
@@ -63,7 +63,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   automatically (ADR D11) — the viewer never writes to the document.
 - `jsonValidation` contribution: schema validation and completion for
   `*.topo.json` while editing as text.
-- Commands: `Network TopoDraft: Open as Text` / `Open in Topology Editor`.
+- Commands: `TopoDraft: Open as Text` / `Open in Topology Editor`.
 - E2E test harness (`@vscode/test-electron`) covering editor association,
   D11 no-write-back, and the reopen commands; new CI job runs it headless.
 

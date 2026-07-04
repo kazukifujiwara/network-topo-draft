@@ -23,7 +23,7 @@ export function buildWebviewHtml(o: WebviewHtmlOptions): string {
         content="default-src 'none'; img-src ${o.cspSource} data:; style-src ${o.cspSource}; font-src ${o.cspSource}; script-src 'nonce-${o.nonce}';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="${o.styleUri}">
-  <title>Network TopoDraft</title>
+  <title>TopoDraft</title>
 </head>
 <body>
   <div id="root" data-locale="${locale}"></div>

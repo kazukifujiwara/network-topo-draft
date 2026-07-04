@@ -22,7 +22,7 @@ export function schemaLegend(): string {
   - name (unique) / provider / description / position
 - cables[] : local physical connections (≈ NetBox Cable) — a/b: {device, interface}; type / bandwidth / status / label
 - circuits[] : carrier circuits (≈ NetBox Circuit) — cid / provider / type / commit_rate / status; a/b: {site, device, interface} or {provider_network}
-- logical_links[] : logical (L3) adjacencies between routing instances — Network TopoDraft extension, not a NetBox object
+- logical_links[] : logical (L3) adjacencies between routing instances — TopoDraft extension, not a NetBox object
   - a / b endpoints: {device, vrf, id, interface, ip_address} — vrf omitted = global routing table; id = environment/attachment identifier (tenant ID, VIF/VC ID) for peers whose VRF name is unknown; ip_address allowed directly when no interface is named; {provider_network, id} is also accepted
   - link_id (connection / VC / VIF ID — displayed on the diagram) / vlan (VLAN ID) / label / description
 - Empty fields are omitted. Devices sharing the same "site" belong to the same location.`;

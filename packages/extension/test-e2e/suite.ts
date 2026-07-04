@@ -62,7 +62,7 @@ function defineTests(): void {
     afterEach: Mocha.HookFunction;
   };
 
-  g.describe('Network TopoDraft custom editor (Phase 1)', () => {
+  g.describe('TopoDraft custom editor', () => {
     g.afterEach(async () => {
       await vscode.commands.executeCommand('workbench.action.closeAllEditors');
     });

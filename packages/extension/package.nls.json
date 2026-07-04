@@ -1,6 +1,6 @@
 {
-  "extension.description": "Graphical network-topology editor for *.topo.json files. AI agents edit the same file as text; the canvas follows.",
-  "editor.displayName": "Network TopoDraft Editor",
+  "extension.description": "Network topology as code: draw physical and logical network diagrams (VRF, cables, circuits) for *.topo.json files — AI agents edit the same file as text and the canvas follows. NetBox-friendly naming, published JSON Schema, Markdown/draw.io export.",
+  "editor.displayName": "TopoDraft Editor",
   "command.newFile": "New Topology File",
   "command.saveAsTemplate": "Save as Template",
   "command.validate": "Validate",

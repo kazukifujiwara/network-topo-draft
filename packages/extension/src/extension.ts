@@ -30,10 +30,10 @@ export function activate(context: vscode.ExtensionContext): void {
           ),
         );
       } else if (count === 0) {
-        void vscode.window.showInformationMessage(vscode.l10n.t('Network TopoDraft: no problems found.'));
+        void vscode.window.showInformationMessage(vscode.l10n.t('TopoDraft: no problems found.'));
       } else {
         void vscode.window.showWarningMessage(
-          vscode.l10n.t('Network TopoDraft: {0} problem(s) — see the Problems panel.', count),
+          vscode.l10n.t('TopoDraft: {0} problem(s) — see the Problems panel.', count),
         );
       }
     }),

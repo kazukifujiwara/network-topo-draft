@@ -1,6 +1,6 @@
 {
   "name": "topodraft",
-  "displayName": "Network TopoDraft",
+  "displayName": "TopoDraft — Network Topology as Code",
   "version": "0.0.1",
   "private": true,
   "publisher": "kazukifujiwara",
@@ -32,48 +32,48 @@
       {
         "command": "topodraft.newFile",
         "title": "%command.newFile%",
-        "category": "Network TopoDraft"
+        "category": "TopoDraft"
       },
       {
         "command": "topodraft.saveAsTemplate",
         "title": "%command.saveAsTemplate%",
-        "category": "Network TopoDraft"
+        "category": "TopoDraft"
       },
       {
         "command": "topodraft.validate",
         "title": "%command.validate%",
-        "category": "Network TopoDraft"
+        "category": "TopoDraft"
       },
       {
         "command": "topodraft.exportMarkdown",
         "title": "%command.exportMarkdown%",
-        "category": "Network TopoDraft"
+        "category": "TopoDraft"
       },
       {
         "command": "topodraft.exportForAi",
         "title": "%command.exportForAi%",
-        "category": "Network TopoDraft"
+        "category": "TopoDraft"
       },
       {
         "command": "topodraft.exportSchema",
         "title": "%command.exportSchema%",
-        "category": "Network TopoDraft"
+        "category": "TopoDraft"
       },
       {
         "command": "topodraft.exportDrawio",
         "title": "%command.exportDrawio%",
-        "category": "Network TopoDraft"
+        "category": "TopoDraft"
       },
       {
         "command": "topodraft.openAsText",
         "title": "%command.openAsText%",
-        "category": "Network TopoDraft",
+        "category": "TopoDraft",
         "icon": "$(code)"
       },
       {
         "command": "topodraft.openInTopologyEditor",
         "title": "%command.openInTopologyEditor%",
-        "category": "Network TopoDraft",
+        "category": "TopoDraft",
         "icon": "$(circuit-board)"
       }
     ],
@@ -92,7 +92,7 @@
       ]
     },
     "configuration": {
-      "title": "Network TopoDraft",
+      "title": "TopoDraft",
       "properties": {
         "topodraft.templatesFolder": {
           "type": "string",
@@ -118,5 +118,16 @@
     "@topodraft/protocol": "0.0.1",
     "@topodraft/webview-ui": "0.0.1",
     "jsonc-parser": "^3.3.1"
-  }
+  },
+  "keywords": [
+    "network",
+    "topology",
+    "network topology",
+    "network diagram",
+    "topology as code",
+    "diagram as code",
+    "netbox",
+    "vrf",
+    "draw.io"
+  ]
 }
