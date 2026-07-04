@@ -183,7 +183,7 @@ For stable git diffs and stable diff-based agent editing, the editor's save outp
         { "name": "Po1", "type": "lag", "description": "LAG to sw-hq-01" },
         { "name": "Gi0/0/1", "lag": "Po1" },
         { "name": "Gi0/0/2", "lag": "Po1" },
-        { "name": "Gi0/0/0.100", "ip_address": "169.254.10.1/30", "type": "virtual", "vrf": "PROD", "description": "DX VIF" }
+        { "name": "Gi0/0/0.100", "ip_address": "169.254.10.1/30", "type": "virtual", "description": "DX VIF", "vrf": "PROD" }
       ],
       "config_context": {
         "bgp": { "asn": 65010, "neighbors": [{ "peer": "169.254.10.2", "remote_asn": 64512 }] }
@@ -201,18 +201,18 @@ For stable git diffs and stable diff-based agent editing, the editor's save outp
   ],
   "circuits": [
     {
-      "cid": "DX-CID-01", "provider": "Equinix", "type": "Direct Connect", "commit_rate": "1Gbps", "status": "active",
       "a": { "site": "HQ", "device": "rt-hq-01", "interface": "Gi0/0/0" },
-      "b": { "provider_network": "AWS Direct Connect" }
+      "b": { "provider_network": "AWS Direct Connect" },
+      "cid": "DX-CID-01", "provider": "Equinix", "type": "Direct Connect", "commit_rate": "1Gbps", "status": "active"
     }
   ],
   "logical_links": [
     {
+      "a": { "device": "rt-hq-01", "vrf": "PROD", "interface": "Gi0/0/0.100" },
+      "b": { "device": "aws-tgw", "id": "tgw-attach-01" },
       "link_id": "dxvif-abc123",
       "vlan": "100",
-      "label": "eBGP over DX VIF",
-      "a": { "device": "rt-hq-01", "vrf": "PROD", "interface": "Gi0/0/0.100" },
-      "b": { "device": "aws-tgw", "id": "tgw-attach-01" }
+      "label": "eBGP over DX VIF"
     }
   ]
 }
