@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Phase 3 — periphery: semantic diagnostics in the Problems panel (core
+  validate() with jsonc-parser path→range resolution; `Network TopoDraft:
+  Validate` command); export commands (Markdown / for AI / import-schema /
+  draw.io); `New Topology File` with built-in templates plus file-based user
+  templates (`topodraft.templatesFolder`, O2 ruling) and `Save as Template`;
+  editor-title buttons to switch between text and topology views; UI
+  localization (en/ja) following the VSCode display language (ADR D13).
+
+### Fixed
+
+- Extension activation failed at runtime because esbuild could not statically
+  bundle jsonc-parser's UMD build ("Cannot find module './impl/format'") —
+  the host bundle now prefers ESM entry points (`mainFields`).
+
 - Phase 2 — canvas editing with the text document as the single source of
   truth: every canvas commit (drag mouseup, panel field change, 400ms nudge
   debounce) serializes the model and is applied as one `WorkspaceEdit`, so

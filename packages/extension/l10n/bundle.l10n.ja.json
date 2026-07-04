@@ -1,0 +1,23 @@
+{
+  "Open a *.topo.json file first — this command works on the active topology document.": "先に *.topo.json ファイルを開いてください — このコマンドはアクティブなトポロジドキュメントに対して動作します。",
+  "Cannot export: the document does not parse ({0})": "エクスポートできません: ドキュメントを解析できません ({0})",
+  "Exported {0} — open it with diagrams.net / draw.io.": "{0} をエクスポートしました — diagrams.net / draw.io で開けます。",
+  "Empty topology": "空のトポロジ",
+  "2-site redundant WAN": "2拠点冗長WAN",
+  "Site + cloud (DX, VRF logical)": "拠点 + クラウド (DX, VRF論理)",
+  "A blank canvas": "空のキャンバス",
+  "Two sites, redundant carrier circuits": "2拠点をキャリア回線で冗長接続",
+  "HQ with Direct Connect to a cloud peer, logical VRF link": "本社からDirect Connectでクラウドへ、VRF論理リンク付き",
+  "Your templates": "ユーザーテンプレート",
+  "Pick a template for the new topology": "新しいトポロジのテンプレートを選択してください",
+  "The file name should end with .topo.json so the topology editor and schema apply.": "トポロジエディタとスキーマを適用するには、ファイル名を .topo.json で終わらせてください。",
+  "Cannot save as template: the document does not parse ({0})": "テンプレートとして保存できません: ドキュメントを解析できません ({0})",
+  "Open a workspace folder (or set an absolute topodraft.templatesFolder) to save templates.": "テンプレートを保存するにはワークスペースフォルダを開いてください (または topodraft.templatesFolder に絶対パスを設定してください)。",
+  "Template name": "テンプレート名",
+  "Enter a valid file name.": "有効なファイル名を入力してください。",
+  "Template \"{0}\" already exists. Overwrite?": "テンプレート「{0}」は既に存在します。上書きしますか?",
+  "Overwrite": "上書き",
+  "Saved template \"{0}\" to {1}.": "テンプレート「{0}」を {1} に保存しました。",
+  "Network TopoDraft: no problems found.": "Network TopoDraft: 問題は見つかりませんでした。",
+  "Network TopoDraft: {0} problem(s) — see the Problems panel.": "Network TopoDraft: {0} 件の問題があります — 「問題」パネルを確認してください。"
+}

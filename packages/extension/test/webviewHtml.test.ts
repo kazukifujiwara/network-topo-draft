@@ -6,13 +6,26 @@ const html = buildWebviewHtml({
   nonce: 'NONCE123',
   scriptUri: 'https://webview.test/dist/webview/webview.js',
   styleUri: 'https://webview.test/dist/webview/webview.css',
+  locale: 'ja',
 });
 
 describe('buildWebviewHtml', () => {
   it('references the script with the nonce and the stylesheet', () => {
     expect(html).toContain('<script nonce="NONCE123" src="https://webview.test/dist/webview/webview.js">');
     expect(html).toContain('<link rel="stylesheet" href="https://webview.test/dist/webview/webview.css">');
-    expect(html).toContain('<div id="root">');
+    expect(html).toContain('<div id="root" data-locale="ja">');
+  });
+
+  it('injects the display language for the webview (D13), rejecting junk', () => {
+    expect(html).toContain('<html lang="ja">');
+    const odd = buildWebviewHtml({
+      cspSource: 'x',
+      nonce: 'n',
+      scriptUri: 's',
+      styleUri: 'c',
+      locale: '"><script>',
+    });
+    expect(odd).toContain('data-locale="en"');
   });
 
   it('locks the CSP down: no remote code, nonce-only scripts, no inline styles', () => {

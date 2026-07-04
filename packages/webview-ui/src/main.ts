@@ -4,6 +4,7 @@
  */
 import type { PersistedViewState } from './app';
 import { createApp } from './app';
+import { initLocale } from './strings';
 
 declare function acquireVsCodeApi(): {
   postMessage(message: unknown): void;
@@ -14,6 +15,8 @@ declare function acquireVsCodeApi(): {
 const vscode = acquireVsCodeApi();
 const root = document.getElementById('root');
 if (!root) throw new Error('webview root element missing');
+// the extension injects the VSCode display language (ADR D13)
+initLocale(root.dataset.locale);
 
 const app = createApp(root, {
   postMessage: (m) => vscode.postMessage(m),

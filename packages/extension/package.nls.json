@@ -1,0 +1,14 @@
+{
+  "extension.description": "Graphical network-topology editor for *.topo.json files. AI agents edit the same file as text; the canvas follows.",
+  "editor.displayName": "Network TopoDraft Editor",
+  "command.newFile": "New Topology File",
+  "command.saveAsTemplate": "Save as Template",
+  "command.validate": "Validate",
+  "command.exportMarkdown": "Export as Markdown",
+  "command.exportForAi": "Export for AI",
+  "command.exportSchema": "Export Import-Schema for AI Agents",
+  "command.exportDrawio": "Export as draw.io Diagram",
+  "command.openAsText": "Open as Text",
+  "command.openInTopologyEditor": "Open in Topology Editor",
+  "config.templatesFolder": "Folder holding user templates (*.topo.json files) for the New Topology File command. Workspace-relative unless absolute."
+}

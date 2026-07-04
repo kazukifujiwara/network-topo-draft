@@ -9,11 +9,14 @@ export interface WebviewHtmlOptions {
   nonce: string;
   scriptUri: string;
   styleUri: string;
+  /** VSCode display language (vscode.env.language), e.g. 'en', 'ja' (D13). */
+  locale: string;
 }
 
 export function buildWebviewHtml(o: WebviewHtmlOptions): string {
+  const locale = /^[a-zA-Z-]+$/.test(o.locale) ? o.locale : 'en';
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${locale}">
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy"
@@ -23,7 +26,7 @@ export function buildWebviewHtml(o: WebviewHtmlOptions): string {
   <title>Network TopoDraft</title>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root" data-locale="${locale}"></div>
   <script nonce="${o.nonce}" src="${o.scriptUri}"></script>
 </body>
 </html>`;

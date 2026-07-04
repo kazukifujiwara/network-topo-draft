@@ -64,6 +64,7 @@ export class TopoEditorProvider implements vscode.CustomTextEditorProvider {
       nonce: getNonce(),
       scriptUri: webviewUri('webview', 'webview.js'),
       styleUri: webviewUri('webview', 'webview.css'),
+      locale: vscode.env.language,
     });
 
     const controller = new DocumentSyncController({

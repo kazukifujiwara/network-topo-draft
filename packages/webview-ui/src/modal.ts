@@ -6,19 +6,20 @@
 import { findDevice } from '@topodraft/core';
 import type { ConfigContext } from '@topodraft/core';
 import type { EditorApi } from './api';
+import { T } from './strings';
 
 export function createConfigContextModal(container: HTMLElement, api: EditorApi) {
   const overlay = document.createElement('div');
   overlay.id = 'modal';
   overlay.innerHTML = `
     <div id="modalBox">
-      <div id="modalHead"><b id="modalTitle">Config Context</b><button id="modalClose" title="Close">×</button></div>
+      <div id="modalHead"><b id="modalTitle">${T('cc_modal')}</b><button id="modalClose" title="×">×</button></div>
       <div id="modalBody">
         <textarea id="modalText" spellcheck="false" placeholder='{\n  "bgp": { "asn": 65010 }\n}'></textarea>
         <div id="modalFoot">
-          <span class="note" id="modalNote">Free-form structured settings for this device (JSON object). Stored as devices[].config_context and re-emitted verbatim. Save with empty text to clear.</span>
-          <button class="m-btn" id="modalCancel">Cancel</button>
-          <button class="m-btn primary" id="modalSave">Save</button>
+          <span class="note" id="modalNote">${T('m_cc_note')}</span>
+          <button class="m-btn" id="modalCancel">${T('m_cancel')}</button>
+          <button class="m-btn primary" id="modalSave">${T('m_save')}</button>
         </div>
       </div>
     </div>`;
@@ -41,12 +42,12 @@ export function createConfigContextModal(container: HTMLElement, api: EditorApi)
       try {
         const value: unknown = JSON.parse(raw);
         if (value === null || typeof value !== 'object' || Array.isArray(value)) {
-          note.textContent = 'Top level must be an object (key/value map)';
+          note.textContent = T('t_cc_obj');
           return;
         }
         parsed = value as ConfigContext;
       } catch (e) {
-        note.textContent = 'Parse error: ' + (e as Error).message;
+        note.textContent = T('t_cc_err') + (e as Error).message;
         return;
       }
     }

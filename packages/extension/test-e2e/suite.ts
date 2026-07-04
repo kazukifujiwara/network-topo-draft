@@ -139,6 +139,43 @@ function defineTests(): void {
       assert.strictEqual(doc.getText(), before);
     });
 
+    g.it('publishes semantic diagnostics to the Problems panel (Phase 3 exit criterion)', async () => {
+      const uri = wsFile('dangling.topo.json');
+      await vscode.commands.executeCommand('vscode.open', uri);
+      await waitFor(() =>
+        vscode.languages.getDiagnostics(uri).some((d) => d.source === 'topodraft'),
+      );
+      const ours = vscode.languages.getDiagnostics(uri).filter((d) => d.source === 'topodraft');
+      assert.strictEqual(ours.length, 1);
+      assert.strictEqual(ours[0]?.code, 'dangling-reference');
+      assert.strictEqual(ours[0]?.severity, vscode.DiagnosticSeverity.Error);
+      // the range points at the offending reference, so an agent can fix it
+      const doc = await vscode.workspace.openTextDocument(uri);
+      assert.strictEqual(doc.getText(ours[0]?.range), '"ghost"');
+
+      // agent self-correction loop: fixing the text clears the problem
+      await replaceAll(uri, doc.getText().replace('"ghost"', '"a"'));
+      await waitFor(
+        () => vscode.languages.getDiagnostics(uri).every((d) => d.source !== 'topodraft'),
+      );
+    });
+
+    g.it('export command opens a Markdown preview of the active topology', async () => {
+      await vscode.commands.executeCommand('vscode.open', wsFile('site-cloud.topo.json'));
+      await waitFor(() => activeInput() instanceof vscode.TabInputCustom);
+      await vscode.commands.executeCommand('topodraft.exportMarkdown');
+      await waitFor(() => vscode.window.activeTextEditor?.document.languageId === 'markdown');
+      const preview = vscode.window.activeTextEditor?.document.getText() ?? '';
+      assert.ok(preview.includes('# Network Configuration'));
+      assert.ok(preview.includes('rt-hq-01'));
+    });
+
+    g.it('validate command runs against the active topology document', async () => {
+      await vscode.commands.executeCommand('vscode.open', wsFile('canonical.topo.json'));
+      await waitFor(() => activeInput() instanceof vscode.TabInputCustom);
+      await vscode.commands.executeCommand('topodraft.validate'); // must not throw
+    });
+
     g.it('reopen commands switch between the text and topology editors', async () => {
       await vscode.commands.executeCommand('vscode.open', wsFile('canonical.topo.json'));
       await waitFor(() => activeInput() instanceof vscode.TabInputCustom);

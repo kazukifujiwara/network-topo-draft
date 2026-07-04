@@ -29,6 +29,7 @@ import {
   vrfRows,
 } from '@topodraft/core';
 import { ICONS, ROLE_COLOR } from './icons';
+import { T } from './strings';
 
 export type ViewMode = 'physical' | 'logical';
 
@@ -490,6 +491,6 @@ export function renderScene(
   const ni = (t.circuits ?? []).length;
   const nl = (t.logical_links ?? []).length;
   dom.counts.textContent =
-    `${nDev} devices${nPn ? ` · ${nPn} provider nets` : ''} · ${nc + ni + nl} links (${nc} cable / ${ni} circuit / ${nl} logical) · ${sitesList(t).length} sites` +
-    (edit.selectedNodes.size > 1 ? ` · ${edit.selectedNodes.size} selected` : '');
+    `${nDev} ${T('st_devices')}${nPn ? ` · ${nPn} ${T('st_pn')}` : ''} · ${nc + ni + nl} ${T('st_links')} (${nc} cable / ${ni} circuit / ${nl} logical) · ${sitesList(t).length} ${T('st_sites')}` +
+    (edit.selectedNodes.size > 1 ? ` · ${edit.selectedNodes.size} ${T('st_sel')}` : '');
 }

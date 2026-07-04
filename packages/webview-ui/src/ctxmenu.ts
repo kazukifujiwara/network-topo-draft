@@ -5,15 +5,17 @@ import { convertCableToCircuit, convertCircuitToCable, findDevice } from '@topod
 import type { EditorApi, LinkRef } from './api';
 import { ICONS, ROLE_COLOR } from './icons';
 import { iconKey } from '@topodraft/core';
+import { T, fmt } from './strings';
+import type { StringKey } from './strings';
 
-export const NODE_ROLES: { role: string; label: string }[] = [
-  { role: 'router', label: 'Router' },
-  { role: 'switch', label: 'Switch' },
-  { role: 'firewall', label: 'Firewall' },
-  { role: 'external_peer', label: 'External peer' },
-  { role: 'server', label: 'Server' },
-  { role: '__pn__', label: 'Provider network' },
-  { role: '', label: 'Generic node' },
+export const NODE_ROLES: { role: string; labelKey: StringKey }[] = [
+  { role: 'router', labelKey: 'pal_router' },
+  { role: 'switch', labelKey: 'pal_switch' },
+  { role: 'firewall', labelKey: 'pal_firewall' },
+  { role: 'external_peer', labelKey: 'pal_extpeer' },
+  { role: 'server', labelKey: 'pal_server' },
+  { role: '__pn__', labelKey: 'pal_pn' },
+  { role: '', labelKey: 'pal_generic' },
 ];
 
 export type CtxTarget =
@@ -62,25 +64,25 @@ export function createContextMenu(container: HTMLElement, api: EditorApi) {
       if (!api.selectedNodes().has(target.name)) api.selectOnly(target.name);
       const selected = api.selectedNodes();
       if (selected.size > 1) {
-        label(`${selected.size} nodes selected`);
-        item('Copy', () => api.copySelection());
-        item('Duplicate', () => api.duplicateSelection());
+        label(fmt(T('cm_selected'), { n: selected.size }));
+        item(T('copy'), () => api.copySelection());
+        item(T('dup'), () => api.duplicateSelection());
         sep();
-        item('Align in a row', () => api.arrange('row'));
-        item('Align in a column', () => api.arrange('col'));
-        item('Distribute horizontally', () => api.arrange('dh'));
-        item('Distribute vertically', () => api.arrange('dv'));
+        item(T('cm_align_row'), () => api.arrange('row'));
+        item(T('cm_align_col'), () => api.arrange('col'));
+        item(T('cm_dist_h'), () => api.arrange('dh'));
+        item(T('cm_dist_v'), () => api.arrange('dv'));
         sep();
-        item(`Delete ${selected.size} nodes`, () => api.deleteSelection(), { danger: true });
+        item(fmt(T('cm_del_n'), { n: selected.size }), () => api.deleteSelection(), { danger: true });
       } else {
         const device = findDevice(api.model(), target.name);
-        item('Rename', () => api.openInlineRename({ type: 'node', name: target.name }));
-        item('Copy', () => api.copySelection());
-        item('Duplicate', () => api.duplicateSelection());
+        item(T('cm_rename'), () => api.openInlineRename({ type: 'node', name: target.name }));
+        item(T('copy'), () => api.copySelection());
+        item(T('dup'), () => api.duplicateSelection());
         if (device) {
-          item('Config context…', () => api.openConfigContext(target.name));
+          item(T('cm_cc'), () => api.openConfigContext(target.name));
           sep();
-          label('Change role');
+          label(T('cm_role'));
           const row = document.createElement('div');
           row.className = 'roles';
           for (const rt of NODE_ROLES.filter((r) => r.role !== '__pn__')) {
@@ -88,7 +90,7 @@ export function createContextMenu(container: HTMLElement, api: EditorApi) {
             const key = iconKey(rt.role);
             b.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[key]}</svg>`;
             (b.firstChild as SVGElement).style.stroke = ROLE_COLOR[key];
-            b.title = rt.label;
+            b.title = T(rt.labelKey);
             b.addEventListener('click', (ev) => {
               ev.stopPropagation();
               hide();
@@ -107,7 +109,7 @@ export function createContextMenu(container: HTMLElement, api: EditorApi) {
           menu.appendChild(row);
         }
         sep();
-        item('Delete', () => api.deleteSelection(), { danger: true });
+        item(T('del'), () => api.deleteSelection(), { danger: true });
       }
     } else if (target.kind === 'link') {
       api.selectLink(target.ref);
@@ -116,32 +118,32 @@ export function createContextMenu(container: HTMLElement, api: EditorApi) {
         link !== undefined &&
         (link.a.provider_network !== undefined || link.b.provider_network !== undefined);
       if (target.ref.col === 'cables') {
-        item('Change to circuit', () => {
+        item(T('cm_to_circuit'), () => {
           const ref = target.ref;
           api.apply((m) => convertCableToCircuit(m, ref.idx));
           api.selectLink({ col: 'circuits', idx: (api.model().circuits ?? []).length - 1 });
         });
       } else if (target.ref.col === 'circuits' && !hasPn) {
-        item('Change to cable', () => {
+        item(T('cm_to_cable'), () => {
           const ref = target.ref;
           api.apply((m) => convertCircuitToCable(m, ref.idx));
           api.selectLink({ col: 'cables', idx: (api.model().cables ?? []).length - 1 });
         });
       }
       sep();
-      item('Delete link', () => api.deleteSelection(), { danger: true });
+      item(T('del_link'), () => api.deleteSelection(), { danger: true });
     } else {
-      label('Add node here');
+      label(T('cm_add_here'));
       for (const rt of NODE_ROLES) {
-        item(rt.label, () => api.addNodeAt(rt.role, target.wx, target.wy));
+        item(T(rt.labelKey), () => api.addNodeAt(rt.role, target.wx, target.wy));
       }
       if (api.hasClipboard()) {
         sep();
-        item('Paste here', () => api.pasteClipboard({ x: target.wx, y: target.wy }));
+        item(T('cm_paste'), () => api.pasteClipboard({ x: target.wx, y: target.wy }));
       }
       sep();
-      item('Select all', () => api.selectAll());
-      item('Clear canvas', () => api.clearCanvas(), { danger: true });
+      item(T('cm_select_all'), () => api.selectAll());
+      item(T('clear_canvas'), () => api.clearCanvas(), { danger: true });
     }
     menu.style.display = 'block';
     const mw = menu.offsetWidth;

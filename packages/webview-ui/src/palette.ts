@@ -8,6 +8,7 @@ import { iconKey } from '@topodraft/core';
 import type { EditorApi } from './api';
 import { NODE_ROLES } from './ctxmenu';
 import { ICONS, ROLE_COLOR } from './icons';
+import { T } from './strings';
 
 const SUBTITLE: Record<string, string> = {
   router: 'router',
@@ -24,13 +25,13 @@ export function buildPalette(
   api: EditorApi,
   canvas: { svgCenterWorld(): { x: number; y: number }; beginPlacement(role: string): void },
 ): void {
-  container.innerHTML = '<div class="pal-title">Nodes</div>';
+  container.innerHTML = `<div class="pal-title">${T('pal_nodes')}</div>`;
   for (const t of NODE_ROLES) {
     const d = document.createElement('div');
     d.className = 'pal-item';
     const key = t.role === '__pn__' ? 'pnet' : iconKey(t.role);
     d.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[key]}</svg>
-      <div><div class="pl">${t.label}</div><div class="ps">${SUBTITLE[t.role] ?? ''}</div></div>`;
+      <div><div class="pl">${T(t.labelKey)}</div><div class="ps">${SUBTITLE[t.role] ?? ''}</div></div>`;
     (d.firstChild as SVGElement).style.stroke = ROLE_COLOR[key];
     d.setAttribute('data-pal-role', t.role);
     d.addEventListener('mousedown', (e) => {
@@ -42,7 +43,6 @@ export function buildPalette(
   }
   const hint = document.createElement('div');
   hint.className = 'pal-hint';
-  hint.innerHTML =
-    'Drag onto the canvas to place.<br>Connect: drag from a <b>◦ port</b> shown on hover.<br><kbd>Shift</kbd>+click / drag: multi-select';
+  hint.innerHTML = T('pal_hint');
   container.appendChild(hint);
 }

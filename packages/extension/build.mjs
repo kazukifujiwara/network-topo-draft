@@ -14,6 +14,10 @@ await build({
   platform: 'node',
   format: 'cjs',
   external: ['vscode'],
+  // prefer ESM entry points: jsonc-parser's UMD "main" uses AMD-style
+  // dependencies esbuild cannot statically bundle (runtime
+  // "Cannot find module './impl/format'")
+  mainFields: ['module', 'main'],
   outfile: resolve(here, 'dist/extension.js'),
   logLevel: 'warning',
 });

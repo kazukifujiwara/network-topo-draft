@@ -1,0 +1,14 @@
+{
+  "extension.description": "*.topo.json のグラフィカルなネットワーク構成図エディタ。AIエージェントがテキストとして編集すると、キャンバスが追従します。",
+  "editor.displayName": "Network TopoDraft エディタ",
+  "command.newFile": "新しいトポロジファイル",
+  "command.saveAsTemplate": "テンプレートとして保存",
+  "command.validate": "検証",
+  "command.exportMarkdown": "Markdown としてエクスポート",
+  "command.exportForAi": "AI 向けにエクスポート",
+  "command.exportSchema": "AIエージェント用インポートスキーマを出力",
+  "command.exportDrawio": "draw.io 図としてエクスポート",
+  "command.openAsText": "テキストとして開く",
+  "command.openInTopologyEditor": "トポロジエディタで開く",
+  "config.templatesFolder": "「新しいトポロジファイル」コマンドが参照するユーザーテンプレート (*.topo.json) のフォルダ。絶対パスでなければワークスペース相対。"
+}

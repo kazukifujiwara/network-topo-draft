@@ -54,6 +54,7 @@ import { renderPanel } from './panel';
 import { createContextMenu } from './ctxmenu';
 import { createConfigContextModal } from './modal';
 import { buildPalette } from './palette';
+import { T, fmt } from './strings';
 import './styles.css';
 
 export interface PersistedViewState {
@@ -136,16 +137,16 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   root.innerHTML = `
     <div id="app">
       <div id="topbar">
-        <div class="tb-seg" title="Physical view: cables &amp; circuits. Logical view: VRF instances inside devices.">
-          <button id="btnPhys">Physical</button>
-          <button id="btnLogi">Logical</button>
+        <div class="tb-seg" title="${T('tt_seg')}">
+          <button id="btnPhys">${T('tb_phys')}</button>
+          <button id="btnLogi">${T('tb_logi')}</button>
         </div>
-        <button class="tb-btn" id="btnUnder" title="Underlay — show the physical links faintly under the logical view">Underlay</button>
-        <button class="tb-btn" id="btnGlobal" title="Global — show/hide the global-routing-table compartments">Global</button>
+        <button class="tb-btn" id="btnUnder" title="${T('tt_under')}">${T('tb_under')}</button>
+        <button class="tb-btn" id="btnGlobal" title="${T('tt_global')}">${T('tb_global')}</button>
         <div class="tb-sep"></div>
-        <button class="tb-btn" id="btnSnap" title="Grid snap — while ON, dragged nodes snap to a 10px grid">Snap</button>
-        <button class="tb-btn" id="btnGrid" title="Grid lines">Grid</button>
-        <button class="tb-btn" id="btnFit" title="Fit view — zoom to show everything">Fit</button>
+        <button class="tb-btn" id="btnSnap" title="${T('tt_snap')}">${T('tb_snap')}</button>
+        <button class="tb-btn" id="btnGrid" title="${T('tt_grid')}">${T('tb_grid')}</button>
+        <button class="tb-btn" id="btnFit" title="${T('tt_fit')}">${T('tb_fit')}</button>
         <div class="spacer"></div>
       </div>
       <div id="main">
@@ -173,14 +174,14 @@ export function createApp(root: HTMLElement, host: AppHost): App {
               <g id="lyTemp"></g>
             </g>
           </svg>
-          <div id="errorBar"><span class="et">Invalid JSON</span><span class="em"></span></div>
-          <div id="emptyHint">The canvas is empty<br><b>Drag a node from the left palette</b> — or edit the JSON as text</div>
+          <div id="errorBar"><span class="et">${T('err_invalid')}</span><span class="em"></span></div>
+          <div id="emptyHint">${T('empty_hint')}</div>
           <div id="viewBadge">LOGICAL VIEW</div>
           <div id="vrfLegend"></div>
           <div id="zoomCtl">
-            <button id="zoomOut" title="Zoom out">−</button>
-            <button id="zoomReset" title="Zoom to 100%">⊙</button>
-            <button id="zoomIn" title="Zoom in">＋</button>
+            <button id="zoomOut" title="${T('tt_zoom_out')}">−</button>
+            <button id="zoomReset" title="${T('tt_zoom_reset')}">⊙</button>
+            <button id="zoomIn" title="${T('tt_zoom_in')}">＋</button>
           </div>
           <input id="inlineEdit" type="text" spellcheck="false">
         </div>
@@ -485,7 +486,12 @@ export function createApp(root: HTMLElement, host: AppHost): App {
       pasteN = 0;
       const links =
         clipboard.cables.length + clipboard.circuits.length + clipboard.logical_links.length;
-      toast(`Copied ${clipboard.devices.length + clipboard.provider_networks.length} node(s) / ${links} link(s)`);
+      toast(
+        fmt(T('t_copied'), {
+          n: clipboard.devices.length + clipboard.provider_networks.length,
+          m: links,
+        }),
+      );
       return true;
     },
     pasteClipboard: (at) => {
@@ -558,7 +564,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
         if (t.version !== undefined) next.version = t.version;
         return next;
       });
-      toast('Canvas cleared — Ctrl+Z to undo');
+      toast(T('t_cleared'));
     },
     arrange: (kind) => {
       if (!editable() || sel.size < 2) return;
@@ -658,18 +664,25 @@ export function createApp(root: HTMLElement, host: AppHost): App {
           : { device: n.name, ...(vrf ? { vrf } : {}) };
       api.apply((t) => addLogicalLink(t, { a: ep(a, fromVrf), b: ep(b, toVrf) }));
       api.selectLink({ col: 'logical_links', idx: ((model as Topology).logical_links ?? []).length - 1 });
-      toast(`Logical link: ${a.name} [${fromVrf || 'global'}] — ${b.name} [${toVrf || 'global'}]`);
+      toast(
+        fmt(T('t_log_link'), {
+          a: a.name,
+          va: fromVrf || T('t_global_word'),
+          b: b.name,
+          vb: toVrf || T('t_global_word'),
+        }),
+      );
     } else {
       const ep = (n: NodeVM): Cable['a'] =>
         n.kind === 'pn' ? { provider_network: n.name } : { device: n.name };
       if (kind === 'circuit') {
         api.apply((t) => addCircuit(t, { a: ep(a), b: ep(b) } as Circuit));
         api.selectLink({ col: 'circuits', idx: ((model as Topology).circuits ?? []).length - 1 });
-        toast('Connected as circuit');
+        toast(T('t_circuit'));
       } else {
         api.apply((t) => addCable(t, { a: ep(a), b: ep(b) } as Cable));
         api.selectLink({ col: 'cables', idx: ((model as Topology).cables ?? []).length - 1 });
-        toast('Connected as cable');
+        toast(T('t_cable'));
       }
     }
   };
@@ -1053,7 +1066,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
     snapOn = !snapOn;
     persist();
     render();
-    toast(snapOn ? 'Grid snap ON — positions snap to a 10px grid' : 'Grid snap OFF — free positioning');
+    toast(snapOn ? T('t_snap_on') : T('t_snap_off'));
   });
   $('#btnFit').addEventListener('click', fit);
   $('#zoomIn').addEventListener('click', () => zoomCenter(1.2));

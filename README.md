@@ -62,10 +62,20 @@ Extension Development Host opens on `fixtures/`; open any `*.topo.json` there.
 - **Undo/redo is plain VSCode** (`Ctrl/Cmd+Z`): every canvas commit is one
   `WorkspaceEdit` on the text document — there is no editor-internal history.
 - **Agent-friendly**: edit the JSON as text in a split (`Network TopoDraft:
-  Open as Text`) and the canvas follows. Canvas edits computed against a stale
-  document version are discarded, never overwriting agent edits. While the
-  JSON is mid-edit/invalid, the canvas dims, editing pauses, and everything
-  resumes automatically (ADR D11).
+  Open as Text`, also the `</>` button in the editor title bar) and the canvas
+  follows. Canvas edits computed against a stale document version are
+  discarded, never overwriting agent edits. While the JSON is
+  mid-edit/invalid, the canvas dims, editing pauses, and everything resumes
+  automatically (ADR D11).
+- **Problems panel**: semantic diagnostics (duplicate names, dangling
+  references, missing LAG parents, unknown interfaces, undeclared VRFs,
+  missing version) with ranges pointing at the offending text — the loop AI
+  agents use to self-correct. `Network TopoDraft: Validate` runs it on demand.
+- **Commands**: `New Topology File` (built-in templates + your own — any
+  `*.topo.json` under `topodraft.templatesFolder`, default
+  `.topodraft/templates`), `Save as Template`, and `Export as Markdown /
+  for AI / Import-Schema / draw.io`.
+- **Languages**: UI follows the VSCode display language (English/Japanese).
 
 ## Testing policy
 

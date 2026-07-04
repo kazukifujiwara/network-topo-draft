@@ -23,6 +23,7 @@ import {
   convertCircuitToCable,
 } from '@topodraft/core';
 import type { EditorApi, LinkRef } from './api';
+import { T, fmt } from './strings';
 
 const esc = (s: unknown): string =>
   String(s ?? '').replace(
@@ -75,9 +76,9 @@ function bindFields(
 
 function actionsRow(withDelete = true): string {
   return `<div class="pn-actions">
-    <button data-act="copy">Copy</button>
-    <button data-act="dup">Duplicate</button>
-    ${withDelete ? '<button data-act="del" class="danger">Delete</button>' : ''}
+    <button data-act="copy">${T('copy')}</button>
+    <button data-act="dup">${T('dup')}</button>
+    ${withDelete ? `<button data-act="del" class="danger">${T('del')}</button>` : ''}
   </div>`;
 }
 
@@ -99,8 +100,8 @@ function bindRename(panel: HTMLElement, api: EditorApi, currentName: string): vo
 
 export function renderPanel(panel: HTMLElement, api: EditorApi): void {
   if (!api.editable()) {
-    panel.innerHTML = `<div class="pn-title">Network TopoDraft</div>
-      <div class="pn-info">The document has a JSON error — the canvas shows the last valid state and editing is paused until the text parses again.</div>`;
+    panel.innerHTML = `<div class="pn-title">${T('home_title')}</div>
+      <div class="pn-info">${T('pn_paused')}</div>`;
     return;
   }
   const t = api.model();
@@ -124,16 +125,8 @@ export function renderPanel(panel: HTMLElement, api: EditorApi): void {
       return renderPhysicalLink(panel, api, t, link as Cable | Circuit, linkRef);
     }
   }
-  panel.innerHTML = `<div class="pn-title">Network TopoDraft</div>
-    <div class="pn-info">
-      <b>Physical</b> shows cables and carrier circuits; <b>Logical</b> shows VRF
-      compartments connected by logical links.<br><br>
-      Drag from a node's <b>◦ port</b> to connect. <b>Shift</b>+click or
-      <b>Shift</b>+drag to multi-select. Double-click renames. Right-click for
-      the context menu.<br><br>
-      <b>Ctrl/Cmd+C/V/D</b> copy · paste · duplicate — <b>Del</b> delete —
-      <b>arrows</b> nudge — undo/redo is VSCode's regular <b>Ctrl/Cmd+Z</b>.
-    </div>`;
+  panel.innerHTML = `<div class="pn-title">${T('home_title')}</div>
+    <div class="pn-info">${T('home_info')}</div>`;
 }
 
 /* ---------- multi selection ---------- */
@@ -141,19 +134,19 @@ export function renderPanel(panel: HTMLElement, api: EditorApi): void {
 function renderMulti(panel: HTMLElement, api: EditorApi, t: Topology, nodes: ReadonlySet<string>): void {
   panel.innerHTML = `
     ${datalists(t)}
-    <div class="pn-title">Selection <span class="badge">${nodes.size} nodes</span></div>
-    <div class="fld"><label>set site for all selected devices</label>
-      <input id="bulkSite" list="dlSites" placeholder="site name…" spellcheck="false"></div>
-    <button class="mini-btn" id="bulkSiteApply">Apply site</button>
+    <div class="pn-title">${T('sel_title')} <span class="badge">${fmt(T('badge_nodes'), { n: nodes.size })}</span></div>
+    <div class="fld"><label>${T('bulk_label')}</label>
+      <input id="bulkSite" list="dlSites" placeholder="${T('bulk_ph')}" spellcheck="false"></div>
+    <button class="mini-btn" id="bulkSiteApply">${T('bulk_apply')}</button>
     <div class="pn-sep"></div>
-    <div class="pn-title">Arrange</div>
+    <div class="pn-title">${T('arrange')}</div>
     <div class="align-row">
-      <button data-arr="row" title="Same Y — align in one horizontal row">═ Row</button>
-      <button data-arr="col" title="Same X — align in one vertical column">║ Column</button>
+      <button data-arr="row" title="${T('tt_row')}">${T('al_row')}</button>
+      <button data-arr="col" title="${T('tt_col')}">${T('al_col')}</button>
     </div>
     <div class="align-row">
-      <button data-arr="dh" title="Even horizontal spacing (3+ nodes)">↔ Distribute</button>
-      <button data-arr="dv" title="Even vertical spacing (3+ nodes)">↕ Distribute</button>
+      <button data-arr="dh" title="${T('tt_dh')}">${T('al_dh')}</button>
+      <button data-arr="dv" title="${T('tt_dv')}">${T('al_dv')}</button>
     </div>
     ${actionsRow()}`;
   panel.querySelectorAll<HTMLButtonElement>('[data-arr]').forEach((b) =>
@@ -181,12 +174,12 @@ function renderMulti(panel: HTMLElement, api: EditorApi, t: Topology, nodes: Rea
 function renderPn(panel: HTMLElement, api: EditorApi, t: Topology, pn: ProviderNetwork): void {
   panel.innerHTML = `
     ${datalists(t)}
-    <div class="pn-title">Provider network <span class="badge">circuit endpoint</span></div>
+    <div class="pn-title">${T('pn_title2')} <span class="badge">${T('pn_badge')}</span></div>
     ${fld('name', pn.name, 'e.g. AWS Direct Connect')}
     ${fld('provider', pn.provider, 'e.g. AWS / Oracle / Equinix')}
     ${fld('description', pn.description, '')}
     <div class="pn-sep"></div>
-    <div class="pn-info">A provider network is a carrier-side network (DX, FastConnect, IP-VPN cloud …). Links attached to it are always <b>circuits</b>. In the file it lives in <b>provider_networks[]</b>.</div>
+    <div class="pn-info">${T('pn_info')}</div>
     ${actionsRow()}`;
   bindRename(panel, api, pn.name);
   bindFields(panel, api, pn as unknown as Record<string, unknown>, { skip: ['name'] });
@@ -201,9 +194,9 @@ function renderDevice(panel: HTMLElement, api: EditorApi, t: Topology, d: Device
   const vchips = derivedVrfs
     .map((v) => {
       const derived = !explicit.has(v);
-      return `<span class="vchip${derived ? ' derived' : ''}" title="${derived ? 'defined by an interface or logical link' : 'routing instance'}">
+      return `<span class="vchip${derived ? ' derived' : ''}" title="${derived ? T('vrf_chip_derived') : T('vrf_chip')}">
         <span class="vd" data-vrfdot="${esc(v)}"></span>${esc(v)}
-        ${derived ? '' : `<button data-vdel="${esc(v)}" title="Remove VRF">×</button>`}</span>`;
+        ${derived ? '' : `<button data-vdel="${esc(v)}" title="${T('vrf_chip_del')}">×</button>`}</span>`;
     })
     .join('');
   const ifs = (d.interfaces ?? [])
@@ -213,7 +206,7 @@ function renderDevice(panel: HTMLElement, api: EditorApi, t: Topology, d: Device
         <div class="if-row">
           <input data-if="${i}" data-k="name" value="${esc(f.name)}" placeholder="Gi0/0/1 or Gi0/0/1.100" spellcheck="false">
           <input data-if="${i}" data-k="ip_address" value="${esc(f.ip_address)}" placeholder="10.0.0.1/30" spellcheck="false">
-          <button class="if-del" data-ifdel="${i}" title="Delete">×</button>
+          <button class="if-del" data-ifdel="${i}" title="${T('del')}">×</button>
         </div>
         <div class="if-row3">
           <input data-if="${i}" data-k="type" value="${esc(f.type)}" placeholder="type / lag / virtual" spellcheck="false">
@@ -232,7 +225,7 @@ function renderDevice(panel: HTMLElement, api: EditorApi, t: Topology, d: Device
     : '';
   panel.innerHTML = `
     ${datalists(t)}
-    <div class="pn-title">Device <span class="badge">${esc(iconKey(d.role))}</span></div>
+    <div class="pn-title">${T('dev_title')} <span class="badge">${esc(iconKey(d.role))}</span></div>
     ${fld('name', d.name, 'hostname')}
     <div class="fld-row">
       ${fld('role', d.role, 'router / fw / …', 'dlRoles')}
@@ -244,20 +237,20 @@ function renderDevice(panel: HTMLElement, api: EditorApi, t: Topology, d: Device
     </div>
     ${fld('device_type', d.device_type, 'vendor + model (e.g. Cisco C8300)')}
     <div class="pn-sep"></div>
-    <div class="pn-title">VRF instances <span class="badge">${derivedVrfs.length}</span></div>
-    <div class="vchips">${vchips || '<span class="pn-dim">Only the global routing table</span>'}</div>
+    <div class="pn-title">${T('vrf_title')} <span class="badge">${derivedVrfs.length}</span></div>
+    <div class="vchips">${vchips || `<span class="pn-dim">${T('vrf_none')}</span>`}</div>
     <div id="vrfAddRow">
-      <input id="vrfNew" placeholder="Add VRF (e.g. PROD)" list="dlVrfs" spellcheck="false">
-      <button id="vrfAdd">Add</button>
+      <input id="vrfNew" placeholder="${T('vrf_ph')}" list="dlVrfs" spellcheck="false">
+      <button id="vrfAdd">${T('vrf_add')}</button>
     </div>
     <div class="pn-sep"></div>
-    <div class="pn-title">Interfaces <span class="badge">${(d.interfaces ?? []).length}</span></div>
-    ${ifs || '<div class="pn-dim">None yet — subinterfaces (Gi0/0/1.100), LAG parents (lag) and VRFs are supported</div>'}
-    <button class="mini-btn" id="ifAdd">+ Add interface</button>
+    <div class="pn-title">${T('if_title')} <span class="badge">${(d.interfaces ?? []).length}</span></div>
+    ${ifs || `<div class="pn-dim">${T('if_none')}</div>`}
+    <button class="mini-btn" id="ifAdd">${T('if_add')}</button>
     <div class="pn-sep"></div>
-    <div class="pn-title">Config Context <span class="badge">${d.config_context ? Object.keys(d.config_context).length : '—'}</span></div>
-    ${d.config_context ? `<div class="cc-preview" id="ccPreview" title="Edit config context (JSON)">${esc(ccPreview)}</div>` : ''}
-    <button class="mini-btn" id="ccEdit">Edit config context (JSON)</button>
+    <div class="pn-title">${T('cc_title')} <span class="badge">${d.config_context ? Object.keys(d.config_context).length : '—'}</span></div>
+    ${d.config_context ? `<div class="cc-preview" id="ccPreview" title="${T('cc_edit')}">${esc(ccPreview)}</div>` : ''}
+    <button class="mini-btn" id="ccEdit">${T('cc_edit')}</button>
     ${actionsRow()}`;
   panel.querySelectorAll<HTMLElement>('[data-vrfdot]').forEach((dot) => {
     dot.style.background = vrfColor(dot.getAttribute('data-vrfdot') ?? '');
@@ -346,8 +339,8 @@ function renderLogicalLink(
     if (ep.provider_network !== undefined) {
       const pn = findProviderNetwork(t, ep.provider_network);
       return `<div class="ep-box" data-ep-side="${side}">
-        <div class="ep-dev">${esc(ep.provider_network)} <span class="ep-site">Provider network${pn?.provider ? ' · ' + esc(pn.provider) : ''}</span></div>
-        <div class="ep-lbl">ID (attachment / VC / VIF …)</div>
+        <div class="ep-dev">${esc(ep.provider_network)} <span class="ep-site">${T('pn_title2')}${pn?.provider ? ' · ' + esc(pn.provider) : ''}</span></div>
+        <div class="ep-lbl">${T('ep_id_pn')}</div>
         <input data-epid="${side}" value="${esc(ep.id)}" placeholder="e.g. dxvif-xxxx / ocid1.vc…" spellcheck="false">
       </div>`;
     }
@@ -366,25 +359,25 @@ function renderLogicalLink(
           .join('')}</datalist>`
       : '';
     return `<div class="ep-box" data-ep-side="${side}">
-      <div class="ep-dev">${esc(ep.device ?? '(unresolved)')} <span class="ep-site">${esc(dev ? siteOf(dev) || '(no site)' : 'missing device')}</span></div>
+      <div class="ep-dev">${esc(ep.device ?? T('ep_unresolved'))} <span class="ep-site">${esc(dev ? siteOf(dev) || T('ep_no_site') : T('ep_missing'))}</span></div>
       ${vrfOpts}${ifOpts}
       <div class="ep-grid">
-        <div><div class="ep-lbl">VRF (empty = global)</div>
+        <div><div class="ep-lbl">${T('ep_vrf')}</div>
           <input data-epv="${side}" list="dlv_${side}" value="${esc(ep.vrf)}" placeholder="global" spellcheck="false"></div>
-        <div><div class="ep-lbl">ID (tenant / attach …)</div>
+        <div><div class="ep-lbl">${T('ep_id')}</div>
           <input data-epid="${side}" value="${esc(ep.id)}" placeholder="optional" spellcheck="false"></div>
       </div>
       <div class="ep-grid">
-        <div><div class="ep-lbl">interface (subIF ok)</div>
+        <div><div class="ep-lbl">${T('ep_if')}</div>
           <input data-epi="${side}" list="dli_${side}" value="${esc(ifn)}" placeholder="Gi0/0/1.100" spellcheck="false"></div>
-        <div><div class="ep-lbl">ip_address</div>
+        <div><div class="ep-lbl">${T('ep_ip')}</div>
           <input data-epip="${side}" value="${esc(ip)}" placeholder="10.0.0.1/30" spellcheck="false"></div>
       </div>
     </div>`;
   };
   panel.innerHTML = `
     ${datalists(t)}
-    <div class="pn-title">Logical link <span class="badge">L3 / VRF</span></div>
+    <div class="pn-title">${T('log_title')} <span class="badge">${T('log_badge')}</span></div>
     ${epBox('a')}
     <div class="ep-mid">▲▼</div>
     ${epBox('b')}
@@ -395,8 +388,8 @@ function renderLogicalLink(
     </div>
     ${fld('label', l.label, 'e.g. eBGP / OSPF area 0')}
     ${fld('description', l.description, '')}
-    <div class="pn-dim">With an interface set, the ip_address is written to that interface on the device (created if missing). Without one, the IP stays on this endpoint.</div>
-    <div class="pn-actions"><button data-act="dellink" class="danger">Delete link</button></div>`;
+    <div class="pn-dim">${T('log_note')}</div>
+    <div class="pn-actions"><button data-act="dellink" class="danger">${T('del_link')}</button></div>`;
   panel.querySelectorAll<HTMLElement>('[data-ep-side]').forEach((box) => {
     const side = box.getAttribute('data-ep-side') as 'a' | 'b';
     box.style.borderLeft = `3px solid ${vrfColor((l[side].vrf ?? '').trim())}`;
@@ -463,7 +456,7 @@ function renderPhysicalLink(
     const ep = l[side];
     if (ep.provider_network !== undefined) {
       const pn = findProviderNetwork(t, ep.provider_network);
-      return `<div class="ep-box"><div class="ep-dev">${esc(ep.provider_network)} <span class="ep-site">Provider network${pn?.provider ? ' · ' + esc(pn.provider) : ''}</span></div></div>`;
+      return `<div class="ep-box"><div class="ep-dev">${esc(ep.provider_network)} <span class="ep-site">${T('pn_title2')}${pn?.provider ? ' · ' + esc(pn.provider) : ''}</span></div></div>`;
     }
     const dev = ep.device !== undefined ? findDevice(t, ep.device) : undefined;
     const ifOpts = dev
@@ -472,7 +465,7 @@ function renderPhysicalLink(
           .join('')}</datalist>`
       : '';
     return `<div class="ep-box">
-      <div class="ep-dev">${esc(ep.device ?? '(unresolved)')} <span class="ep-site">${esc(dev ? siteOf(dev) || '(no site)' : 'missing device')}</span></div>
+      <div class="ep-dev">${esc(ep.device ?? T('ep_unresolved'))} <span class="ep-site">${esc(dev ? siteOf(dev) || T('ep_no_site') : T('ep_missing'))}</span></div>
       ${ifOpts}
       <input data-pep="${side}" list="dlpi_${side}" value="${esc(ep.interface)}" placeholder="interface (e.g. Gi0/0/1)" spellcheck="false">
     </div>`;
@@ -487,9 +480,9 @@ function renderPhysicalLink(
       fld('status', (l as Circuit).status, 'active / provisioning', 'dlStatus');
   panel.innerHTML = `
     ${datalists(t)}
-    <div class="pn-title">Physical link <span class="badge">${isCable ? 'Cable / local' : 'Circuit / carrier'}</span></div>
+    <div class="pn-title">${T('phy_title')} <span class="badge">${isCable ? T('badge_cable') : T('badge_circuit')}</span></div>
     <div class="seg">
-      <button id="segCable" class="${isCable ? 'on' : ''}" ${hasPn ? 'disabled title="Provider-network links must be circuits"' : ''}>cable</button>
+      <button id="segCable" class="${isCable ? 'on' : ''}" ${hasPn ? `disabled title="${T('seg_pn_dis')}"` : ''}>cable</button>
       <button id="segCircuit" class="${isCable ? '' : 'on'}">circuit</button>
     </div>
     ${epBox('a')}
@@ -497,7 +490,7 @@ function renderPhysicalLink(
     ${epBox('b')}
     <div class="pn-sep"></div>
     ${common}
-    <div class="pn-actions"><button data-act="dellink" class="danger">Delete link</button></div>`;
+    <div class="pn-actions"><button data-act="dellink" class="danger">${T('del_link')}</button></div>`;
   panel.querySelector('#segCircuit')?.addEventListener('click', () => {
     if (isCable) {
       api.apply((m) => convertCableToCircuit(m, ref.idx));

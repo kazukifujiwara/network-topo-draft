@@ -27,6 +27,18 @@ const workspace = mkdtempSync(join(tmpdir(), 'topodraft-e2e-'));
 cpSync(resolve(repoRoot, 'fixtures/v1/canonical.topo.json'), join(workspace, 'canonical.topo.json'));
 cpSync(resolve(repoRoot, 'fixtures/v6v7/site-cloud.topo.json'), join(workspace, 'site-cloud.topo.json'));
 writeFileSync(join(workspace, 'plain.json'), '{"not":"topodraft"}\n');
+writeFileSync(
+  join(workspace, 'dangling.topo.json'),
+  JSON.stringify(
+    {
+      version: 1,
+      devices: [{ name: 'a' }],
+      cables: [{ a: { device: 'a' }, b: { device: 'ghost' } }],
+    },
+    null,
+    2,
+  ) + '\n',
+);
 
 await runTests({
   extensionDevelopmentPath,
