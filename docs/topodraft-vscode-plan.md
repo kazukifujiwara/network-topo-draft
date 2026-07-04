@@ -1,6 +1,7 @@
 # TopoDraft VSCode Extension — Development Plan
 
-- Status: Draft v1.0 (2026-07)
+- Status: v1.1 (2026-07) — Phases 0–4 (groundwork) implemented; post-plan
+  decisions and intentional v7 deviations are logged in Appendix B
 - Audience: implementer (Claude Code) and reviewer (Kazuki)
 - Related documents: `topodraft-file-format-v1.md` (file format spec / the contract with AI agents), `topodraft-spec.md` (standalone HTML v7 specification)
 
@@ -104,7 +105,7 @@ TextDocument (truth) ──(update: full text + docVersion)──▶ Webview
 | --- | --- |
 | Topology + layout | The `.topo.json` document (truth) |
 | Selection, viewport (pan/zoom), view toggles (Grid/Snap/Underlay/Global/viewMode) | Ephemeral Webview state. Do not use `retainContextWhenHidden`; restore across tab switches via `getState/setState` (O4) |
-| User templates | `globalState` (migrated). An alternative is "templates are just `.topo.json` files referenced by the New File command" (O2) |
+| User templates | **Decided (O2): plain `*.topo.json` files** in `topodraft.templatesFolder` (default `.topodraft/templates`), listed by the New File command and the toolbar ＋New menu. `globalState` is not used |
 | Language | Follows the VSCode display language (D13). No custom setting |
 
 ### 4.4 Commands (initial set)
@@ -115,6 +116,8 @@ TextDocument (truth) ──(update: full text + docVersion)──▶ Webview
 | `TopoDraft: Export as Markdown / For AI / Import Schema / draw.io` | Invoke core generators; output to a new editor or file save (replaces the standalone Export tabs; a JSON tab is unnecessary — the file itself is the JSON) |
 | `TopoDraft: Validate` | Run validate explicitly (normally automatic on edit) |
 | `TopoDraft: Open as Text / Open in Topology Editor` | Convenience wrappers over `workbench.action.reopenWithEditor` |
+| `TopoDraft: Save as Template` | Serializes the active topology into `topodraft.templatesFolder` (added with O2) |
+| `TopoDraft: Write AI Agent Guide (AGENTS.md)` | Upserts the marker-delimited format contract (rules + schema + example) into the workspace's AGENTS.md; also on the toolbar (✨ AI Guide) with a Save-as option |
 
 ### 4.5 `package.json` contributions (essentials)
 
@@ -198,19 +201,19 @@ Initial rule set:
 
 ## 7. Roadmap
 
-| Phase | Contents | Exit criteria |
-| --- | --- | --- |
-| 0. Foundation | Monorepo scaffold / core extraction / **port standalone tests + build golden fixtures** / publish schema v1 / CI enforced | `npm test` all green. Fixtures guarantee v3–v7 read compatibility |
-| 1. Viewer | CustomTextEditor renders `.topo.json` read-only. Follows text changes. Invalid-JSON resilience (D11). jsonValidation enabled | Canvas follows when an agent rewrites the file |
-| 2. Editing | Canvas edits → WorkspaceEdit. Undo delegation. Rename reference-following. Panels, Config Context, context menu ported. Shortcut redesign | Feature parity with the standalone editor (minus YAML/Ctrl+K/internal undo). E2E green |
-| 3. Periphery | Diagnostics / export commands / New File + templates / l10n (ja) | Agents can self-correct driven by the Problems panel |
-| 4. Distribution | Private VSIX distribution / Marketplace readiness (§9) complete | Daily use starts from the `vsce package` artifact |
+| Phase | Contents | Exit criteria | Status |
+| --- | --- | --- | --- |
+| 0. Foundation | Monorepo scaffold / core extraction / **port standalone tests + build golden fixtures** / publish schema v1 / CI enforced | `npm test` all green. Fixtures guarantee v3–v7 read compatibility | ✅ done |
+| 1. Viewer | CustomTextEditor renders `.topo.json` read-only. Follows text changes. Invalid-JSON resilience (D11). jsonValidation enabled | Canvas follows when an agent rewrites the file | ✅ done |
+| 2. Editing | Canvas edits → WorkspaceEdit. Undo delegation. Rename reference-following. Panels, Config Context, context menu ported. Shortcut redesign | Feature parity with the standalone editor (minus YAML/Ctrl+K/internal undo). E2E green | ✅ done |
+| 3. Periphery | Diagnostics / export commands / New File + templates / l10n (ja) | Agents can self-correct driven by the Problems panel | ✅ done |
+| 4. Distribution | Private VSIX distribution / Marketplace readiness (§9) complete | Daily use starts from the `vsce package` artifact | ✅ VSIX in daily use; Marketplace items (publisher ID, LICENSE, icon) pending |
 | Future | Marketplace publication decision / NetBox operations as MCP · Language Model Tools (separate project) / PNG & annotations | — |
 
 ## 8. Open questions (to be decided with Claude Code during implementation)
 
 - **O1**: Whether/when to optimize Webview→host edits from full-text replacement to minimal range edits — within Phase 2, or later
-- **O2**: Where templates live — globalState (mirroring the standalone version) vs. "a template is just a `.topo.json` file referenced by the New File command" (the latter is stronger for git management and sharing)
+- **O2**: ~~Where templates live~~ — **decided: file-based** (`topodraft.templatesFolder`, default `.topodraft/templates`); stronger for git management and sharing
 - **O3**: The `$schema` URL — a versioned GitHub raw URL, or a relative path to the bundled copy (consider how it looks post-Marketplace)
 - **O4**: Webview behavior when the tab is hidden — is `getState/setState` restoration sufficient, or do large diagrams need `retainContextWhenHidden` (weigh the memory cost)
 - **O5**: Diagnostics severity tuning (especially the W/I boundary) — adjust with real-world feedback
@@ -243,3 +246,23 @@ Initial rule set:
 | i18n | In-app toggle | vscode.l10n (follows display language) |
 | Templates / settings | localStorage | globalState / VSCode settings |
 | NetBox integration | None | None (delegated to AI agents; the schema is the contract) |
+
+---
+
+## Appendix B: Post-plan decisions and intentional v7 deviations (implementation log)
+
+Decisions made with the reviewer during implementation, in addition to the
+ADRs above. The file-format side of these is normative in the format spec;
+this table records the editor-behavior side.
+
+| Date | Decision / deviation | Rationale |
+| --- | --- | --- |
+| 2026-07 | **O2 decided: file-based templates** (`topodraft.templatesFolder`, default `.topodraft/templates`); `Save as Template` writes there; built-ins use vendor-neutral names only | Git-manageable and shareable; no real service names in shipped defaults |
+| 2026-07 | **Toolbar surfaces the common commands**: ＋New (template dropdown), Export dropdown, ✨ AI Guide | Features must be discoverable in the UI, not only the command palette |
+| 2026-07 | **AGENTS.md agent guide**: marker-delimited idempotent upsert (`topodraft:agent-guide:begin/end`), toolbar dialog with append-notice and Save-as; guide includes creation rules (produce `*.topo.json`, not images; `$schema` skeleton) | Closes the agent-interop loop proactively (guide) + reactively (did-you-mean diagnostics) |
+| 2026-07-05 | **`networks[]` multi-access segments** (format spec §3.10) with dedicated `fhrp` field and `{network}` endpoints; logical-view-only pill rendering; physical view untouched | Point-to-point-only logical view could not express HSRP/VRRP server segments |
+| 2026-07-05 | **Deviation from v7 — segment link anchors**: link endpoints on segment pills intersect the rounded boundary (`roundedAnchor`), not the square bounding box | v7's rect anchor left endpoints floating up to ~20px outside the pill corners |
+| 2026-07-05 | **Deviation from v7 — parallel-link bundles**: in the logical view, bundles are keyed by (node, VRF) anchor pair and never mix with the physical underlay; v7 keyed by node pair | Node-pair bundling shifted endpoints off their 20px VRF compartment rows once a device pair carried several VRFs |
+| 2026-07-05 | **QuickPick is never triggered from webview messages**: the ＋New toolbar menu lives in the webview and passes a preselected template key; only the command-palette path shows a QuickPick | A QuickPick opened from a webview message is dismissed by the webview re-taking focus (microsoft/vscode#214787) |
+| 2026-07-05 | **Stale-host detection**: one esbuild-defined build id in both bundles; the webview compares the host's `data-build` stamp and shows a persistent reload hint on mismatch | Reinstalling a same-version VSIX leaves the old extension host in memory while new webview assets load from disk |
+| 2026-07-05 | **Collapsible properties panel** (strip button, persisted per editor; new selections re-open it) | Maximize canvas space on demand |

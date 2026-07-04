@@ -24,8 +24,10 @@ packages/
                absorption), canonical serialize, validate (diagnostics),
                operations, geometry, generators (markdown / for-ai / schema /
                draw.io)
-  webview-ui/  Canvas UI (Phase 1+; empty shell for now)
-  extension/   VSCode extension host (Phase 1+; empty shell for now)
+  webview-ui/  Canvas UI: scene rendering, interactions, panels, toolbar
+               (jsdom-tested; talks to the host only via protocol messages)
+  extension/   VSCode extension host: custom editor, sync loop, diagnostics,
+               commands, templates, agent guide
   protocol/    Webview ⇔ host message types (shared)
 schema/        Published JSON Schema for format v1
 fixtures/      Golden files: legacy v3–v7 export shapes + v1 canonical forms
@@ -52,7 +54,11 @@ To install the VSIX into your own VSCode: Extensions panel → `…` menu →
 **Install from VSIX…** (or `code --install-extension topodraft-<version>.vsix`).
 CI also uploads the VSIX as a workflow artifact on every push.
 
-### Trying the editor (Phase 2: full canvas editing)
+> **Reinstalling a same-version VSIX?** Run **Developer: Reload Window**
+> afterwards — the running extension host keeps the old code in memory until
+> the window reloads (the canvas shows a reload hint when it detects this).
+
+### Trying the editor
 
 Open this repo in VSCode and press **F5** ("Run TopoDraft Extension"). The
 Extension Development Host opens on `fixtures/`; open any `*.topo.json` there.
@@ -60,10 +66,16 @@ Extension Development Host opens on `fixtures/`; open any `*.topo.json` there.
 - **Draw**: drag node types from the palette, connect via the ◦ ports shown on
   hover (same-site → cable, cross-site or provider network → circuit; in the
   logical view, drag between VRF compartments for logical links).
-- **Edit**: property panels for devices / provider networks / links, VRF chips,
-  interface cards, a JSON Config Context modal, right-click context menus,
-  double-click rename (references follow automatically), copy/paste/duplicate,
-  align/distribute, arrow-key nudge.
+- **Multi-access L3 segments** (format spec §3.10): `networks[]` entries render
+  as pill nodes in the logical view — subnets shared by several devices, with
+  optional FHRP (HSRP/VRRP) group and virtual IP. Each attached device gets one
+  logical link with a `{ "network": "<name>" }` endpoint.
+- **Edit**: property panels for devices / provider networks / segments / links,
+  VRF chips, interface cards, a JSON Config Context modal, right-click context
+  menus, double-click rename (references follow automatically),
+  copy/paste/duplicate, align/distribute, arrow-key nudge. The properties
+  panel collapses via the strip button on its edge when you want the full
+  canvas; selecting something re-opens it.
 - **Undo/redo is plain VSCode** (`Ctrl/Cmd+Z`): every canvas commit is one
   `WorkspaceEdit` on the text document — there is no editor-internal history.
 - **Agent-friendly**: edit the JSON as text in a split (`TopoDraft:
@@ -74,18 +86,21 @@ Extension Development Host opens on `fixtures/`; open any `*.topo.json` there.
   automatically (ADR D11).
 - **Problems panel**: semantic diagnostics (duplicate names, dangling
   references, missing LAG parents, unknown interfaces, undeclared VRFs,
-  missing version, and misspelled fields with did-you-mean suggestions —
-  `"ip"` → `"ip_address"`) with ranges pointing at the offending text — the
-  loop AI agents use to self-correct. `TopoDraft: Validate` runs it on demand.
+  IPs outside a segment's prefix, missing version, and misspelled fields with
+  did-you-mean suggestions — `"ip"` → `"ip_address"`) with ranges pointing at
+  the offending text — the loop AI agents use to self-correct.
+  `TopoDraft: Validate` runs it on demand.
 - **Teach your agents the format up front**: `TopoDraft: Write AI Agent
-  Guide (AGENTS.md)` drops the full file-format contract (rules + JSON
-  Schema + example) into the workspace where coding agents (Claude Code,
-  Copilot, …) discover it automatically. New files also carry a `$schema`
-  URL pointing at the published schema.
+  Guide (AGENTS.md)` — also the ✨ AI Guide toolbar button — drops the full
+  file-format contract (rules + JSON Schema + example) into the workspace
+  where coding agents (Claude Code, Copilot, …) discover it automatically
+  (idempotent marker-based section; "Save as…" writes elsewhere). New files
+  also carry a `$schema` URL pointing at the published schema.
 - **Commands**: `New Topology File` (built-in templates + your own — any
   `*.topo.json` under `topodraft.templatesFolder`, default
   `.topodraft/templates`), `Save as Template`, and `Export as Markdown /
-  for AI / Import-Schema / draw.io`.
+  for AI / Import-Schema / draw.io`. The canvas toolbar mirrors the common
+  ones: **＋ New** (template menu) and **Export** dropdowns.
 - **Languages**: UI follows the VSCode display language (English/Japanese).
 
 ## Testing policy
