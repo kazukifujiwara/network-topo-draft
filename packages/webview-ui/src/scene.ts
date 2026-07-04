@@ -310,18 +310,33 @@ export function renderScene(
   /* links — parallel offsets are computed over ALL links like v7 (hidden
      links still consume an offset slot) */
   const pairIdx = new Map<string, number>();
+  const drawnInView = (l: LinkVM): boolean => {
+    if (view.viewMode === 'physical' && l.kind === 'logical') return false;
+    if (view.viewMode === 'logical' && l.kind !== 'logical' && !view.underlayOn) return false;
+    return true;
+  };
+  // Parallel-offset bundles: two links spread apart only when their ANCHORS
+  // coincide. In the logical view each VRF pair anchors to its own
+  // compartment rows, so bundling by node pair (v7) shifted endpoints off
+  // their rows once a device pair carried several VRFs — bundle logical
+  // links by (node, vrf) pair instead, and never mix them with the physical
+  // underlay. Only links drawn in the current view join a bundle.
+  const pairKey = (l: LinkVM): string =>
+    l.kind === 'logical' && view.viewMode === 'logical'
+      ? 'logi:' + [`${l.aName ?? ''}#${l.aVrf}`, `${l.bName ?? ''}#${l.bVrf}`].sort().join('|')
+      : 'phys:' + [l.aName ?? '', l.bName ?? ''].sort().join('|');
   const pairTotal = new Map<string, number>();
   for (const l of links) {
-    const key = [l.aName ?? '', l.bName ?? ''].sort().join('|');
+    if (!drawnInView(l)) continue;
+    const key = pairKey(l);
     pairTotal.set(key, (pairTotal.get(key) ?? 0) + 1);
   }
   for (const l of links) {
-    const key = [l.aName ?? '', l.bName ?? ''].sort().join('|');
+    if (!drawnInView(l)) continue;
+    const key = pairKey(l);
     const i = (pairIdx.get(key) ?? -1) + 1;
     pairIdx.set(key, i);
-    if (view.viewMode === 'physical' && l.kind === 'logical') continue;
     const physInLogical = view.viewMode === 'logical' && l.kind !== 'logical';
-    if (physInLogical && !view.underlayOn) continue;
     const a = l.aName !== undefined ? nodes.get(l.aName) : undefined;
     const b = l.bName !== undefined ? nodes.get(l.bName) : undefined;
     if (!a || !b) continue; // dangling reference — validate() reports it

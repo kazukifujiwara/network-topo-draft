@@ -362,6 +362,31 @@ button {
   overflow-y: auto;
   padding: 12px;
 }
+#panelStrip {
+  flex: 0 0 auto;
+  width: 16px;
+  background: var(--bg1);
+  border-left: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+}
+#panelStrip button {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--tx2);
+  font-size: 10px;
+  cursor: pointer;
+}
+#panelStrip button:hover {
+  background: var(--bg3);
+  color: var(--tx);
+}
+#app.panel-collapsed #panel {
+  display: none;
+}
 
 /* palette */
 .pal-title {

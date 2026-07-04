@@ -20,8 +20,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   generic diagram tools) and name files `*.topo.json`, with a starter
   skeleton including `$schema`.
 
+### Added
+
+- The right properties panel can be collapsed with a slim strip button on
+  its edge to maximize the canvas; the state persists per editor, and any
+  new selection re-opens the panel so properties are never edited blind.
+
 ### Fixed
 
+- In the logical view, links between a device pair carrying several VRFs
+  were bundled by node pair (v7 behavior) and spread 16px apart — pushing
+  endpoints off their 20px VRF compartment rows. Parallel-offset bundles
+  are now keyed by (node, VRF) anchor pair and never mix with the physical
+  underlay, so endpoints sit exactly on their rows; true duplicates of the
+  same VRF pair still spread apart.
 - Stale-host detection: reinstalling a same-version VSIX replaces the files
   on disk while the running extension host keeps the old code in memory —
   newly opened editors then load the NEW webview against the OLD host and

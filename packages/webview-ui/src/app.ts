@@ -69,6 +69,8 @@ export interface PersistedViewState {
   showGlobal: boolean;
   gridOn: boolean;
   snapOn?: boolean;
+  /** Right properties panel collapsed via its strip button. */
+  panelCollapsed?: boolean;
 }
 
 /** Host abstraction so tests can drive the app without a real webview. */
@@ -211,6 +213,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
           </div>
           <input id="inlineEdit" type="text" spellcheck="false">
         </div>
+        <div id="panelStrip"><button id="btnPanel" title="${T('tt_panel_collapse')}">⮞</button></div>
         <div id="panel"></div>
       </div>
       <div id="statusbar">
@@ -267,7 +270,23 @@ export function createApp(root: HTMLElement, host: AppHost): App {
       showGlobal: view.showGlobal,
       gridOn: view.gridOn,
       snapOn,
+      panelCollapsed,
     });
+
+  /* right panel collapse (user request: maximize canvas on demand; a new
+     selection re-opens the panel so properties are never edited blind) */
+  let panelCollapsed = false;
+  const setPanelCollapsed = (collapsed: boolean): void => {
+    panelCollapsed = collapsed;
+    dom.app.classList.toggle('panel-collapsed', collapsed);
+    const btn = $('#btnPanel');
+    btn.textContent = collapsed ? '⮜' : '⮞';
+    btn.setAttribute('title', T(collapsed ? 'tt_panel_expand' : 'tt_panel_collapse'));
+    persist();
+  };
+  const expandPanel = (): void => {
+    if (panelCollapsed) setPanelCollapsed(false);
+  };
 
   let toastTimer: ReturnType<typeof setTimeout> | undefined;
   const toast = (message: string, ms = 1900): void => {
@@ -437,6 +456,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   const selectOnly = (name: string): void => {
     sel = new Set([name]);
     selLink = null;
+    expandPanel();
     render();
     renderPanelNow();
   };
@@ -452,18 +472,21 @@ export function createApp(root: HTMLElement, host: AppHost): App {
       selLink = null;
       if (sel.has(name)) sel.delete(name);
       else sel.add(name);
+      if (sel.size) expandPanel();
       render();
       renderPanelNow();
     },
     setSelection: (names) => {
       sel = new Set(names);
       selLink = null;
+      if (sel.size) expandPanel();
       render();
       renderPanelNow();
     },
     selectLink: (ref) => {
       sel.clear();
       selLink = ref;
+      expandPanel();
       render();
       renderPanelNow();
     },
@@ -681,6 +704,8 @@ export function createApp(root: HTMLElement, host: AppHost): App {
     host.postMessage({ type: 'agent-guide', ...(saveAs ? { saveAs: true } : {}) }),
   );
   $('#btnAgentGuide').addEventListener('click', () => guideModal.open());
+  $('#btnPanel').addEventListener('click', () => setPanelCollapsed(!panelCollapsed));
+  if (persisted?.panelCollapsed) setPanelCollapsed(true);
   const ctxMenu = createContextMenu(dom.app, api);
   buildPalette($('#palette'), api, {
     svgCenterWorld: () => {

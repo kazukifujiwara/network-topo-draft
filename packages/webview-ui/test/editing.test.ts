@@ -650,6 +650,81 @@ describe('multi-access network segments (spec §3.10)', () => {
   });
 });
 
+describe('Panel collapse (strip button)', () => {
+  const appEl = (h: Harness): HTMLElement => h.root.querySelector('#app') as HTMLElement;
+
+  it('collapses only via the button, persists, and restores on boot', () => {
+    const h = harness();
+    expect(appEl(h).classList.contains('panel-collapsed')).toBe(false);
+    (h.root.querySelector('#btnPanel') as HTMLElement).click();
+    expect(appEl(h).classList.contains('panel-collapsed')).toBe(true);
+    expect(h.f.state()?.panelCollapsed).toBe(true);
+    (h.root.querySelector('#btnPanel') as HTMLElement).click();
+    expect(appEl(h).classList.contains('panel-collapsed')).toBe(false);
+
+    // boot with the persisted flag
+    const f2 = fakeHost({ ...FIXED_VIEW, panelCollapsed: true });
+    const root2 = mount();
+    createApp(root2, f2.host);
+    expect((root2.querySelector('#app') as HTMLElement).classList.contains('panel-collapsed')).toBe(
+      true,
+    );
+  });
+
+  it('re-opens when something gets selected so properties are never hidden', () => {
+    const h = harness();
+    (h.root.querySelector('#btnPanel') as HTMLElement).click();
+    expect(appEl(h).classList.contains('panel-collapsed')).toBe(true);
+    h.app.api.selectOnly('rt-hq-01');
+    expect(appEl(h).classList.contains('panel-collapsed')).toBe(false);
+  });
+});
+
+describe('VRF compartment link anchors (many VRFs)', () => {
+  const MULTI_VRF = {
+    version: 1,
+    devices: [
+      { name: 'd1', vrfs: ['A', 'B'], position: { x: 0, y: 0 } },
+      { name: 'd2', vrfs: ['A', 'B'], position: { x: 400, y: 0 } },
+    ],
+    cables: [{ a: { device: 'd1' }, b: { device: 'd2' } }],
+    logical_links: [
+      { a: { device: 'd1', vrf: 'A' }, b: { device: 'd2', vrf: 'A' } },
+      { a: { device: 'd1', vrf: 'B' }, b: { device: 'd2', vrf: 'B' } },
+    ],
+  };
+
+  const dotYs = (h: Harness): number[][] =>
+    [...h.root.querySelectorAll('#lyLogi .link')].map((g) =>
+      [...g.querySelectorAll('circle')].map((c) => Number(c.getAttribute('cy'))),
+    );
+
+  it('REGRESSION: links of different VRFs are not bundled — dots sit exactly on their rows', () => {
+    const h = harness(MULTI_VRF);
+    (h.root.querySelector('#btnLogi') as HTMLElement).click();
+    // rows ['', A, B]: row centers at y = 44 + idx*24 + 2 + 10
+    expect(dotYs(h)).toEqual([
+      [80, 80], // VRF A, both ends
+      [104, 104], // VRF B, both ends
+    ]);
+  });
+
+  it('true duplicates (same VRF pair) still spread apart', () => {
+    const h = harness({
+      ...MULTI_VRF,
+      logical_links: [
+        { a: { device: 'd1', vrf: 'A' }, b: { device: 'd2', vrf: 'A' } },
+        { a: { device: 'd1', vrf: 'A' }, b: { device: 'd2', vrf: 'A' } },
+      ],
+    });
+    (h.root.querySelector('#btnLogi') as HTMLElement).click();
+    expect(dotYs(h)).toEqual([
+      [72, 72],
+      [88, 88], // ±8px around the row center 80
+    ]);
+  });
+});
+
 describe('New file menu (toolbar)', () => {
   const ITEMS = [
     { key: 'builtin:empty', label: 'Empty topology', description: 'A blank canvas' },
