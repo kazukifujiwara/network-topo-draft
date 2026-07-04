@@ -41,10 +41,21 @@ Requires Node.js ≥ 20.
 npm install
 npm test               # runs every test in every package (vitest)
 npm run test:coverage  # same, with core coverage thresholds enforced (plan §6.3)
+npm run test:e2e       # VSCode integration tests (@vscode/test-electron)
 npm run lint           # eslint (includes the core browser-purity rules)
 npm run typecheck
-npm run build          # bundles the extension/webview shells (esbuild)
+npm run build          # bundles the extension host + webview (esbuild)
 ```
+
+### Trying the editor (Phase 1: read-only viewer)
+
+Open this repo in VSCode and press **F5** ("Run TopoDraft Extension"). The
+Extension Development Host opens on `fixtures/`; open any `*.topo.json` there
+— it renders in the topology viewer (physical/logical views, pan/zoom/fit).
+Edit the file as text in a split (`Network TopoDraft: Open as Text`) and the
+canvas follows. While the JSON is mid-edit/invalid, the last good canvas stays
+visible under an error bar and recovers automatically (ADR D11). Editing on
+the canvas arrives in Phase 2.
 
 ## Testing policy
 

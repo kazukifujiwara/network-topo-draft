@@ -3,18 +3,57 @@
   "displayName": "Network TopoDraft",
   "version": "0.0.1",
   "private": true,
-  "type": "module",
-  "description": "Graphical network-topology editor for *.topo.json files (Phase 1+; empty shell in Phase 0)",
+  "publisher": "kazukifujiwara",
+  "description": "Graphical network-topology editor for *.topo.json files. AI agents edit the same file as text; the canvas follows.",
   "engines": {
     "vscode": "^1.90.0"
   },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
   "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "topodraft.editor",
+        "displayName": "Network TopoDraft Editor",
+        "selector": [
+          {
+            "filenamePattern": "*.topo.json"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "commands": [
+      {
+        "command": "topodraft.openAsText",
+        "title": "Open as Text",
+        "category": "Network TopoDraft"
+      },
+      {
+        "command": "topodraft.openInTopologyEditor",
+        "title": "Open in Topology Editor",
+        "category": "Network TopoDraft"
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": "*.topo.json",
+        "url": "./schema/topodraft.schema.json"
+      }
+    ]
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.js --log-level=warning"
+    "build": "node build.mjs",
+    "test:e2e": "node build.mjs && node test-e2e/run.mjs"
   },
   "dependencies": {
     "@topodraft/core": "0.0.1",
-    "@topodraft/protocol": "0.0.1"
+    "@topodraft/protocol": "0.0.1",
+    "@topodraft/webview-ui": "0.0.1"
   }
 }

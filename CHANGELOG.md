@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Phase 1 — read-only viewer: opening a `*.topo.json` launches the Network
+  TopoDraft custom editor (`topodraft.editor`, default for the pattern).
+  Physical/logical views with VRF compartments, site frames, link labels,
+  underlay/global/grid toggles, pan/zoom/fit; view state survives tab
+  switches. The canvas follows external (agent) text edits; invalid JSON
+  shows the last good canvas dimmed under an error bar and recovers
+  automatically (ADR D11) — the viewer never writes to the document.
+- `jsonValidation` contribution: schema validation and completion for
+  `*.topo.json` while editing as text.
+- Commands: `Network TopoDraft: Open as Text` / `Open in Topology Editor`.
+- E2E test harness (`@vscode/test-electron`) covering editor association,
+  D11 no-write-back, and the reopen commands; new CI job runs it headless.
+
 - Phase 0 foundation: npm-workspaces monorepo (core / webview-ui / extension /
   protocol), CI, lint, and a single root `npm test`.
 - `@topodraft/core`: pure browser-compatible TypeScript extraction of the v7

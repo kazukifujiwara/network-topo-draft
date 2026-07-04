@@ -1,6 +1,10 @@
 node_modules/
 dist/
+dist-e2e/
 coverage/
 *.vsix
 *.tsbuildinfo
 .DS_Store
+.vscode-test/
+# build-time copy of /schema for the packaged extension (see build.mjs)
+packages/extension/schema/

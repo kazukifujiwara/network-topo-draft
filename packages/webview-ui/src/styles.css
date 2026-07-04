@@ -1,0 +1,340 @@
+/* Ported subset of the frozen v7 stylesheet — read-only viewer (Phase 1).
+   Dynamic colors are applied via CSSOM (el.style.*) so the webview CSP needs
+   no 'unsafe-inline' for styles. */
+:root {
+  --bg0: #0f1317;
+  --bg1: #161b21;
+  --bg2: #1d242c;
+  --bg3: #242d37;
+  --line: #2a333e;
+  --line2: #3a4552;
+  --tx: #dee5ee;
+  --tx2: #94a1b4;
+  --tx3: #5e6b7d;
+  --acc: #6aa9ff;
+  --acc-dim: #31517e;
+  --danger: #e5636c;
+  --c-router: #5b9dff;
+  --c-switch: #4cc38a;
+  --c-firewall: #f2994a;
+  --c-cloud: #b18cff;
+  --c-server: #45c4ce;
+  --c-generic: #93a0b4;
+  --c-pnet: #d9a44c;
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, 'Roboto Mono', monospace;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+body {
+  background: var(--bg0);
+  color: var(--tx);
+  font-family: var(--sans);
+  font-size: 13px;
+}
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+#topbar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 12px;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--line);
+  flex: 0 0 auto;
+}
+#canvasWrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: var(--bg0);
+}
+#statusbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 24px;
+  padding: 0 12px;
+  background: var(--bg1);
+  border-top: 1px solid var(--line);
+  color: var(--tx3);
+  font-family: var(--mono);
+  font-size: 11px;
+  flex: 0 0 auto;
+}
+#statusbar .grow {
+  flex: 1;
+}
+
+.tb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 9px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--tx2);
+  font-size: 12px;
+}
+.tb-btn:hover {
+  background: var(--bg2);
+  color: var(--tx);
+}
+.tb-btn.active {
+  background: var(--acc-dim);
+  color: var(--tx);
+  border-color: var(--acc-dim);
+}
+.tb-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--line);
+  margin: 0 3px;
+}
+.tb-seg {
+  display: flex;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 2px;
+}
+.tb-seg button {
+  height: 22px;
+  padding: 0 11px;
+  border: 0;
+  background: transparent;
+  color: var(--tx3);
+  border-radius: 5px;
+  font-size: 12px;
+}
+.tb-seg button.on {
+  background: var(--bg3);
+  color: var(--tx);
+}
+.spacer {
+  flex: 1;
+}
+.ro-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--tx3);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 2px 7px;
+}
+
+#svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: default;
+}
+#svg.panning {
+  cursor: grabbing;
+}
+.site-rect {
+  fill: rgba(106, 169, 255, 0.025);
+  stroke: var(--line2);
+  stroke-width: 1.2;
+  stroke-dasharray: 7 5;
+}
+.site-label {
+  fill: var(--tx3);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+.node-box {
+  fill: var(--bg2);
+  stroke: var(--line2);
+  stroke-width: 1.2;
+}
+.node-box.pnbox {
+  stroke-dasharray: 6 4;
+  stroke: #5a5344;
+}
+.node-name {
+  fill: var(--tx);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--mono);
+}
+.node-sub {
+  fill: var(--tx3);
+  font-size: 10px;
+  font-family: var(--mono);
+}
+.vrf-row {
+  fill: var(--bg0);
+  stroke-width: 1;
+}
+.vrf-row-label {
+  font-size: 10px;
+  font-family: var(--mono);
+  pointer-events: none;
+}
+.ep-id {
+  fill: var(--tx3);
+  font-size: 9px;
+  font-family: var(--mono);
+  pointer-events: none;
+}
+.link-line {
+  stroke: var(--tx3);
+  stroke-width: 1.6;
+  fill: none;
+  pointer-events: none;
+}
+.link-line.circuit {
+  stroke: var(--c-cloud);
+  stroke-dasharray: 8 5;
+  stroke-width: 1.8;
+}
+.link-line.logical {
+  stroke-width: 2.2;
+  stroke-dasharray: 1.5 6;
+  stroke-linecap: round;
+}
+.link-label {
+  fill: var(--tx3);
+  font-size: 10px;
+  font-family: var(--mono);
+  pointer-events: none;
+}
+.link.dim {
+  opacity: 0.15;
+}
+
+#emptyHint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--tx3);
+  pointer-events: none;
+  line-height: 2;
+}
+#viewBadge {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--tx3);
+  background: var(--bg1);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 9px;
+  pointer-events: none;
+  display: none;
+}
+#vrfLegend {
+  position: absolute;
+  left: 12px;
+  bottom: 48px;
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: var(--bg1);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 11px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--tx2);
+  max-height: 40vh;
+  overflow-y: auto;
+}
+#vrfLegend .vt {
+  color: var(--tx3);
+  letter-spacing: 0.1em;
+  margin-bottom: 2px;
+}
+.vrf-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.vrf-dot {
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  flex: 0 0 auto;
+}
+#zoomCtl {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: flex;
+  gap: 4px;
+  background: var(--bg1);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px;
+}
+#zoomCtl button {
+  width: 26px;
+  height: 26px;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  color: var(--tx2);
+  font-size: 14px;
+}
+#zoomCtl button:hover {
+  background: var(--bg3);
+  color: var(--tx);
+}
+
+/* D11: invalid-JSON error view — the last good canvas stays, dimmed */
+#errorBar {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 12px;
+  display: none;
+  align-items: flex-start;
+  gap: 10px;
+  background: #2a1518;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  padding: 9px 12px;
+  z-index: 10;
+}
+#errorBar .et {
+  color: var(--danger);
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+}
+#errorBar .em {
+  color: var(--tx2);
+  font-family: var(--mono);
+  font-size: 11px;
+  word-break: break-all;
+}
+#app.invalid #svg {
+  opacity: 0.35;
+}
