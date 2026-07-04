@@ -232,6 +232,90 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
       ],
     },
   },
+  {
+    id: 'lag-pair',
+    label: 'Routed LAG pair',
+    description: 'Two routers uplinked to a switch pair over 2-member LAGs (lag interface examples)',
+    topology: {
+      $schema: 'https://raw.githubusercontent.com/kazukifujiwara/network-topo-draft/main/schema/topodraft.schema.json',
+      version: 1,
+      devices: [
+        {
+          name: 'rt-dc-01',
+          role: 'router',
+          site: 'DC',
+          interfaces: [
+            { name: 'Po1', ip_address: '10.0.0.1/30', type: 'lag', description: 'LAG to core-sw-01' },
+            { name: 'Gi0/0/1', type: '1000base-t', lag: 'Po1' },
+            { name: 'Gi0/0/2', type: '1000base-t', lag: 'Po1' },
+          ],
+          position: { x: 250, y: 60 },
+        },
+        {
+          name: 'rt-dc-02',
+          role: 'router',
+          site: 'DC',
+          interfaces: [
+            { name: 'Po1', ip_address: '10.0.0.5/30', type: 'lag', description: 'LAG to core-sw-02' },
+            { name: 'Gi0/0/1', type: '1000base-t', lag: 'Po1' },
+            { name: 'Gi0/0/2', type: '1000base-t', lag: 'Po1' },
+          ],
+          position: { x: 690, y: 60 },
+        },
+        {
+          name: 'core-sw-01',
+          role: 'switch',
+          site: 'DC',
+          interfaces: [
+            { name: 'Po10', type: 'lag', description: 'LAG to core-sw-02' },
+            { name: 'Te1/0/1', type: '10gbase-x-sfpp', lag: 'Po10' },
+            { name: 'Te1/0/2', type: '10gbase-x-sfpp', lag: 'Po10' },
+            { name: 'Po1', type: 'lag', description: 'LAG to rt-dc-01' },
+            { name: 'Te1/0/3', type: '10gbase-x-sfpp', lag: 'Po1' },
+            { name: 'Te1/0/4', type: '10gbase-x-sfpp', lag: 'Po1' },
+          ],
+          position: { x: 250, y: 210 },
+        },
+        {
+          name: 'core-sw-02',
+          role: 'switch',
+          site: 'DC',
+          interfaces: [
+            { name: 'Po10', type: 'lag', description: 'LAG to core-sw-01' },
+            { name: 'Te1/0/1', type: '10gbase-x-sfpp', lag: 'Po10' },
+            { name: 'Te1/0/2', type: '10gbase-x-sfpp', lag: 'Po10' },
+            { name: 'Po1', type: 'lag', description: 'LAG to rt-dc-02' },
+            { name: 'Te1/0/3', type: '10gbase-x-sfpp', lag: 'Po1' },
+            { name: 'Te1/0/4', type: '10gbase-x-sfpp', lag: 'Po1' },
+          ],
+          position: { x: 690, y: 210 },
+        },
+      ],
+      cables: [
+        {
+          a: { device: 'core-sw-01', interface: 'Po10' },
+          b: { device: 'core-sw-02', interface: 'Po10' },
+          bandwidth: '2x10G LAG',
+          status: 'connected',
+          label: 'Po10',
+        },
+        {
+          a: { device: 'core-sw-01', interface: 'Po1' },
+          b: { device: 'rt-dc-01', interface: 'Po1' },
+          bandwidth: '2x1G LAG',
+          status: 'connected',
+          label: 'Po1',
+        },
+        {
+          a: { device: 'core-sw-02', interface: 'Po1' },
+          b: { device: 'rt-dc-02', interface: 'Po1' },
+          bandwidth: '2x1G LAG',
+          status: 'connected',
+          label: 'Po1',
+        },
+      ],
+    },
+  },
 ];
 
 /** Canonical file text for a builtin template. */

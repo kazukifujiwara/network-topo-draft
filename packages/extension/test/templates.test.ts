@@ -35,6 +35,7 @@ describe('template inventory', () => {
       'two-site-wan',
       'site-cloud',
       'hsrp-segment',
+      'lag-pair',
     ]);
   });
 
@@ -48,7 +49,7 @@ describe('template inventory', () => {
 
   it('uses generic names — no real vendor or service names ship in defaults', () => {
     const banned =
-      /(aws|azure|gcp|oci\b|oracle|equinix|direct\s*connect|fastconnect|megaport|ntt|tgw|dxvif)/i;
+      /(aws|azure|gcp|oci\b|oracle|equinix|direct\s*connect|fastconnect|megaport|ntt|tgw|dxvif|cisco|juniper|arista|catalyst|nexus|ios-xe|junos|eos\b)/i;
     for (const template of BUILTIN_TEMPLATES) {
       const text = templateText(template) + template.label + template.description;
       expect(banned.exec(text), `template ${template.id}`).toBeNull();

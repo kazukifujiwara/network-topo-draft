@@ -22,6 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- New built-in template "Routed LAG pair": two routers uplinked to a switch
+  pair over 2-member LAGs — a ready-made example of the `lag` /
+  `type: "lag"` interface notation (vendor-neutral).
 - The right properties panel can be collapsed with a slim strip button on
   its edge to maximize the canvas; the state persists per editor, and any
   new selection re-opens the panel so properties are never edited blind.

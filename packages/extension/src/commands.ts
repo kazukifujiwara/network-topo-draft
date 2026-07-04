@@ -119,12 +119,14 @@ export async function listTemplateItems(): Promise<TemplateItem[]> {
     'two-site-wan': t('2-site redundant WAN'),
     'site-cloud': t('Site + cloud (VRF logical)'),
     'hsrp-segment': t('Gateway pair + segment (HSRP)'),
+    'lag-pair': t('Routed LAG pair'),
   };
   const builtinDescription: Record<string, string> = {
     empty: t('A blank canvas'),
     'two-site-wan': t('Two sites, redundant carrier circuits'),
     'site-cloud': t('HQ connected to a cloud peer over a dedicated interconnect, logical VRF link'),
     'hsrp-segment': t('Two gateways sharing a /28 multi-access segment with an HSRP virtual IP'),
+    'lag-pair': t('Two routers uplinked to a switch pair over 2-member LAGs (lag interface examples)'),
   };
   const items: TemplateItem[] = BUILTIN_TEMPLATES.map((b) => ({
     key: `builtin:${b.id}`,
