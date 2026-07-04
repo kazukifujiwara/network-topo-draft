@@ -9,6 +9,8 @@ import { activeTopoUri } from './activeDocument';
 import { exportContent } from './exportContent';
 import type { ExportKind } from './exportContent';
 import { BUILTIN_TEMPLATES, templateText } from './templates';
+import { log } from './log';
+import { ensureTopoJsonPath } from './uriUtils';
 
 const t = vscode.l10n.t;
 
@@ -141,18 +143,29 @@ async function newTopologyFile(): Promise<void> {
     return;
   }
   const root = vscode.workspace.workspaceFolders?.[0]?.uri;
-  const target = await vscode.window.showSaveDialog({
+  const picked = await vscode.window.showSaveDialog({
     defaultUri: root ? vscode.Uri.joinPath(root, 'new.topo.json') : undefined,
     filters: { 'Network TopoDraft topology': ['topo.json', 'json'] },
   });
-  if (!target) return;
-  if (!target.path.endsWith('.topo.json')) {
-    void vscode.window.showWarningMessage(
-      t('The file name should end with .topo.json so the topology editor and schema apply.'),
+  log(`newFile: template=${pick.builtinId ?? pick.userUri?.toString() ?? '?'} dialog=${picked?.toString() ?? 'cancelled'}`);
+  if (!picked) return;
+  // native dialogs mishandle the compound ".topo.json" extension — normalize
+  // instead of trusting the returned name (the editor/schema key off it)
+  const target = picked.with({ path: ensureTopoJsonPath(picked.path) });
+  if (target.path !== picked.path) log(`newFile: normalized to ${target.toString()}`);
+  try {
+    await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(content));
+    const stat = await vscode.workspace.fs.stat(target);
+    log(`newFile: wrote ${stat.size} bytes to ${target.fsPath}`);
+  } catch (e) {
+    log(`newFile: WRITE FAILED: ${(e as Error).message}`);
+    void vscode.window.showErrorMessage(
+      t('Could not create {0}: {1}', target.fsPath, (e as Error).message),
     );
+    return;
   }
-  await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(content));
   await vscode.commands.executeCommand('vscode.openWith', target, 'topodraft.editor');
+  log('newFile: opened in topology editor');
 }
 
 /* ---------- Save as Template ---------- */

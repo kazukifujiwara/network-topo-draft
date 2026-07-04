@@ -10,7 +10,7 @@
   "HQ connected to a cloud peer over a dedicated interconnect, logical VRF link": "本社から専用相互接続でクラウドのピアへ、VRF論理リンク付き",
   "Your templates": "ユーザーテンプレート",
   "Pick a template for the new topology": "新しいトポロジのテンプレートを選択してください",
-  "The file name should end with .topo.json so the topology editor and schema apply.": "トポロジエディタとスキーマを適用するには、ファイル名を .topo.json で終わらせてください。",
+  "Could not create {0}: {1}": "{0} を作成できませんでした: {1}",
   "Cannot save as template: the document does not parse ({0})": "テンプレートとして保存できません: ドキュメントを解析できません ({0})",
   "Open a workspace folder (or set an absolute topodraft.templatesFolder) to save templates.": "テンプレートを保存するにはワークスペースフォルダを開いてください (または topodraft.templatesFolder に絶対パスを設定してください)。",
   "Template name": "テンプレート名",
