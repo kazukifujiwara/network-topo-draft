@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- TopoDraft logo: the letter N drawn as a network topology.
+       Solid verticals = physical links, dotted diagonal = logical link,
+       colors from the editor canvas (bg #0E1621, blue #6AA9FF, green #4CC38A). -->
+  <rect width="128" height="128" rx="28" fill="#0E1621"/>
+  <g stroke="#6AA9FF" stroke-width="9" stroke-linecap="round">
+    <line x1="38" y1="94" x2="38" y2="34"/>
+    <line x1="90" y1="94" x2="90" y2="34"/>
+  </g>
+  <!-- dotted diagonal as explicit dots so every renderer draws it identically -->
+  <g fill="#4CC38A">
+    <circle cx="48.4" cy="46" r="4.5"/>
+    <circle cx="58.8" cy="58" r="4.5"/>
+    <circle cx="69.2" cy="70" r="4.5"/>
+    <circle cx="79.6" cy="82" r="4.5"/>
+  </g>
+  <g fill="#EAF2FF">
+    <circle cx="38" cy="34" r="10"/>
+    <circle cx="38" cy="94" r="10"/>
+    <circle cx="90" cy="34" r="10"/>
+    <circle cx="90" cy="94" r="10"/>
+  </g>
+</svg>

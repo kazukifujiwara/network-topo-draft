@@ -1,5 +1,7 @@
 # TopoDraft — Network Topology as Code
 
+<img src="assets/logo.svg" width="112" align="right" alt="TopoDraft logo: the letter N drawn as a network topology — two solid physical links and a dotted logical link connecting four nodes">
+
 A graphical network-topology editor for `*.topo.json` files (alias: `*.topo`),
 built as a VSCode custom editor. Opening one launches a canvas where you draw
 devices, cables, carrier circuits, and logical (L3/VRF) adjacencies — while

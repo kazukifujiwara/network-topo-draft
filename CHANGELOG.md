@@ -47,6 +47,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Extension icon: the letter N drawn as a network topology — four nodes,
+  solid verticals for physical links and a dotted diagonal for the logical
+  link, in the editor's canvas colors. SVG master in `assets/logo.svg`,
+  256px PNG shipped in the VSIX.
+
 - License decided: **Apache License 2.0** (was an all-rights-reserved
   placeholder). LICENSE carries the canonical text, a NOTICE file names
   the project and copyright holder, every package declares the SPDX id,

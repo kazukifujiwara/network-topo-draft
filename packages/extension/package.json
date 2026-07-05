@@ -3,6 +3,7 @@
   "displayName": "TopoDraft — Network Topology as Code",
   "version": "0.0.1",
   "license": "Apache-2.0",
+  "icon": "icon.png",
   "private": true,
   "publisher": "kazukifujiwara",
   "description": "%extension.description%",

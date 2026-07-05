@@ -223,7 +223,7 @@ Initial rule set:
 - [ ] Obtain a publisher ID; fill in `package.json` name/displayName/description/categories/keywords
 - [x] LICENSE — **Apache-2.0 (ruled 2026-07-06)**: permissive for enterprise adoption, explicit patent grant + retaliation, trademark non-grant protects the name, §5 lets contributions in without a CLA
 - [ ] README (English-first, screenshots/GIFs) and CHANGELOG
-- [ ] Icon (128px) and gallery banner
+- [x] Icon — **ruled 2026-07-06**: the letter N drawn as a topology (4 nodes; solid verticals = physical, dotted diagonal = logical; editor canvas colors). Master `assets/logo.svg`, 256px `packages/extension/icon.png`. Gallery banner still optional
 - [ ] Sensible `engines.vscode` floor / minimal activationEvents (lazy activation)
 - [ ] esbuild-bundled, `.vscodeignore` curated for minimal VSIX size
 - [ ] No remote code loading (guaranteed by the D2 CDN removal) / no telemetry (state the no-telemetry policy explicitly)
