@@ -9,6 +9,10 @@ the **text document stays authoritative for the canvas** (the drawing is just
 a view of it), so AI agents (GitHub Copilot, Claude Code, NetBox-MCP-driven
 agents, …) can edit the same file as text and the canvas follows.
 
+![Demo: an AI agent builds a two-site network step by step and the TopoDraft canvas draws each device, cable, and inter-site circuit live](assets/demo.gif)
+
+*An AI agent builds a two-site network by editing the JSON — the canvas follows every step live.*
+
 This repository is a rebuild of the standalone HTML editor (frozen at v7,
 preserved verbatim under [`reference/`](reference/)) into a monorepo of pure
 TypeScript packages.

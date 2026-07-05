@@ -11,6 +11,10 @@ every canvas operation becomes a regular document edit, so undo/redo is
 plain `Ctrl/Cmd+Z` and git diffs stay clean thanks to deterministic,
 NetBox-friendly serialization.
 
+![Demo: an AI agent builds a two-site network step by step and the TopoDraft canvas draws each device, cable, and inter-site circuit live](https://raw.githubusercontent.com/kazukifujiwara/network-topo-draft/main/assets/demo.gif)
+
+*An AI agent builds a two-site network by editing the JSON — the canvas follows every step live.*
+
 ## Features
 
 - **Custom editor for `*.topo.json`** (alias: `*.topo`) — open a file, get
