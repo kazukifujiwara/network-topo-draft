@@ -44,6 +44,10 @@ NetBox-friendly serialization.
   `topodraft.templatesFolder` (`TopoDraft: Save as Template`).
 - **English / Japanese UI**, following the VSCode display language.
 
+![Logical view: VRF-1 compartments on four routers connected by eBGP adjacencies over the carrier circuits, with a VRRP segment (virtual IP shown) at each site](https://raw.githubusercontent.com/kazukifujiwara/network-topo-draft/main/assets/screenshot-logical.png)
+
+*The logical view: VRF compartments, L3 adjacencies, and multi-access VRRP segments.*
+
 ## The file format
 
 Versioned, documented, and schema-validated JSON with NetBox-friendly field

@@ -13,6 +13,10 @@ agents, …) can edit the same file as text and the canvas follows.
 
 *An AI agent builds a two-site network by editing the JSON — the canvas follows every step live.*
 
+![Logical view: VRF-1 compartments on four routers connected by eBGP adjacencies over the carrier circuits, with a VRRP segment (virtual IP shown) at each site and the property panel open](assets/screenshot-logical.png)
+
+*The logical view: VRF compartments, L3 adjacencies, and multi-access VRRP segments — edited in the same file.*
+
 This repository is a rebuild of the standalone HTML editor (frozen at v7,
 preserved verbatim under [`reference/`](reference/)) into a monorepo of pure
 TypeScript packages.
