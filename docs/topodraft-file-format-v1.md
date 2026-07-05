@@ -37,11 +37,11 @@
 | Field | Type | Description |
 | --- | --- | --- |
 | `name` | string **required** | Hostname. Unique. The reference key used by links |
-| `device_type` | string | Vendor + model (e.g. `"Cisco C8300"`) |
+| `device_type` | string | Vendor + model (e.g. `"ExampleVendor RT-1000"`) |
 | `role` | string | Free text (router / switch / firewall / external_peer, …). Used to infer the drawn icon |
 | `site` | string | Location. Devices sharing a value are framed together; cross-site links default to circuit |
 | `tenant` | string | Owning organization |
-| `platform` | string | OS (e.g. `"IOS-XE 17.12"`) |
+| `platform` | string | OS (e.g. `"ExampleOS 1.2"`) |
 | `vrfs` | string[] | VRF (routing instance) names defined on the device. Drawn as compartments in the logical view |
 | `interfaces` | object[] | §3.2 |
 | `config_context` | object | Free-form structured settings for the device (§3.3; TopoDraft-extension semantics, see §8) |
@@ -72,12 +72,12 @@
 
 ### 3.4 provider_networks[] — carrier-side networks (≈ NetBox Provider Network)
 
-AWS Direct Connect / OCI FastConnect / IP-VPN clouds, etc.
+Dedicated cloud interconnects, IP-VPN clouds, internet exchanges, etc.
 
 | Field | Type | Description |
 | --- | --- | --- |
 | `name` | string **required** | Unique. Referenced by circuits / logical_links |
-| `provider` | string | e.g. `"AWS"` / `"Oracle"` / `"Equinix"` |
+| `provider` | string | e.g. `"Carrier-A"` / `"ExampleNet"` |
 | `description` | string | Free text |
 | `position` | object | Coordinates (optional) |
 
@@ -100,7 +100,7 @@ Links attached to a provider network are always **circuits** (never cables).
 | `a`, `b` | endpoint **required** | `{site?, device, interface?}` or `{provider_network}` (§3.8-A) |
 | `cid` | string | Circuit ID |
 | `provider` | string | Carrier name |
-| `type` | string | Leased line / IP-VPN / Direct Connect, … |
+| `type` | string | Leased line / IP-VPN / dedicated interconnect, … |
 | `commit_rate` | string | Contracted bandwidth (e.g. `"1Gbps"`) |
 | `status` | string | active / provisioning, … |
 
@@ -122,14 +122,14 @@ Logical connections between routing instances (VRFs). NetBox has no correspondin
 
 ```jsonc
 { "site": "HQ", "device": "rt-hq-01", "interface": "Gi0/0/0" }   // site/interface optional
-{ "provider_network": "AWS Direct Connect" }
+{ "provider_network": "Cloud Interconnect" }
 ```
 
 **B. Logical endpoints (logical_links)** — one of the three shapes:
 
 ```jsonc
 { "device": "rt-hq-01", "vrf": "PROD", "id": "tenant-abc", "interface": "Gi0/0/0.100", "ip_address": "169.254.10.1/30" }
-{ "provider_network": "AWS Direct Connect", "id": "dxcon-xyz789" }
+{ "provider_network": "Cloud Interconnect", "id": "attach-01" }
 { "network": "svc-seg-01" }                                          // attaches to a networks[] segment (§3.10)
 ```
 
@@ -202,7 +202,7 @@ For stable git diffs and stable diff-based agent editing, the editor's save outp
   "devices": [
     {
       "name": "rt-hq-01",
-      "device_type": "Cisco C8300",
+      "device_type": "ExampleVendor RT-1000",
       "role": "router",
       "site": "HQ",
       "tenant": "NetOps",
@@ -211,7 +211,7 @@ For stable git diffs and stable diff-based agent editing, the editor's save outp
         { "name": "Po1", "type": "lag", "description": "LAG to sw-hq-01" },
         { "name": "Gi0/0/1", "lag": "Po1" },
         { "name": "Gi0/0/2", "lag": "Po1" },
-        { "name": "Gi0/0/0.100", "ip_address": "169.254.10.1/30", "type": "virtual", "description": "DX VIF", "vrf": "PROD" }
+        { "name": "Gi0/0/0.100", "ip_address": "169.254.10.1/30", "type": "virtual", "description": "interconnect VIF", "vrf": "PROD" }
       ],
       "config_context": {
         "bgp": { "asn": 65010, "neighbors": [{ "peer": "169.254.10.2", "remote_asn": 64512 }] }
@@ -219,10 +219,10 @@ For stable git diffs and stable diff-based agent editing, the editor's save outp
       "position": { "x": 120, "y": 60 }
     },
     { "name": "sw-hq-01", "role": "switch", "site": "HQ", "position": { "x": 120, "y": 210 } },
-    { "name": "aws-tgw", "role": "external_peer", "site": "AWS", "position": { "x": 820, "y": 60 } }
+    { "name": "cloud-gw-01", "role": "external_peer", "site": "Cloud", "position": { "x": 820, "y": 60 } }
   ],
   "provider_networks": [
-    { "name": "AWS Direct Connect", "provider": "AWS", "position": { "x": 470, "y": 60 } }
+    { "name": "Cloud Interconnect", "provider": "ExampleNet", "position": { "x": 470, "y": 60 } }
   ],
   "cables": [
     { "a": { "device": "rt-hq-01", "interface": "Po1" }, "b": { "device": "sw-hq-01" }, "bandwidth": "2x1G LAG", "status": "connected" }
@@ -230,17 +230,17 @@ For stable git diffs and stable diff-based agent editing, the editor's save outp
   "circuits": [
     {
       "a": { "site": "HQ", "device": "rt-hq-01", "interface": "Gi0/0/0" },
-      "b": { "provider_network": "AWS Direct Connect" },
-      "cid": "DX-CID-01", "provider": "Equinix", "type": "Direct Connect", "commit_rate": "1Gbps", "status": "active"
+      "b": { "provider_network": "Cloud Interconnect" },
+      "cid": "IC-CID-01", "provider": "Carrier-A", "type": "dedicated interconnect", "commit_rate": "1Gbps", "status": "active"
     }
   ],
   "logical_links": [
     {
       "a": { "device": "rt-hq-01", "vrf": "PROD", "interface": "Gi0/0/0.100" },
-      "b": { "device": "aws-tgw", "id": "tgw-attach-01" },
-      "link_id": "dxvif-abc123",
+      "b": { "device": "cloud-gw-01", "id": "attach-01" },
+      "link_id": "vif-0001",
       "vlan": "100",
-      "label": "eBGP over DX VIF"
+      "label": "eBGP over interconnect VIF"
     }
   ]
 }

@@ -54,10 +54,12 @@ Workflow for agents:
 1. Follow the JSON Schema below exactly. Unknown fields fail validation and
    are DROPPED when the editor saves (the Problems panel suggests the field
    you probably meant, e.g. \`ip\` → \`ip_address\`).
-2. After editing, read the diagnostics for the file (source \`topodraft\` and
-   the JSON schema validation). Fix until clean: duplicate names, dangling
-   \`device\`/\`provider_network\` references, interfaces or VRFs that do not
-   exist, misspelled fields.
+2. After editing, validate. If your environment surfaces the editor's
+   diagnostics (the VSCode Problems panel: source \`topodraft\` plus JSON
+   schema validation), read them and fix until clean; if you run headless,
+   check the file against the JSON Schema below yourself. Either way watch
+   for: duplicate names, dangling \`device\`/\`provider_network\` references,
+   interfaces or VRFs that do not exist, misspelled fields.
 3. IP addressing: put IPs on \`devices[].interfaces[].ip_address\` (CIDR).
    A logical-link endpoint may carry \`ip_address\` directly ONLY when it has
    no \`interface\`; provider_network endpoints never carry IPs.

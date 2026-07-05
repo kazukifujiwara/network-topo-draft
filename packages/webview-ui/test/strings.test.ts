@@ -8,6 +8,25 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
+describe('vendor neutrality (shipped UI text)', () => {
+  // Named integration targets are allowed: NetBox (data source), draw.io /
+  // diagrams.net (export format), coding-agent harnesses (Claude Code,
+  // Copilot). Everything else stays generic — see kazuki's ruling.
+  const banned =
+    /(aws|azure|gcp|oci\b|oracle|equinix|direct\s*connect|fastconnect|expressroute|megaport|ntt|dxvif|dxcon|\bdx\b|cisco|juniper|arista|catalyst|nexus|ios-xe|junos|excalidraw|\bvisio\b|lucidchart)/i;
+
+  it('mentions no product names beyond the allowed integration targets', () => {
+    for (const [name, dict] of [
+      ['en', STRINGS_EN],
+      ['ja', STRINGS_JA],
+    ] as const) {
+      for (const [key, value] of Object.entries(dict)) {
+        expect(banned.exec(String(value)), `${name}:${key}`).toBeNull();
+      }
+    }
+  });
+});
+
 describe('dictionary completeness (D13)', () => {
   it('every English key has a Japanese translation', () => {
     for (const key of Object.keys(STRINGS_EN)) {

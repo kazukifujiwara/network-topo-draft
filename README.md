@@ -2,10 +2,10 @@
 
 A graphical network-topology editor for `*.topo.json` files (alias: `*.topo`),
 built as a VSCode custom editor. Opening one launches a canvas where you draw
-devices, cables, carrier circuits, and logical (L3/VRF) adjacencies — while the
-**text document stays the single source of truth**, so AI agents (GitHub
-Copilot, Claude Code, NetBox-MCP-driven agents, …) can edit the same file as
-text and the canvas follows.
+devices, cables, carrier circuits, and logical (L3/VRF) adjacencies — while
+the **text document stays authoritative for the canvas** (the drawing is just
+a view of it), so AI agents (GitHub Copilot, Claude Code, NetBox-MCP-driven
+agents, …) can edit the same file as text and the canvas follows.
 
 This repository is a rebuild of the standalone HTML editor (frozen at v7,
 preserved verbatim under [`reference/`](reference/)) into a monorepo of pure

@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Documentation audit (fairness / ethics / presumptions): remaining
+  product names outside the allowed integration targets (NetBox, draw.io,
+  agent harnesses) were genericized in the format spec's examples and the
+  provider-network panel help text (DX / FastConnect → dedicated cloud
+  interconnect); a vendor-neutrality guard test now also covers the
+  webview UI dictionaries. The agent guide's validation step no longer
+  assumes the agent can see VSCode diagnostics (headless agents are told
+  to validate against the schema themselves), and both READMEs scope
+  "source of truth" to the canvas, not the network.
 - The agent guide no longer calls the file "the single source of truth":
   the file is authoritative for the DIAGRAM only — the source of truth for
   the network itself is the organization's configuration/inventory system

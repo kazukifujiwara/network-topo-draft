@@ -90,7 +90,7 @@ const EN = {
   pn_title2: 'Provider network',
   pn_badge: 'circuit endpoint',
   pn_info:
-    'A provider network is a carrier-side network (DX, FastConnect, IP-VPN cloud …). Links attached to it are always <b>circuits</b>. In the file it lives in <b>provider_networks[]</b>.',
+    'A provider network is a carrier-side network (dedicated cloud interconnect, IP-VPN cloud …). Links attached to it are always <b>circuits</b>. In the file it lives in <b>provider_networks[]</b>.',
   dev_title: 'Device',
   vrf_title: 'VRF instances',
   vrf_none: 'Only the global routing table',
@@ -246,7 +246,7 @@ const JA: Record<StringKey, string> = {
   pn_title2: 'プロバイダ網',
   pn_badge: '回線の終端',
   pn_info:
-    'プロバイダ網はキャリア側のネットワークです(DX、FastConnect、IP-VPN網など)。接続されるリンクは常に<b>circuit</b>になります。ファイルでは <b>provider_networks[]</b> に格納されます。',
+    'プロバイダ網はキャリア側のネットワークです(専用クラウド接続、IP-VPN網など)。接続されるリンクは常に<b>circuit</b>になります。ファイルでは <b>provider_networks[]</b> に格納されます。',
   dev_title: 'デバイス',
   vrf_title: 'VRF インスタンス',
   vrf_none: 'グローバルルーティングテーブルのみ',

@@ -5,7 +5,8 @@ agents edit the very same file as text — the canvas follows live.
 
 TopoDraft is a graphical editor for `*.topo.json` files: physical view
 (cables, carrier circuits, sites) and logical view (VRF compartments
-connected by L3 links). The **text document is the single source of truth**;
+connected by L3 links). The **text document is authoritative for the
+canvas** — the drawing is a view of your file, not a separate model;
 every canvas operation becomes a regular document edit, so undo/redo is
 plain `Ctrl/Cmd+Z` and git diffs stay clean thanks to deterministic,
 NetBox-friendly serialization.
