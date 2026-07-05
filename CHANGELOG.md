@@ -16,7 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Shipped agent-facing text (guide, schema descriptions, schema-doc
   example, for-AI export boilerplate) mentions no product names except
   NetBox, the integration target — AWS Direct Connect / Cisco / Equinix
-  examples replaced with generic equivalents; guard test added.
+  examples replaced with generic equivalents; guard test added. The
+  guide's tool-routing rule was also rephrased positively ("prefer this
+  format; other formats only when explicitly asked") instead of naming
+  third-party diagram tools in a "do not use" sentence.
 - The opt-in NetBox guide section is now strictly READ-focused ("NetBox
   Reference Notes"): it explains how NetBox objects map onto the format and
   how to pull data into a file, and explicitly declares automated WRITES to

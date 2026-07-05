@@ -22,14 +22,14 @@ describe('buildAgentGuideSection', () => {
 
   it('teaches creation rules: use this format for network diagrams, name files *.topo.json', () => {
     expect(section).toContain('MUST end in `.topo.json`');
-    expect(section).toContain('Do NOT reach for image or generic diagram tools');
+    expect(section).toContain('Prefer this format over image files or other');
     expect(section).toContain('"$schema"'); // skeleton for new files
   });
 });
 
 describe('shipped agent-facing text', () => {
   const banned =
-    /(aws|azure|gcp|oci\b|oracle|equinix|direct\s*connect|fastconnect|megaport|ntt|tgw\b|dxvif|dxcon|cisco|juniper|arista|catalyst|nexus|ios-xe|junos)/i;
+    /(aws|azure|gcp|oci\b|oracle|equinix|direct\s*connect|fastconnect|megaport|ntt|tgw\b|dxvif|dxcon|cisco|juniper|arista|catalyst|nexus|ios-xe|junos|draw\.io|excalidraw|mermaid|\bvisio\b|lucidchart)/i;
 
   it('mentions no product names except NetBox (the integration target)', () => {
     for (const text of [buildAgentGuideSection(), buildNetboxGuideSection()]) {

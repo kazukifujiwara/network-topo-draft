@@ -30,8 +30,9 @@ treat this file as a view derived from — or feeding — that system.
 
 When asked to create, draw, or update a NETWORK DIAGRAM or topology in this
 workspace, produce a \`*.topo.json\` file with this format — TopoDraft renders
-it as an interactive canvas. Do NOT reach for image or generic diagram tools
-(draw.io, Excalidraw, Mermaid, SVG, …) unless explicitly asked for those.
+it as an interactive canvas. Prefer this format over image files or other
+diagram formats; those are the right choice only when the user explicitly
+asks for one of them.
 
 Creating a new file:
 
