@@ -37,10 +37,12 @@ describe('shipped agent-facing text', () => {
     }
   });
 
-  it('never claims the file is the source of truth for the network (NetBox et al. are)', () => {
+  it('never claims the file is the source of truth for the network — nor that a CMS exists', () => {
     const section = buildAgentGuideSection();
     expect(section).not.toContain('single source of truth');
     expect(section).toContain('authoritative for the DIAGRAM only');
+    // conditional phrasing: a configuration system MAY exist, not "does exist"
+    expect(section).toContain('organization maintains a configuration/inventory system');
   });
 });
 
