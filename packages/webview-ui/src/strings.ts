@@ -56,7 +56,7 @@ const EN = {
   st_devices: 'devices',
   st_pn: 'provider nets',
   st_networks: 'segments',
-  gm_netbox: 'Also include NetBox sync notes (only if you use NetBox)',
+  gm_netbox: 'Also include NetBox reference notes (read-only; only if you use NetBox)',
   tt_panel_collapse: 'Collapse the properties panel',
   tt_panel_expand: 'Expand the properties panel',
   stale_build:
@@ -212,7 +212,7 @@ const JA: Record<StringKey, string> = {
   st_devices: 'デバイス',
   st_pn: 'プロバイダ網',
   st_networks: 'セグメント',
-  gm_netbox: 'NetBox 連携ノートも含める(NetBox を使う場合のみ)',
+  gm_netbox: 'NetBox 参照ノートも含める(読み取り専用・NetBox を使う場合のみ)',
   tt_panel_collapse: 'プロパティパネルを折りたたむ',
   tt_panel_expand: 'プロパティパネルを展開する',
   stale_build:

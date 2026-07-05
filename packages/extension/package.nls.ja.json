@@ -12,5 +12,5 @@
   "command.openInTopologyEditor": "トポロジエディタで開く",
   "config.templatesFolder": "「新しいトポロジファイル」コマンドが参照するユーザーテンプレート (*.topo.json) のフォルダ。絶対パスでなければワークスペース相対。",
   "command.writeAgentGuide": "AIエージェント用ガイドを書き出す (AGENTS.md)",
-  "command.writeNetboxGuide": "NetBox 連携ノートを書き出す (AGENTS.md)"
+  "command.writeNetboxGuide": "NetBox 参照ノートを書き出す (AGENTS.md)"
 }

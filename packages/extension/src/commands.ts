@@ -318,7 +318,7 @@ async function writeNetboxGuide(): Promise<void> {
   await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(upsertNetboxGuide(existing)));
   log(`netboxGuide: wrote ${target.fsPath}`);
   void vscode.window.showInformationMessage(
-    t('Wrote the NetBox sync notes section to {0}.', target.path.split('/').pop() ?? 'AGENTS.md'),
+    t('Wrote the NetBox reference notes section to {0}.', target.path.split('/').pop() ?? 'AGENTS.md'),
   );
   await vscode.window.showTextDocument(target, { preview: true });
 }

@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- The opt-in NetBox guide section is now strictly READ-focused ("NetBox
+  Reference Notes"): it explains how NetBox objects map onto the format and
+  how to pull data into a file, and explicitly declares automated WRITES to
+  NetBox out of scope (add your own instructions outside the TopoDraft
+  markers, at your own risk; prefer read-only API tokens). The extension
+  ships no push-workflow instructions.
+
 ### Added
 
 - NetBox sync notes became an OPT-IN guide section (not every user runs

@@ -34,12 +34,15 @@ describe('NetBox notes are opt-in (not every user runs NetBox)', () => {
     expect(section).not.toContain('NetBox mapping');
   });
 
-  it('the NetBox section is self-contained with the field-tested pitfalls', () => {
+  it('the NetBox section is READ-focused: no write automation is endorsed', () => {
     const nb = buildNetboxGuideSection();
     expect(nb).toContain('topodraft:netbox-guide:begin');
-    expect(nb).toContain('LAG interfaces'); // cables cannot terminate on LAGs
-    expect(nb).toContain('termination_type'); // NetBox 4.x circuit terminations
-    expect(nb).toContain('group_id');
+    expect(nb).toContain('OUT OF SCOPE'); // writes are explicitly not covered
+    expect(nb).toContain('read-only API token');
+    expect(nb).toContain('group_id'); // mapping table stays (needed for reads)
+    // no push-workflow instructions ship in the product
+    expect(nb).not.toMatch(/dry.?run/i);
+    expect(nb).not.toContain('get-or-create');
   });
 
   it('upsertNetboxGuide coexists with the core guide and regenerates in place', () => {
