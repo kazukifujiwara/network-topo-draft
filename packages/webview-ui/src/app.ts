@@ -700,8 +700,12 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   /* ---------- sub-modules ---------- */
 
   const configModal = createConfigContextModal($('#canvasWrap'), api);
-  const guideModal = createAgentGuideModal($('#canvasWrap'), (saveAs) =>
-    host.postMessage({ type: 'agent-guide', ...(saveAs ? { saveAs: true } : {}) }),
+  const guideModal = createAgentGuideModal($('#canvasWrap'), (saveAs, netbox) =>
+    host.postMessage({
+      type: 'agent-guide',
+      ...(saveAs ? { saveAs: true } : {}),
+      ...(netbox ? { netbox: true } : {}),
+    }),
   );
   $('#btnAgentGuide').addEventListener('click', () => guideModal.open());
   $('#btnPanel').addEventListener('click', () => setPanelCollapsed(!panelCollapsed));

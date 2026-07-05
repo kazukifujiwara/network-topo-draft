@@ -12,7 +12,7 @@ import type { ExportKind } from './exportContent';
 import { BUILTIN_TEMPLATES, templateText } from './templates';
 import { log } from './log';
 import { ensureTopoJsonPath } from './uriUtils';
-import { upsertAgentGuide } from './agentGuide';
+import { upsertAgentGuide, upsertNetboxGuide } from './agentGuide';
 
 const t = vscode.l10n.t;
 
@@ -259,7 +259,7 @@ async function saveAsTemplate(): Promise<void> {
 
 /* ---------- AI agent guide (AGENTS.md) ---------- */
 
-async function writeAgentGuide(saveAs = false): Promise<void> {
+async function writeAgentGuide(saveAs = false, netbox = false): Promise<void> {
   const root = vscode.workspace.workspaceFolders?.[0]?.uri;
   if (!root && !saveAs) {
     void vscode.window.showErrorMessage(
@@ -284,13 +284,41 @@ async function writeAgentGuide(saveAs = false): Promise<void> {
   } catch {
     // file does not exist yet
   }
-  await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(upsertAgentGuide(existing)));
-  log(`agentGuide: wrote ${target.fsPath}${existing !== null ? ' (updated existing file)' : ''}`);
+  let content = upsertAgentGuide(existing);
+  if (netbox) content = upsertNetboxGuide(content);
+  await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(content));
+  log(
+    `agentGuide: wrote ${target.fsPath}${existing !== null ? ' (updated existing file)' : ''}${netbox ? ' +netbox' : ''}`,
+  );
   const shownName = target.path.split('/').pop() ?? 'AGENTS.md';
   void vscode.window.showInformationMessage(
     existing !== null
       ? t('Updated the TopoDraft section in {0}.', shownName)
       : t('Wrote the AI agent guide to {0} — coding agents pick it up automatically.', shownName),
+  );
+  await vscode.window.showTextDocument(target, { preview: true });
+}
+
+/** Opt-in: upsert ONLY the NetBox sync-notes section into AGENTS.md. */
+async function writeNetboxGuide(): Promise<void> {
+  const root = vscode.workspace.workspaceFolders?.[0]?.uri;
+  if (!root) {
+    void vscode.window.showErrorMessage(
+      t('Open a workspace folder first — the agent guide is written to its AGENTS.md.'),
+    );
+    return;
+  }
+  const target = vscode.Uri.joinPath(root, 'AGENTS.md');
+  let existing: string | null = null;
+  try {
+    existing = new TextDecoder().decode(await vscode.workspace.fs.readFile(target));
+  } catch {
+    // file does not exist yet
+  }
+  await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(upsertNetboxGuide(existing)));
+  log(`netboxGuide: wrote ${target.fsPath}`);
+  void vscode.window.showInformationMessage(
+    t('Wrote the NetBox sync notes section to {0}.', target.path.split('/').pop() ?? 'AGENTS.md'),
   );
   await vscode.window.showTextDocument(target, { preview: true });
 }
@@ -305,6 +333,9 @@ export function registerCommands(): vscode.Disposable {
       newTopologyFile(typeof template === 'string' ? template : undefined),
     ),
     vscode.commands.registerCommand('topodraft.saveAsTemplate', () => saveAsTemplate()),
-    vscode.commands.registerCommand('topodraft.writeAgentGuide', (saveAs?: boolean) => writeAgentGuide(saveAs === true)),
+    vscode.commands.registerCommand('topodraft.writeAgentGuide', (saveAs?: boolean, netbox?: boolean) =>
+      writeAgentGuide(saveAs === true, netbox === true),
+    ),
+    vscode.commands.registerCommand('topodraft.writeNetboxGuide', () => writeNetboxGuide()),
   );
 }

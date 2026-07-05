@@ -11,5 +11,6 @@
   "command.openAsText": "Open as Text",
   "command.openInTopologyEditor": "Open in Topology Editor",
   "config.templatesFolder": "Folder holding user templates (*.topo.json files) for the New Topology File command. Workspace-relative unless absolute.",
-  "command.writeAgentGuide": "Write AI Agent Guide (AGENTS.md)"
+  "command.writeAgentGuide": "Write AI Agent Guide (AGENTS.md)",
+  "command.writeNetboxGuide": "Write NetBox Sync Notes (AGENTS.md)"
 }

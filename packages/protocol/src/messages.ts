@@ -59,6 +59,8 @@ export interface AgentGuideRequestMessage {
   type: 'agent-guide';
   /** true → the host asks for a target file instead of writing AGENTS.md */
   saveAs?: boolean;
+  /** true → also write the opt-in NetBox sync-notes section */
+  netbox?: boolean;
 }
 
 /**

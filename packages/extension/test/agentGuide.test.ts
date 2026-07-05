@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { genSchemaDoc } from '@topodraft/core';
-import { GUIDE_BEGIN, GUIDE_END, buildAgentGuideSection, upsertAgentGuide } from '../src/agentGuide';
+import {
+  GUIDE_BEGIN,
+  GUIDE_END,
+  buildAgentGuideSection,
+  buildNetboxGuideSection,
+  upsertAgentGuide,
+  upsertNetboxGuide,
+} from '../src/agentGuide';
 
 describe('buildAgentGuideSection', () => {
   const section = buildAgentGuideSection();
@@ -17,6 +24,32 @@ describe('buildAgentGuideSection', () => {
     expect(section).toContain('MUST end in `.topo.json`');
     expect(section).toContain('Do NOT reach for image or generic diagram tools');
     expect(section).toContain('"$schema"'); // skeleton for new files
+  });
+});
+
+describe('NetBox notes are opt-in (not every user runs NetBox)', () => {
+  it('the default guide contains no NetBox section', () => {
+    const section = buildAgentGuideSection();
+    expect(section).not.toContain('topodraft:netbox-guide');
+    expect(section).not.toContain('NetBox mapping');
+  });
+
+  it('the NetBox section is self-contained with the field-tested pitfalls', () => {
+    const nb = buildNetboxGuideSection();
+    expect(nb).toContain('topodraft:netbox-guide:begin');
+    expect(nb).toContain('LAG interfaces'); // cables cannot terminate on LAGs
+    expect(nb).toContain('termination_type'); // NetBox 4.x circuit terminations
+    expect(nb).toContain('group_id');
+  });
+
+  it('upsertNetboxGuide coexists with the core guide and regenerates in place', () => {
+    let content = upsertAgentGuide(null);
+    content = upsertNetboxGuide(content);
+    expect(content).toContain('topodraft:agent-guide:begin');
+    expect(content).toContain('topodraft:netbox-guide:begin');
+    // idempotent for both sections, in any order
+    expect(upsertNetboxGuide(content)).toBe(content);
+    expect(upsertAgentGuide(content)).toBe(content);
   });
 });
 

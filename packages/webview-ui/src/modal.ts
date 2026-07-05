@@ -14,14 +14,16 @@ import { T } from './strings';
  */
 export function createAgentGuideModal(
   container: HTMLElement,
-  onConfirm: (saveAs: boolean) => void,
+  onConfirm: (saveAs: boolean, netbox: boolean) => void,
 ) {
   const overlay = document.createElement('div');
   overlay.id = 'guideModal';
   overlay.innerHTML = `
     <div id="guideBox">
       <div class="g-head"><b>${T('gm_title')}</b><button id="guideClose" title="×">×</button></div>
-      <div class="g-body">${T('gm_body')}<div class="g-note">${T('gm_exists_note')}</div></div>
+      <div class="g-body">${T('gm_body')}
+        <label class="g-check"><input type="checkbox" id="guideNetbox"> ${T('gm_netbox')}</label>
+        <div class="g-note">${T('gm_exists_note')}</div></div>
       <div class="g-foot">
         <button class="m-btn" id="guideCancel">${T('m_cancel')}</button>
         <button class="m-btn" id="guideSaveAs" title="${T('tt_gm_saveas')}">${T('gm_saveas')}</button>
@@ -34,13 +36,15 @@ export function createAgentGuideModal(
   };
   overlay.querySelector('#guideClose')?.addEventListener('click', close);
   overlay.querySelector('#guideCancel')?.addEventListener('click', close);
+  const netboxChecked = (): boolean =>
+    (overlay.querySelector('#guideNetbox') as HTMLInputElement).checked;
   overlay.querySelector('#guideWrite')?.addEventListener('click', () => {
     close();
-    onConfirm(false);
+    onConfirm(false, netboxChecked());
   });
   overlay.querySelector('#guideSaveAs')?.addEventListener('click', () => {
     close();
-    onConfirm(true);
+    onConfirm(true, netboxChecked());
   });
   overlay.addEventListener('mousedown', (e) => {
     if (e.target === overlay) close();

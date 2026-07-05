@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- NetBox sync notes became an OPT-IN guide section (not every user runs
+  NetBox): the default AGENTS.md guide is NetBox-free again, and a separate
+  marker-delimited section is written only via the ✨ AI Guide dialog's new
+  checkbox or `TopoDraft: Write NetBox Sync Notes (AGENTS.md)`. The section
+  now also covers pitfalls field-tested against a real NetBox 4.x push —
+  cables cannot terminate on LAG interfaces (expand to member cables),
+  cables need concrete interfaces on both ends (ask, don't invent stubs),
+  circuit terminations attach via `termination_type`, and dry-run +
+  tag-everything workflow rules. The default guide gained NetBox-agnostic
+  layout conventions (node size, tiering, one-edit re-arrangement) and a
+  "re-read after the editor normalizes on save" rule, both learned from a
+  real agent session.
+
 - Dedicated `*.topo` file-name alias alongside the canonical `*.topo.json`:
   both open in the topology editor with schema validation and JSON language
   support. `.topo.json` stays the default for new files (universally

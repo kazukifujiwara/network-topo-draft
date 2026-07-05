@@ -48,6 +48,11 @@
         "category": "TopoDraft"
       },
       {
+        "command": "topodraft.writeNetboxGuide",
+        "title": "%command.writeNetboxGuide%",
+        "category": "TopoDraft"
+      },
+      {
         "command": "topodraft.validate",
         "title": "%command.validate%",
         "category": "TopoDraft"

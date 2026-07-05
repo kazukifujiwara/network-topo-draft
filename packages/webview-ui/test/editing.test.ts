@@ -789,6 +789,16 @@ describe('AI guide button (toolbar)', () => {
     expect(h.f.posted).toContainEqual({ type: 'agent-guide', saveAs: true });
   });
 
+  it('the NetBox checkbox is off by default and adds the netbox flag when checked', () => {
+    const h = harness();
+    (h.root.querySelector('#btnAgentGuide') as HTMLElement).click();
+    const box = h.root.querySelector('#guideNetbox') as HTMLInputElement;
+    expect(box.checked).toBe(false);
+    box.checked = true;
+    (h.root.querySelector('#guideWrite') as HTMLElement).click();
+    expect(h.f.posted).toContainEqual({ type: 'agent-guide', netbox: true });
+  });
+
   it('cancelling posts nothing', () => {
     const h = harness();
     (h.root.querySelector('#btnAgentGuide') as HTMLElement).click();

@@ -26,5 +26,6 @@
   "Routed LAG pair": "ルータ2台 + LAG (ポートチャネル)",
   "Two routers uplinked to a switch pair over 2-member LAGs (lag interface examples)": "2本束ねたLAGでルータをスイッチペアに接続(lagインターフェース記法の例)",
   "Two gateways sharing a /28 multi-access segment with an HSRP virtual IP": "2台のゲートウェイが /28 マルチアクセスセグメントと HSRP 仮想IPを共有する構成",
+  "Wrote the NetBox sync notes section to {0}.": "NetBox 連携ノートのセクションを {0} に書き出しました。",
   "Updated the TopoDraft section in {0}.": "{0} 内の TopoDraft セクションを更新しました。"
 }
