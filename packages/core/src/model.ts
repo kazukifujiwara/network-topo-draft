@@ -50,7 +50,8 @@ export interface ProviderNetwork {
 /** First-hop redundancy (HSRP/VRRP/GLBP …) on a network segment (spec §3.10). */
 export interface FhrpConfig {
   protocol?: string;
-  group?: string;
+  /** FHRP group id (NetBox FHRPGroup.group_id) */
+  group_id?: string;
   virtual_ip?: string;
 }
 

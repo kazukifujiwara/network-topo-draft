@@ -29,7 +29,7 @@ it as an interactive canvas. Do NOT reach for image or generic diagram tools
 
 Creating a new file:
 
-- The file name MUST end in \`.topo.json\` — e.g. \`hsrp-sample.topo.json\`.
+- The file name MUST end in \`.topo.json\` (preferred) or \`.topo\` — e.g. \`hsrp-sample.topo.json\`.
   A different suffix (plain \`.json\`) will not open in the topology editor.
 - Start from this skeleton and build up:
 
@@ -58,6 +58,30 @@ Workflow for agents:
    the editor normalizes on save — but staying canonical keeps diffs small.
 5. \`position\` is canvas layout metadata; keep existing values unless asked
    to re-arrange. New nodes may omit it (the editor auto-places them).
+
+NetBox mapping notes (when you sync this file with NetBox via API/MCP):
+
+- Field names follow NetBox where a counterpart exists (\`name\`, \`role\`,
+  \`site\`, \`device_type\`, \`platform\`, \`tenant\`, interface \`type\`/\`lag\`/
+  \`vrf\`, cable \`type\`/\`status\`/\`label\`, circuit \`cid\`/\`provider\`/
+  \`commit_rate\`, \`fhrp.protocol\`/\`group_id\`) — but every value here is a
+  FREE-TEXT STRING, while NetBox often wants FK objects (Site, DeviceRole,
+  DeviceType + Manufacturer), choice slugs (interface types, \`vrrp2\`/\`vrrp3\`),
+  or integers (\`commit_rate\` in kbps, FHRPGroup \`group_id\`). Resolve names
+  and convert units yourself, and decide a create-if-missing policy first.
+- Flattenings: \`interfaces[].ip_address\` ≈ a NetBox IPAddress object
+  assigned to the interface; \`networks[]\` ≈ Prefix + FHRPGroup
+  (\`virtual_ip\` ≈ the group's assigned IP); cable \`a\`/\`b\` ≈ terminations.
+- No NetBox counterpart (do NOT push): \`logical_links\`, cable \`bandwidth\`,
+  \`devices[].vrfs\` (declare VRF objects instead), \`position\`, \`$schema\`,
+  \`version\`.
+- Identity is name-based here. Track your own mapping (e.g. a NetBox tag)
+  so a rename in one system is not mistaken for delete + create, and only
+  delete NetBox objects you created from this file.
+- Pulling FROM NetBox: merge into the existing file (preserve \`position\`
+  and \`logical_links\`) instead of regenerating it; collapse cable paths
+  through patch panels to direct device-to-device cables; include only the
+  interfaces that matter to the diagram.
 
 ${genSchemaDoc()}
 ${GUIDE_END}`;

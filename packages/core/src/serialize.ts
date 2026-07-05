@@ -123,7 +123,7 @@ function canonicalNetwork(n: Network): Network {
   if (n.fhrp) {
     const fhrp = {} as FhrpConfig;
     put(fhrp, 'protocol', n.fhrp.protocol);
-    put(fhrp, 'group', n.fhrp.group);
+    put(fhrp, 'group_id', n.fhrp.group_id);
     put(fhrp, 'virtual_ip', n.fhrp.virtual_ip);
     if (Object.keys(fhrp).length) out.fhrp = fhrp;
   }

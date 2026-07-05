@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "TopoDraft topology (*.topo.json, format v1)",
-  "description": "File format v1 of TopoDraft. Normative specification: docs/topodraft-file-format-v1.md. Revision: 2026-07-05.",
+  "description": "File format v1 of TopoDraft. Normative specification: docs/topodraft-file-format-v1.md. Revision: 2026-07-06.",
   "type": "object",
   "required": [
     "version",
@@ -279,9 +279,9 @@
                 "type": "string",
                 "description": "e.g. hsrp / vrrp / glbp (free text)"
               },
-              "group": {
+              "group_id": {
                 "type": "string",
-                "description": "group / VRID"
+                "description": "group / VRID (NetBox FHRPGroup.group_id)"
               },
               "virtual_ip": {
                 "type": "string",

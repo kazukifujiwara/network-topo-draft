@@ -205,8 +205,8 @@ function renderNetwork(panel: HTMLElement, api: EditorApi, t: Topology, n: Netwo
     <div class="fld-row">
       <div class="fld"><label>protocol</label>
         <input data-fh="protocol" value="${esc(n.fhrp?.protocol)}" placeholder="hsrp / vrrp / glbp" spellcheck="false"></div>
-      <div class="fld"><label>group</label>
-        <input data-fh="group" value="${esc(n.fhrp?.group)}" placeholder="1" spellcheck="false"></div>
+      <div class="fld"><label>group_id</label>
+        <input data-fh="group_id" value="${esc(n.fhrp?.group_id)}" placeholder="1" spellcheck="false"></div>
     </div>
     <div class="fld"><label>virtual_ip</label>
       <input data-fh="virtual_ip" value="${esc(n.fhrp?.virtual_ip)}" placeholder="10.0.0.1/28" spellcheck="false"></div>
@@ -217,7 +217,7 @@ function renderNetwork(panel: HTMLElement, api: EditorApi, t: Topology, n: Netwo
   bindRename(panel, api, n.name);
   bindFields(panel, api, n as unknown as Record<string, unknown>, { skip: ['name'] });
   panel.querySelectorAll<HTMLInputElement>('input[data-fh]').forEach((inp) => {
-    const key = inp.getAttribute('data-fh') as 'protocol' | 'group' | 'virtual_ip';
+    const key = inp.getAttribute('data-fh') as 'protocol' | 'group_id' | 'virtual_ip';
     inp.addEventListener('input', () => {
       api.mutate((m) => {
         const net = findNetwork(m, n.name);

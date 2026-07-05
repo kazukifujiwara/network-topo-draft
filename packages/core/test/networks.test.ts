@@ -30,7 +30,7 @@ const HSRP = JSON.stringify({
       name: 'seg-1',
       prefix: '10.0.0.0/28',
       vlan: '100',
-      fhrp: { protocol: 'hsrp', group: '1', virtual_ip: '10.0.0.1/28' },
+      fhrp: { protocol: 'hsrp', group_id: '1', virtual_ip: '10.0.0.1/28' },
     },
   ],
   logical_links: [
@@ -50,7 +50,28 @@ describe('parse/serialize networks', () => {
     const out = JSON.parse(once);
     expect(Object.keys(out)).toEqual(['version', 'devices', 'networks', 'logical_links']);
     expect(Object.keys(out.networks[0])).toEqual(['name', 'prefix', 'vlan', 'fhrp']);
-    expect(Object.keys(out.networks[0].fhrp)).toEqual(['protocol', 'group', 'virtual_ip']);
+    expect(Object.keys(out.networks[0].fhrp)).toEqual(['protocol', 'group_id', 'virtual_ip']);
+  });
+
+  it("absorbs the legacy 'group' key into group_id on load (renamed 2026-07-06)", () => {
+    const t = parse(
+      JSON.stringify({
+        version: 1,
+        devices: [],
+        networks: [{ name: 's', fhrp: { protocol: 'vrrp', group: '10' } }],
+      }),
+    );
+    expect(t.networks?.[0]?.fhrp?.group_id).toBe('10');
+    expect(JSON.parse(serialize(t)).networks[0].fhrp).toEqual({ protocol: 'vrrp', group_id: '10' });
+    // group_id wins when both are present
+    const both = parse(
+      JSON.stringify({
+        version: 1,
+        devices: [],
+        networks: [{ name: 's', fhrp: { group: '1', group_id: '2' } }],
+      }),
+    );
+    expect(both.networks?.[0]?.fhrp?.group_id).toBe('2');
   });
 
   it('a {network} endpoint is exclusive — other fields are dropped', () => {

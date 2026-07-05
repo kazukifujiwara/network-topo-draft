@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Dedicated `*.topo` file-name alias alongside the canonical `*.topo.json`:
+  both open in the topology editor with schema validation and JSON language
+  support. `.topo.json` stays the default for new files (universally
+  recognized as JSON); `.topo` survives Finder copies ("test.topo copy.json"
+  no longer escapes the editor) and save-dialog stem edits.
+
+- NetBox naming alignment: `fhrp.group` renamed to `group_id` (NetBox
+  FHRPGroup naming; the old key is absorbed on load, `version` stays 1),
+  and the AGENTS.md agent guide gained NetBox mapping notes — FK/slug/unit
+  conversion caveats, flattenings, extension fields never to push,
+  name-based identity, and merge-not-regenerate guidance for pulls.
+
 - ＋ New button in the canvas toolbar: runs the New Topology File command,
   showing the same template QuickPick (built-ins + your templates folder)
   as the command palette.

@@ -16,7 +16,7 @@ export const topoJsonSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
   title: 'TopoDraft topology (*.topo.json, format v1)',
   description:
-    'File format v1 of TopoDraft. Normative specification: docs/topodraft-file-format-v1.md. Revision: 2026-07-05.',
+    'File format v1 of TopoDraft. Normative specification: docs/topodraft-file-format-v1.md. Revision: 2026-07-06.',
   type: 'object',
   required: ['version', 'devices'],
   additionalProperties: false,
@@ -213,7 +213,7 @@ export const topoJsonSchema = {
             additionalProperties: false,
             properties: {
               protocol: { type: 'string', description: 'e.g. hsrp / vrrp / glbp (free text)' },
-              group: { type: 'string', description: 'group / VRID' },
+              group_id: { type: 'string', description: 'group / VRID (NetBox FHRPGroup.group_id)' },
               virtual_ip: { type: 'string', description: 'virtual IP (CIDR), e.g. 10.0.0.1/28' },
             },
           },
@@ -339,7 +339,7 @@ const EXAMPLE = {
       name: 'svc-seg',
       prefix: '10.20.0.0/28',
       vlan: '20',
-      fhrp: { protocol: 'vrrp', group: '1', virtual_ip: '10.20.0.1/28' },
+      fhrp: { protocol: 'vrrp', group_id: '1', virtual_ip: '10.20.0.1/28' },
     },
   ],
   logical_links: [
@@ -381,7 +381,7 @@ Generate a JSON document that follows the schema below and save it as a \`*.topo
 - When a peer's VRF name is unknown (external tenants, provider attachments), put the known identifier in the endpoint "id" (tenant ID, VIF/VC ID). A per-connection identifier belongs in "link_id" and is displayed on the diagram.
 - "config_context" on a device may hold any JSON object with device settings (routing, BGP, policies …); the editor stores it and re-exports it unchanged.
 - Circuits and logical_links may terminate on a provider network via {"provider_network": "<name>"}.
-- Multi-access segments (a subnet shared by 3+ devices, HSRP/VRRP gateways): define an entry in "networks" (prefix in CIDR, optional vlan and fhrp {protocol, group, virtual_ip}) and give each attached device ONE logical_link whose far endpoint is {"network": "<name>"}. Device-side real IPs stay on interfaces[].ip_address; the virtual IP lives on the network's fhrp.virtual_ip.
+- Multi-access segments (a subnet shared by 3+ devices, HSRP/VRRP gateways): define an entry in "networks" (prefix in CIDR, optional vlan and fhrp {protocol, group_id, virtual_ip}) and give each attached device ONE logical_link whose far endpoint is {"network": "<name>"}. Device-side real IPs stay on interfaces[].ip_address; the virtual IP lives on the network's fhrp.virtual_ip.
 
 ## JSON Schema (draft-07)
 \`\`\`json

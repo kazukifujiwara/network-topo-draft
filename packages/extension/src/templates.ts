@@ -216,7 +216,7 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
           name: 'seg-svc-01',
           prefix: '10.0.0.0/28',
           vlan: '100',
-          fhrp: { protocol: 'hsrp', group: '1', virtual_ip: '10.0.0.1/28' },
+          fhrp: { protocol: 'hsrp', group_id: '1', virtual_ip: '10.0.0.1/28' },
           position: { x: 470, y: 60 },
         },
       ],

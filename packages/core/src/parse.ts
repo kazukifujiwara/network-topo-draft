@@ -210,10 +210,11 @@ function normalizeNetwork(raw: unknown, index: number): Network | undefined {
   if (isPlainObject(raw.fhrp)) {
     const fhrp: FhrpConfig = {};
     const protocol = nonEmptyString(raw.fhrp.protocol);
-    const group = nonEmptyString(raw.fhrp.group);
+    // 'group' was renamed to NetBox's 'group_id' (2026-07-06); absorb the old name
+    const group_id = nonEmptyString(raw.fhrp.group_id) ?? nonEmptyString(raw.fhrp.group);
     const virtual_ip = nonEmptyString(raw.fhrp.virtual_ip);
     if (protocol !== undefined) fhrp.protocol = protocol;
-    if (group !== undefined) fhrp.group = group;
+    if (group_id !== undefined) fhrp.group_id = group_id;
     if (virtual_ip !== undefined) fhrp.virtual_ip = virtual_ip;
     if (Object.keys(fhrp).length) n.fhrp = fhrp;
   }

@@ -87,7 +87,7 @@ export function genMarkdown(topology: Topology, options?: MarkdownOptions): stri
           n.name,
           n.prefix,
           n.vlan,
-          [n.fhrp?.protocol, n.fhrp?.group ? 'grp ' + n.fhrp.group : ''].filter(Boolean).join(' '),
+          [n.fhrp?.protocol, n.fhrp?.group_id ? 'grp ' + n.fhrp.group_id : ''].filter(Boolean).join(' '),
           n.fhrp?.virtual_ip,
           n.description,
         ]),

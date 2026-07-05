@@ -1,7 +1,7 @@
 # TopoDraft — Network Topology as Code
 
-A graphical network-topology editor for `*.topo.json` files, built as a VSCode
-custom editor. Opening a `.topo.json` file launches a canvas where you draw
+A graphical network-topology editor for `*.topo.json` files (alias: `*.topo`),
+built as a VSCode custom editor. Opening one launches a canvas where you draw
 devices, cables, carrier circuits, and logical (L3/VRF) adjacencies — while the
 **text document stays the single source of truth**, so AI agents (GitHub
 Copilot, Claude Code, NetBox-MCP-driven agents, …) can edit the same file as

@@ -177,7 +177,7 @@ export function buildNodes(topology: Topology, view: ViewOptions): Map<string, N
         rows: [],
       };
       if (n.fhrp?.virtual_ip) {
-        vm.extra = `VIP ${n.fhrp.virtual_ip}${n.fhrp.protocol ? ' (' + n.fhrp.protocol + (n.fhrp.group ? ' ' + n.fhrp.group : '') + ')' : ''}`;
+        vm.extra = `VIP ${n.fhrp.virtual_ip}${n.fhrp.protocol ? ' (' + n.fhrp.protocol + (n.fhrp.group_id ? ' ' + n.fhrp.group_id : '') + ')' : ''}`;
       }
       map.set(n.name, vm);
     }

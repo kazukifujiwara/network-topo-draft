@@ -23,6 +23,9 @@
         "selector": [
           {
             "filenamePattern": "*.topo.json"
+          },
+          {
+            "filenamePattern": "*.topo"
           }
         ],
         "priority": "default"
@@ -110,6 +113,18 @@
       {
         "fileMatch": "*.topo.json",
         "url": "./schema/topodraft.schema.json"
+      },
+      {
+        "fileMatch": "*.topo",
+        "url": "./schema/topodraft.schema.json"
+      }
+    ],
+    "languages": [
+      {
+        "id": "json",
+        "extensions": [
+          ".topo"
+        ]
       }
     ]
   },

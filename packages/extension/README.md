@@ -12,8 +12,8 @@ NetBox-friendly serialization.
 
 ## Features
 
-- **Custom editor for `*.topo.json`** — open a file, get the canvas. The
-  `</>` title-bar button switches to the text view and back.
+- **Custom editor for `*.topo.json`** (alias: `*.topo`) — open a file, get
+  the canvas. The `</>` title-bar button switches to the text view and back.
 - **Physical and logical layers in one file** — cables/circuits/sites on the
   physical view; VRF compartments, L3 links, and multi-access segments
   (`networks[]` with HSRP/VRRP virtual IPs) on the logical view.

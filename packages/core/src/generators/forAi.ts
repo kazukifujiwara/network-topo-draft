@@ -22,7 +22,7 @@ export function schemaLegend(): string {
   - name (unique) / provider / description / position
 - cables[] : local physical connections (≈ NetBox Cable) — a/b: {device, interface}; type / bandwidth / status / label
 - circuits[] : carrier circuits (≈ NetBox Circuit) — cid / provider / type / commit_rate / status; a/b: {site, device, interface} or {provider_network}
-- networks[] : multi-access L3 segments (TopoDraft extension; ≈ NetBox Prefix + FHRPGroup) — name (unique) / prefix (CIDR) / vlan / fhrp {protocol, group, virtual_ip} / description / position. Devices attach via logical_links whose far endpoint is {network}
+- networks[] : multi-access L3 segments (TopoDraft extension; ≈ NetBox Prefix + FHRPGroup) — name (unique) / prefix (CIDR) / vlan / fhrp {protocol, group_id, virtual_ip} / description / position. Devices attach via logical_links whose far endpoint is {network}
 - logical_links[] : logical (L3) adjacencies between routing instances — TopoDraft extension, not a NetBox object
   - a / b endpoints: {device, vrf, id, interface, ip_address} — vrf omitted = global routing table; id = environment/attachment identifier (tenant ID, VIF/VC ID) for peers whose VRF name is unknown; ip_address allowed directly when no interface is named; {provider_network, id} and {network} are also accepted
   - link_id (connection / VC / VIF ID — displayed on the diagram) / vlan (VLAN ID) / label / description

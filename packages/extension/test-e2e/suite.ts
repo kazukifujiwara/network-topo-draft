@@ -77,6 +77,22 @@ function defineTests(): void {
       await waitFor(() => ext.isActive);
     });
 
+    g.it('opens the dedicated *.topo alias in the topology editor too', async () => {
+      const uri = wsFile('alias-check.topo');
+      await vscode.workspace.fs.writeFile(
+        uri,
+        new TextEncoder().encode('{\n  "version": 1,\n  "devices": []\n}\n'),
+      );
+      try {
+        await vscode.commands.executeCommand('vscode.open', uri);
+        await waitFor(() => activeInput() instanceof vscode.TabInputCustom);
+        assert.strictEqual((activeInput() as vscode.TabInputCustom).viewType, VIEW_TYPE);
+      } finally {
+        await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+        await vscode.workspace.fs.delete(uri);
+      }
+    });
+
     g.it('leaves non-matching .json files to the text editor', async () => {
       await vscode.commands.executeCommand('vscode.open', wsFile('plain.json'));
       await waitFor(() => activeInput() !== undefined);

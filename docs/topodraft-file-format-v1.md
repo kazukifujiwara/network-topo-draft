@@ -9,7 +9,7 @@
 ## 1. Basic Principles
 
 1. **JSON only.** YAML is not supported (ADR D2)
-2. File names match `*.topo.json` (e.g. `dallas-dc.topo.json`). VSCode associates this pattern with the TopoDraft editor and schema validation
+2. File names match `*.topo.json` (canonical; e.g. `dallas-dc.topo.json`) or the alias `*.topo`. VSCode associates both patterns with the TopoDraft editor and schema validation. Prefer `.topo.json` — every tool recognizes it as JSON; `.topo` survives finder copies / save-dialog stem edits better
 3. Field names **follow NetBox naming**. Elements with no NetBox counterpart are explicitly marked as "TopoDraft extensions" in §8
 4. **Every field except `devices` is optional.** Do not write empty strings / arrays / objects — omit the field entirely (exception: the contents of `config_context` are preserved verbatim)
 5. `position` is editor metadata with no network meaning. When omitted, nodes are auto-arranged on open
@@ -159,7 +159,7 @@ A subnet shared by multiple devices (server segments, HSRP/VRRP gateway pairs, D
 | `name` | string **required** | Unique (shared namespace with devices / provider networks). Referenced by logical endpoints |
 | `prefix` | string | Subnet in CIDR (e.g. `"10.0.0.0/28"`) |
 | `vlan` | string | VLAN ID of the segment |
-| `fhrp` | object | First-hop redundancy: `protocol` (hsrp / vrrp / glbp …, free text), `group`, `virtual_ip` (CIDR) |
+| `fhrp` | object | First-hop redundancy: `protocol` (hsrp / vrrp / glbp …, free text; NetBox uses the slugs `hsrp` / `vrrp2` / `vrrp3` / `glbp` / `carp`), `group_id` (NetBox FHRPGroup.group_id), `virtual_ip` (CIDR) |
 | `description` | string | Free text |
 | `position` | object | Coordinates (optional) |
 
@@ -168,7 +168,7 @@ A subnet shared by multiple devices (server segments, HSRP/VRRP gateway pairs, D
 ```jsonc
 "networks": [
   { "name": "svc-seg", "prefix": "10.0.0.0/28", "vlan": "100",
-    "fhrp": { "protocol": "hsrp", "group": "1", "virtual_ip": "10.0.0.1/28" } }
+    "fhrp": { "protocol": "hsrp", "group_id": "1", "virtual_ip": "10.0.0.1/28" } }
 ],
 "logical_links": [
   { "a": { "device": "rt-01", "vrf": "PROD", "interface": "Gi0/1.100" }, "b": { "network": "svc-seg" } },
@@ -255,6 +255,7 @@ The extension **absorbs the following at load time** and normalizes to v1 canoni
 | Missing `version` (standalone HTML v4–v7 exports) | Interpreted as v1; `version: 1` is added on save |
 | Top-level `vrf` on a logical link (v3 format) | Expanded onto both endpoints' `vrf` |
 | Logical endpoint with both `interface` and `ip_address` | The IP is written onto the device-side `interfaces[]` (if no existing value) |
+| `fhrp.group` (pre-rename, before 2026-07-06) | Read as `fhrp.group_id` (`group_id` wins if both are present) |
 | Unknown fields | A schema error (additionalProperties: false). parse loads what it can; Diagnostics warns — including a note that **unknown fields will be lost on save** |
 
 ## 8. NetBox Mapping Notes (for agents)
@@ -270,7 +271,7 @@ The editor performs no NetBox sync (ADR D5). Notes for agents bridging this file
 | `devices[].config_context` | **`local_context_data`** (the writable field). NetBox's `config_context` is computed and read-only | **Write to `local_context_data` when pushing.** The name here is unified as `config_context` for TopoDraft's convenience |
 | `provider_networks[]` | circuits.ProviderNetwork (requires Provider FK) | — |
 | `circuits[]` | Circuit + CircuitTermination | `commit_rate` in NetBox is an integer in kbps; here it is a free string such as `"1Gbps"` |
-| `networks[]` | **Prefix + FHRPGroup (TopoDraft extension)** | `prefix`/`vlan` map to Prefix (+VLAN); `fhrp` maps to FHRPGroup (protocol, group ID, virtual IPs); attachments correspond to IPAddress assignments |
+| `networks[]` | **Prefix + FHRPGroup (TopoDraft extension)** | `prefix`/`vlan` map to Prefix (+VLAN); `fhrp.protocol/group_id` map by name to FHRPGroup (NetBox protocol slugs: `hsrp`/`vrrp2`/`vrrp3`/…; `group_id` is an integer there), `virtual_ip` flattens FHRPGroup's assigned `ip_addresses`; attachments correspond to IPAddress assignments |
 | `logical_links[]` | **No corresponding object (TopoDraft extension)** | When pushing, either design a representation on the agent side (tags / custom fields / L2VPN, …) or exclude them |
 | `position` | None | Never send to NetBox |
 
@@ -279,4 +280,5 @@ The editor performs no NetBox sync (ADR D5). Notes for agents bridging this file
 - Increment `version` **only for breaking changes** (field removal or meaning change); implement a read migration for the old version in `parse.ts` and add the corresponding golden fixture
 - Backward-compatible additions (new optional fields) may stay at `version: 1` with a schema extension (record the revision date in the schema file)
   - 2026-07-05: `networks[]` (multi-access L3 segments with FHRP, §3.10) and the `{network}` logical endpoint shape added; `version` stays 1
+  - 2026-07-06: `fhrp.group` renamed to `group_id` (NetBox FHRPGroup naming); the old key is absorbed on load (§7); `version` stays 1. File-name alias `*.topo` accepted alongside `*.topo.json` (§1)
 - The schema, this document, and fixtures must be updated **in the same PR** (plan §6.4 Definition of Done)

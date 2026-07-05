@@ -30,7 +30,7 @@ async function topoText(
 }
 
 function basenameNoExt(uri: vscode.Uri): string {
-  return (uri.path.split('/').pop() ?? 'topology').replace(/\.topo\.json$/, '');
+  return (uri.path.split('/').pop() ?? 'topology').replace(/\.topo(\.json)?$/, '');
 }
 
 /* ---------- exports ---------- */
@@ -91,9 +91,12 @@ async function listUserTemplates(): Promise<{ label: string; uri: vscode.Uri }[]
   try {
     const entries = await vscode.workspace.fs.readDirectory(folder);
     return entries
-      .filter(([name, type]) => type === vscode.FileType.File && name.endsWith('.topo.json'))
+      .filter(
+        ([name, type]) =>
+          type === vscode.FileType.File && (name.endsWith('.topo.json') || name.endsWith('.topo')),
+      )
       .map(([name]) => ({
-        label: name.replace(/\.topo\.json$/, ''),
+        label: name.replace(/\.topo(\.json)?$/, ''),
         uri: vscode.Uri.joinPath(folder, name),
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
@@ -184,7 +187,7 @@ async function newTopologyFile(templateKey?: string): Promise<void> {
   const root = vscode.workspace.workspaceFolders?.[0]?.uri;
   const picked = await vscode.window.showSaveDialog({
     defaultUri: root ? vscode.Uri.joinPath(root, 'new.topo.json') : undefined,
-    filters: { 'TopoDraft topology': ['topo.json', 'json'] },
+    filters: { 'TopoDraft topology': ['topo.json', 'json', 'topo'] },
   });
   log(`newFile: template=${templateKey ?? '?'} dialog=${picked?.toString() ?? 'cancelled'}`);
   if (!picked) return;
