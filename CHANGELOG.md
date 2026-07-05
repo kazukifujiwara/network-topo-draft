@@ -6,7 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Nothing yet.
+### Changed
+
+- The agent guide's headless-validation step now points at the published
+  CLI (`npx topodraft-cli validate`) instead of generic self-validation
+  advice — deferred until the package actually existed on npm.
 
 ## [0.1.0] — 2026-07-05
 

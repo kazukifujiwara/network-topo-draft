@@ -207,7 +207,7 @@ Initial rule set:
 | 1. Viewer | CustomTextEditor renders `.topo.json` read-only. Follows text changes. Invalid-JSON resilience (D11). jsonValidation enabled | Canvas follows when an agent rewrites the file | ✅ done |
 | 2. Editing | Canvas edits → WorkspaceEdit. Undo delegation. Rename reference-following. Panels, Config Context, context menu ported. Shortcut redesign | Feature parity with the standalone editor (minus YAML/Ctrl+K/internal undo). E2E green | ✅ done |
 | 3. Periphery | Diagnostics / export commands / New File + templates / l10n (ja) | Agents can self-correct driven by the Problems panel | ✅ done |
-| 4. Distribution | Private VSIX distribution / Marketplace readiness (§9) complete | Daily use starts from the `vsce package` artifact | ✅ VSIX in daily use; Marketplace items (publisher ID, LICENSE, icon) pending |
+| 4. Distribution | Private VSIX distribution / Marketplace readiness (§9) complete | Daily use starts from the `vsce package` artifact | ✅ done — **published 2026-07-05**: Marketplace `kazukifujiwara.topodraft` 0.1.0 + npm `topodraft-cli` (and `topodraft` alias) |
 | Future | Marketplace publication decision / NetBox operations as MCP · Language Model Tools (separate project) / PNG & annotations | — |
 
 ## 8. Open questions (to be decided with Claude Code during implementation)
@@ -267,4 +267,5 @@ this table records the editor-behavior side.
 | 2026-07-05 | **Stale-host detection**: one esbuild-defined build id in both bundles; the webview compares the host's `data-build` stamp and shows a persistent reload hint on mismatch | Reinstalling a same-version VSIX leaves the old extension host in memory while new webview assets load from disk |
 | 2026-07-05 | **Collapsible properties panel** (strip button, persisted per editor; new selections re-open it) | Maximize canvas space on demand |
 | 2026-07-06 | **License ruled: Apache-2.0** (was all-rights-reserved placeholder); NOTICE added; every package.json carries the SPDX id; LICENSE/NOTICE ship in the VSIX and the npm package | Enterprise legal approval, patent grant/retaliation, trademark non-grant — decided before first publication while relicensing was still free |
+| 2026-07-05 | **v0.1.0 published** via the Marketplace web upload (new Azure DevOps organizations now require an Azure subscription, so the PAT/vsce route was skipped) and `npm publish` for topodraft-cli + the `topodraft` alias package | First public release |
 | 2026-07-06 | **`topodraft-cli` package** (`topodraft validate`, bundled core + the extension's pure diagnostics) | Headless agents cannot read the Problems panel; observed hand-rolling partial validators. npm publish pending (claim `topodraft-cli`, consider also `topodraft`) |

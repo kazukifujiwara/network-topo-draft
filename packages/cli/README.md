@@ -6,7 +6,8 @@ the exact same diagnostics as the TopoDraft VSCode extension's Problems
 panel, for CI pipelines and AI agents running outside the editor.
 
 ```sh
-topodraft validate network/*.topo.json
+npx topodraft-cli validate network/*.topo.json
+# or install globally: npm i -g topodraft-cli && topodraft validate ...
 ```
 
 ```

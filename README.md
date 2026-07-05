@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/kazukifujiwara/network-topo-draft/actions/workflows/ci.yml/badge.svg)](https://github.com/kazukifujiwara/network-topo-draft/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![VS Marketplace](https://img.shields.io/visual-studio-marketplace/v/kazukifujiwara.topodraft?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=kazukifujiwara.topodraft)
+[![npm](https://img.shields.io/npm/v/topodraft-cli?label=topodraft-cli)](https://www.npmjs.com/package/topodraft-cli)
 
 <img src="assets/logo.svg" width="112" align="right" alt="TopoDraft logo: the letter N drawn as a network topology — two solid physical links and a dotted logical link connecting four nodes">
 
@@ -65,9 +67,10 @@ npm run build          # bundles the extension host + webview (esbuild)
 npm run package        # builds packages/extension/topodraft-<version>.vsix
 ```
 
-To install the VSIX into your own VSCode: Extensions panel → `…` menu →
-**Install from VSIX…** (or `code --install-extension topodraft-<version>.vsix`).
-CI also uploads the VSIX as a workflow artifact on every push.
+Install from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=kazukifujiwara.topodraft)
+(search "TopoDraft" in the Extensions panel). For development builds:
+Extensions panel → `…` menu → **Install from VSIX…** — CI uploads the VSIX
+as a workflow artifact on every push.
 
 > **Reinstalling a same-version VSIX?** Run **Developer: Reload Window**
 > afterwards — the running extension host keeps the old code in memory until
@@ -124,8 +127,7 @@ Headless environments — CI pipelines and AI agents running outside VSCode —
 get the exact same diagnostics as the editor's Problems panel:
 
 ```sh
-npm run build --workspace topodraft-cli
-node packages/cli/dist/cli.js validate network/*.topo.json
+npx topodraft-cli validate network/*.topo.json   # also: npx topodraft validate
 ```
 
 ```
@@ -139,9 +141,6 @@ network/dc-east.topo.json:9:31 warning unknown-field Unknown field "ip" — did 
   exit codes 0 / 1 / 2 (clean / findings / usage-or-IO error)
 - Zero runtime dependencies beyond the ones already shipped in the
   extension (core + jsonc-parser, bundled)
-
-The package is not published to npm yet; once it is, this becomes
-`npx topodraft-cli validate <file>`.
 
 ## Testing policy
 

@@ -23,6 +23,7 @@ describe('buildAgentGuideSection', () => {
   it('teaches creation rules: use this format for network diagrams, name files *.topo.json', () => {
     expect(section).toContain('MUST end in `.topo.json`');
     expect(section).toContain('Prefer this format over image files or other');
+    expect(section).toContain('npx topodraft-cli validate'); // headless loop (published CLI)
     expect(section).toContain('"$schema"'); // skeleton for new files
   });
 });

@@ -57,9 +57,11 @@ Workflow for agents:
 2. After editing, validate. If your environment surfaces the editor's
    diagnostics (the VSCode Problems panel: source \`topodraft\` plus JSON
    schema validation), read them and fix until clean; if you run headless,
-   check the file against the JSON Schema below yourself. Either way watch
-   for: duplicate names, dangling \`device\`/\`provider_network\` references,
-   interfaces or VRFs that do not exist, misspelled fields.
+   run \`npx topodraft-cli validate <file>\` (add \`--json\` for
+   machine-readable output) — the same rules with file:line:col positions.
+   Either way watch for: duplicate names, dangling
+   \`device\`/\`provider_network\` references, interfaces or VRFs that do
+   not exist, misspelled fields.
 3. IP addressing: put IPs on \`devices[].interfaces[].ip_address\` (CIDR).
    A logical-link endpoint may carry \`ip_address\` directly ONLY when it has
    no \`interface\`; provider_network endpoints never carry IPs.
