@@ -1,6 +1,6 @@
 {
   "name": "topodraft-cli",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "license": "Apache-2.0",
   "description": "Validate TopoDraft topology files (*.topo.json) from the command line — the same diagnostics as the VSCode extension, for headless use and AI agents.",
   "repository": {
@@ -27,7 +27,7 @@
     "build": "node build.mjs",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
+  "devDependencies": {
     "@topodraft/core": "0.0.1",
     "jsonc-parser": "^3.3.1"
   }
