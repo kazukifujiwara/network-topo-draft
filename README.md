@@ -123,6 +123,32 @@ Test layers (plan §6.2):
    canonical key order / newline / indentation rules
 4. Validate/diagnostics: detection and non-detection per rule
 
+## Third-party software (supply chain)
+
+Everything that ships in the VSIX is bundled at build time — the package
+contains no `node_modules` and installs nothing at runtime.
+
+| Scope | Library | License | Why |
+| --- | --- | --- | --- |
+| Bundled into the extension host | [jsonc-parser](https://github.com/microsoft/node-jsonc-parser) | MIT | resolving JSON paths to text ranges for Problems-panel diagnostics |
+
+That is the complete runtime list: `packages/core`, `packages/protocol`,
+and the webview bundle have **zero external dependencies** (enforced by a
+purity test and ESLint rules). Everything else in `package-lock.json` is
+development toolchain only (TypeScript, esbuild, vitest, ESLint,
+@vscode/test-electron + mocha, @vscode/vsce) and never ships.
+
+Verify it yourself:
+
+```sh
+npm ls --omit=dev --all     # the full runtime dependency tree
+npm audit --omit=dev        # advisories against shipped dependencies
+npx vsce ls                 # exactly what goes into the VSIX
+```
+
+CI runs `npm audit --omit=dev` (any severity) and a high-severity gate for
+the dev toolchain on every push.
+
 ## Privacy
 
 The extension collects no telemetry and loads no remote code.

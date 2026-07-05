@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Supply-chain hardening: `npm audit` shows 0 advisories across ALL
+  dependencies — the only runtime dependency is jsonc-parser (bundled;
+  core/protocol/webview have zero external dependencies), and the two
+  dev-toolchain advisories (mocha → serialize-javascript ≤7.0.4,
+  GHSA-5c6j-r48x-rmvq / GHSA-qj8w-gfj5-8c6v) were fixed via an override
+  to 7.0.7. CI now gates every push on `npm audit --omit=dev` (any
+  severity) plus a high-severity gate for the dev toolchain, and both
+  READMEs document the complete third-party list with commands for users
+  to verify the VSIX contents themselves.
 - Documentation audit (fairness / ethics / presumptions): remaining
   product names outside the allowed integration targets (NetBox, draw.io,
   agent harnesses) were genericized in the format spec's examples and the

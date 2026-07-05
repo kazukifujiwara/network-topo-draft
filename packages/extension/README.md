@@ -48,6 +48,16 @@ names — see the
 Legacy exports of the standalone TopoDraft (v3–v7) load and are normalized
 on save.
 
+## Third-party software
+
+The extension is fully bundled — it installs nothing at runtime. The only
+third-party library shipped inside the bundle is
+[jsonc-parser](https://github.com/microsoft/node-jsonc-parser) (MIT, by
+Microsoft), used to map diagnostics to exact text ranges. The canvas
+(webview) bundle contains no third-party code at all. Dependency
+advisories are checked in CI on every change; see the repository README
+for how to verify the supply chain yourself.
+
 ## Privacy
 
 No telemetry. No remote code.
