@@ -8,6 +8,10 @@
     "url": "https://github.com/kazukifujiwara/network-topo-draft.git",
     "directory": "packages/cli"
   },
+  "bugs": {
+    "url": "https://github.com/kazukifujiwara/network-topo-draft/issues"
+  },
+  "homepage": "https://github.com/kazukifujiwara/network-topo-draft#readme",
   "bin": {
     "topodraft": "./dist/cli.js"
   },
