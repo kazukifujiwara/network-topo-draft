@@ -7,7 +7,7 @@ The following is network topology data. Read "Topology data (JSON)" using the sc
   - config_context: free-form structured settings per device (routing, BGP, policies …) as a JSON object; stored as-is, not drawn
   - interfaces[]: name (physical "Gi0/0/1", subinterface "Gi0/0/1.100", or LAG parent "Po1"), ip_address (CIDR), type, description, lag (parent LAG interface on the same device), vrf (VRF the interface belongs to)
   - position: editor canvas coordinates {x,y} — no network meaning; optional
-- provider_networks[] : carrier-side networks such as AWS Direct Connect / OCI FastConnect (≈ NetBox Provider Network)
+- provider_networks[] : carrier-side networks such as dedicated cloud interconnects / IP-VPN clouds (≈ NetBox Provider Network)
   - name (unique) / provider / description / position
 - cables[] : local physical connections (≈ NetBox Cable) — a/b: {device, interface}; type / bandwidth / status / label
 - circuits[] : carrier circuits (≈ NetBox Circuit) — cid / provider / type / commit_rate / status; a/b: {site, device, interface} or {provider_network}

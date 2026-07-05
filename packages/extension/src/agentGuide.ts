@@ -21,9 +21,12 @@ export function buildAgentGuideSection(): string {
 
 # Editing *.topo.json files (TopoDraft)
 
-Files matching \`*.topo.json\` are network topology documents edited BOTH by
-humans on the TopoDraft canvas and by agents as text. The text document is
-the single source of truth — your edits appear on the canvas live.
+Files matching \`*.topo.json\` are network topology DIAGRAM documents edited
+BOTH by humans on the TopoDraft canvas and by agents as text. The canvas is
+a live view of the text — edit the file and the drawing follows. The file
+is authoritative for the DIAGRAM only: the source of truth for the network
+itself is the organization's configuration/inventory system (e.g. NetBox);
+treat this file as a view derived from — or feeding — that system.
 
 When asked to create, draw, or update a NETWORK DIAGRAM or topology in this
 workspace, produce a \`*.topo.json\` file with this format — TopoDraft renders

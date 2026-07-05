@@ -27,6 +27,23 @@ describe('buildAgentGuideSection', () => {
   });
 });
 
+describe('shipped agent-facing text', () => {
+  const banned =
+    /(aws|azure|gcp|oci\b|oracle|equinix|direct\s*connect|fastconnect|megaport|ntt|tgw\b|dxvif|dxcon|cisco|juniper|arista|catalyst|nexus|ios-xe|junos)/i;
+
+  it('mentions no product names except NetBox (the integration target)', () => {
+    for (const text of [buildAgentGuideSection(), buildNetboxGuideSection()]) {
+      expect(banned.exec(text)).toBeNull();
+    }
+  });
+
+  it('never claims the file is the source of truth for the network (NetBox et al. are)', () => {
+    const section = buildAgentGuideSection();
+    expect(section).not.toContain('single source of truth');
+    expect(section).toContain('authoritative for the DIAGRAM only');
+  });
+});
+
 describe('NetBox notes are opt-in (not every user runs NetBox)', () => {
   it('the default guide contains no NetBox section', () => {
     const section = buildAgentGuideSection();

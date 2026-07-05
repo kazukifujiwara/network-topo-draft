@@ -173,7 +173,7 @@ Generate a JSON document that follows the schema below and save it as a `*.topo.
           },
           "device_type": {
             "type": "string",
-            "description": "vendor + model, e.g. 'Cisco C8300'"
+            "description": "vendor + model (free text), e.g. 'ExampleVendor RT-1000'"
           },
           "role": {
             "type": "string",
@@ -189,7 +189,7 @@ Generate a JSON document that follows the schema below and save it as a `*.topo.
           },
           "platform": {
             "type": "string",
-            "description": "OS, e.g. 'IOS-XE 17.12'"
+            "description": "OS, e.g. 'ExampleOS 1.2'"
           },
           "vrfs": {
             "type": "array",
@@ -242,7 +242,7 @@ Generate a JSON document that follows the schema below and save it as a `*.topo.
     },
     "provider_networks": {
       "type": "array",
-      "description": "carrier-side networks: AWS Direct Connect, OCI FastConnect, IP-VPN cloud … (≈ NetBox Provider Network)",
+      "description": "carrier-side networks: dedicated cloud interconnects, IP-VPN clouds … (≈ NetBox Provider Network)",
       "items": {
         "type": "object",
         "required": [
@@ -256,7 +256,7 @@ Generate a JSON document that follows the schema below and save it as a `*.topo.
           },
           "provider": {
             "type": "string",
-            "description": "e.g. AWS / Oracle / Equinix"
+            "description": "e.g. 'Carrier-A' / 'ExampleNet'"
           },
           "description": {
             "type": "string"
@@ -379,7 +379,7 @@ Generate a JSON document that follows the schema below and save it as a `*.topo.
           },
           "type": {
             "type": "string",
-            "description": "e.g. leased line / IP-VPN / Direct Connect"
+            "description": "e.g. leased line / IP-VPN / dedicated interconnect"
           },
           "commit_rate": {
             "type": "string",
@@ -501,8 +501,8 @@ Generate a JSON document that follows the schema below and save it as a `*.topo.
   ],
   "provider_networks": [
     {
-      "name": "AWS Direct Connect",
-      "provider": "AWS"
+      "name": "Cloud Interconnect",
+      "provider": "ExampleNet"
     }
   ],
   "cables": [
@@ -525,11 +525,11 @@ Generate a JSON document that follows the schema below and save it as a `*.topo.
         "device": "rt-hq-01"
       },
       "b": {
-        "provider_network": "AWS Direct Connect"
+        "provider_network": "Cloud Interconnect"
       },
-      "cid": "DX-001",
-      "provider": "Equinix",
-      "type": "Direct Connect",
+      "cid": "IC-CID-01",
+      "provider": "Carrier-A",
+      "type": "dedicated interconnect",
       "commit_rate": "1Gbps"
     }
   ],
@@ -566,10 +566,10 @@ Generate a JSON document that follows the schema below and save it as a `*.topo.
         "vrf": "PROD"
       },
       "b": {
-        "provider_network": "AWS Direct Connect",
-        "id": "dxcon-xyz789"
+        "provider_network": "Cloud Interconnect",
+        "id": "attach-01"
       },
-      "link_id": "dxvif-abc123"
+      "link_id": "vif-0001"
     },
     {
       "a": {

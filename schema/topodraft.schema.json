@@ -154,7 +154,7 @@
           },
           "device_type": {
             "type": "string",
-            "description": "vendor + model, e.g. 'Cisco C8300'"
+            "description": "vendor + model (free text), e.g. 'ExampleVendor RT-1000'"
           },
           "role": {
             "type": "string",
@@ -170,7 +170,7 @@
           },
           "platform": {
             "type": "string",
-            "description": "OS, e.g. 'IOS-XE 17.12'"
+            "description": "OS, e.g. 'ExampleOS 1.2'"
           },
           "vrfs": {
             "type": "array",
@@ -223,7 +223,7 @@
     },
     "provider_networks": {
       "type": "array",
-      "description": "carrier-side networks: AWS Direct Connect, OCI FastConnect, IP-VPN cloud … (≈ NetBox Provider Network)",
+      "description": "carrier-side networks: dedicated cloud interconnects, IP-VPN clouds … (≈ NetBox Provider Network)",
       "items": {
         "type": "object",
         "required": [
@@ -237,7 +237,7 @@
           },
           "provider": {
             "type": "string",
-            "description": "e.g. AWS / Oracle / Equinix"
+            "description": "e.g. 'Carrier-A' / 'ExampleNet'"
           },
           "description": {
             "type": "string"
@@ -360,7 +360,7 @@
           },
           "type": {
             "type": "string",
-            "description": "e.g. leased line / IP-VPN / Direct Connect"
+            "description": "e.g. leased line / IP-VPN / dedicated interconnect"
           },
           "commit_rate": {
             "type": "string",

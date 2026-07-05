@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- The agent guide no longer calls the file "the single source of truth":
+  the file is authoritative for the DIAGRAM only — the source of truth for
+  the network itself is the organization's configuration/inventory system
+  (e.g. NetBox), and the file is a view of it. A guard test keeps the
+  claim out.
+- Shipped agent-facing text (guide, schema descriptions, schema-doc
+  example, for-AI export boilerplate) mentions no product names except
+  NetBox, the integration target — AWS Direct Connect / Cisco / Equinix
+  examples replaced with generic equivalents; guard test added.
 - The opt-in NetBox guide section is now strictly READ-focused ("NetBox
   Reference Notes"): it explains how NetBox objects map onto the format and
   how to pull data into a file, and explicitly declares automated WRITES to

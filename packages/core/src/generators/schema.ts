@@ -132,7 +132,7 @@ export const topoJsonSchema = {
         additionalProperties: false,
         properties: {
           name: { type: 'string', description: 'hostname; UNIQUE — referenced by links' },
-          device_type: { type: 'string', description: "vendor + model, e.g. 'Cisco C8300'" },
+          device_type: { type: 'string', description: "vendor + model (free text), e.g. 'ExampleVendor RT-1000'" },
           role: {
             type: 'string',
             description: 'free text, e.g. router / switch / firewall / external_peer',
@@ -142,7 +142,7 @@ export const topoJsonSchema = {
             description: 'location grouping; same value = drawn in the same site frame',
           },
           tenant: { type: 'string', description: 'owning organization' },
-          platform: { type: 'string', description: "OS, e.g. 'IOS-XE 17.12'" },
+          platform: { type: 'string', description: "OS, e.g. 'ExampleOS 1.2'" },
           vrfs: {
             type: 'array',
             items: { type: 'string' },
@@ -182,14 +182,14 @@ export const topoJsonSchema = {
     provider_networks: {
       type: 'array',
       description:
-        'carrier-side networks: AWS Direct Connect, OCI FastConnect, IP-VPN cloud … (≈ NetBox Provider Network)',
+        'carrier-side networks: dedicated cloud interconnects, IP-VPN clouds … (≈ NetBox Provider Network)',
       items: {
         type: 'object',
         required: ['name'],
         additionalProperties: false,
         properties: {
           name: { type: 'string', description: 'UNIQUE — referenced by circuits/logical_links' },
-          provider: { type: 'string', description: 'e.g. AWS / Oracle / Equinix' },
+          provider: { type: 'string', description: "e.g. 'Carrier-A' / 'ExampleNet'" },
           description: { type: 'string' },
           position: { $ref: '#/definitions/position' },
         },
@@ -251,7 +251,7 @@ export const topoJsonSchema = {
           b: { $ref: '#/definitions/endpoint' },
           cid: { type: 'string', description: 'circuit ID' },
           provider: { type: 'string', description: 'carrier name' },
-          type: { type: 'string', description: 'e.g. leased line / IP-VPN / Direct Connect' },
+          type: { type: 'string', description: 'e.g. leased line / IP-VPN / dedicated interconnect' },
           commit_rate: { type: 'string', description: 'contracted bandwidth, e.g. 1Gbps' },
           status: { type: 'string' },
         },
@@ -315,7 +315,7 @@ const EXAMPLE = {
     },
     { name: 'sw-hq-01', role: 'switch', site: 'HQ' },
   ],
-  provider_networks: [{ name: 'AWS Direct Connect', provider: 'AWS' }],
+  provider_networks: [{ name: 'Cloud Interconnect', provider: 'ExampleNet' }],
   cables: [
     {
       a: { device: 'rt-hq-01', interface: 'Po1' },
@@ -327,10 +327,10 @@ const EXAMPLE = {
   circuits: [
     {
       a: { site: 'HQ', device: 'rt-hq-01' },
-      b: { provider_network: 'AWS Direct Connect' },
-      cid: 'DX-001',
-      provider: 'Equinix',
-      type: 'Direct Connect',
+      b: { provider_network: 'Cloud Interconnect' },
+      cid: 'IC-CID-01',
+      provider: 'Carrier-A',
+      type: 'dedicated interconnect',
       commit_rate: '1Gbps',
     },
   ],
@@ -351,8 +351,8 @@ const EXAMPLE = {
     },
     {
       a: { device: 'rt-hq-01', vrf: 'PROD' },
-      b: { provider_network: 'AWS Direct Connect', id: 'dxcon-xyz789' },
-      link_id: 'dxvif-abc123',
+      b: { provider_network: 'Cloud Interconnect', id: 'attach-01' },
+      link_id: 'vif-0001',
     },
     // multi-access segment: each attached device gets one link to the network
     { a: { device: 'rt-hq-01', vrf: 'PROD' }, b: { network: 'svc-seg' } },
