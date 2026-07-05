@@ -1,5 +1,8 @@
 # TopoDraft — Network Topology as Code
 
+[![CI](https://github.com/kazukifujiwara/network-topo-draft/actions/workflows/ci.yml/badge.svg)](https://github.com/kazukifujiwara/network-topo-draft/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 <img src="assets/logo.svg" width="112" align="right" alt="TopoDraft logo: the letter N drawn as a network topology — two solid physical links and a dotted logical link connecting four nodes">
 
 A graphical network-topology editor for `*.topo.json` files (alias: `*.topo`),

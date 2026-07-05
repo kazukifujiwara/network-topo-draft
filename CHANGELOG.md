@@ -47,6 +47,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Publication polish: Marketplace Q&A disabled in favor of GitHub Issues
+  as the single support channel, gallery banner in the brand color,
+  CI/license badges, SECURITY.md with private vulnerability reporting,
+  and Windows CI jobs (build + unit tests + VSCode E2E on windows-latest)
+  with a .gitattributes that pins LF line endings — the deterministic
+  serializer's byte-identity guarantees now hold on Windows checkouts too.
+
 - Extension icon: the letter N drawn as a network topology — four nodes,
   solid verticals for physical links and a dotted diagonal for the logical
   link, in the editor's canvas colors. SVG master in `assets/logo.svg`,

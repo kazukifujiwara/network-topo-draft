@@ -1,0 +1,7 @@
+# Deterministic serialization (ADR D12) and golden byte-identity tests
+# depend on LF — never let a checkout convert line endings.
+* text=auto eol=lf
+*.png binary
+*.gif binary
+*.mov binary
+*.vsix binary

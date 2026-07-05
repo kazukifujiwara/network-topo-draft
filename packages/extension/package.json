@@ -4,6 +4,11 @@
   "version": "0.0.1",
   "license": "Apache-2.0",
   "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#0E1621",
+    "theme": "dark"
+  },
+  "qna": false,
   "private": true,
   "publisher": "kazukifujiwara",
   "description": "%extension.description%",
