@@ -28,6 +28,8 @@ packages/
                (jsdom-tested; talks to the host only via protocol messages)
   extension/   VSCode extension host: custom editor, sync loop, diagnostics,
                commands, templates, agent guide
+  cli/         `topodraft` command (package: topodraft-cli): the editor's
+               validation as a CLI, for headless use and AI agents
   protocol/    Webview ⇔ host message types (shared)
 schema/        Published JSON Schema for format v1
 fixtures/      Golden files: legacy v3–v7 export shapes + v1 canonical forms
@@ -102,6 +104,31 @@ Extension Development Host opens on `fixtures/`; open any `*.topo.json` there.
   for AI / Import-Schema / draw.io`. The canvas toolbar mirrors the common
   ones: **＋ New** (template menu) and **Export** dropdowns.
 - **Languages**: UI follows the VSCode display language (English/Japanese).
+
+## CLI validation (`topodraft validate`)
+
+Headless environments — CI pipelines and AI agents running outside VSCode —
+get the exact same diagnostics as the editor's Problems panel:
+
+```sh
+npm run build --workspace topodraft-cli
+node packages/cli/dist/cli.js validate network/*.topo.json
+```
+
+```
+network/dc-east.topo.json:14:22 error dangling-reference Endpoint references device "ghost", …
+network/dc-east.topo.json:9:31 warning unknown-field Unknown field "ip" — did you mean "ip_address"? …
+```
+
+- JSON syntax → topology shape → semantic rules → unknown fields with
+  did-you-mean, each with `file:line:col`
+- `--json` for machine-readable output, `--strict` to fail on warnings,
+  exit codes 0 / 1 / 2 (clean / findings / usage-or-IO error)
+- Zero runtime dependencies beyond the ones already shipped in the
+  extension (core + jsonc-parser, bundled)
+
+The package is not published to npm yet; once it is, this becomes
+`npx topodraft-cli validate <file>`.
 
 ## Testing policy
 

@@ -211,6 +211,7 @@ For stable git diffs and stable diff-based agent editing, the editor's save outp
         { "name": "Po1", "type": "lag", "description": "LAG to sw-hq-01" },
         { "name": "Gi0/0/1", "lag": "Po1" },
         { "name": "Gi0/0/2", "lag": "Po1" },
+        { "name": "Gi0/0/0", "description": "WAN uplink to the interconnect" },
         { "name": "Gi0/0/0.100", "ip_address": "169.254.10.1/30", "type": "virtual", "description": "interconnect VIF", "vrf": "PROD" }
       ],
       "config_context": {

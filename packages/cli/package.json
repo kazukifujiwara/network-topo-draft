@@ -1,0 +1,29 @@
+{
+  "name": "topodraft-cli",
+  "version": "0.0.1",
+  "description": "Validate TopoDraft topology files (*.topo.json) from the command line — the same diagnostics as the VSCode extension, for headless use and AI agents.",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kazukifujiwara/network-topo-draft.git",
+    "directory": "packages/cli"
+  },
+  "bin": {
+    "topodraft": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@topodraft/core": "0.0.1",
+    "jsonc-parser": "^3.3.1"
+  }
+}

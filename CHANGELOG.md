@@ -47,6 +47,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `topodraft validate` CLI (new package `topodraft-cli`, command
+  `topodraft`): the editor's full validation loop for headless use — AI
+  agents running outside VSCode and CI pipelines get the same diagnostics
+  as the Problems panel (JSON syntax, topology shape, semantic rules,
+  unknown fields with did-you-mean), each with file:line:col. `--json`
+  for machine-readable output, `--strict` to fail on warnings; a single
+  self-contained bundle with the same supply-chain surface as the
+  extension. Born from a real observed gap: a headless agent hand-rolled
+  its own partial validator because it could not read the Problems panel.
+- The CLI immediately caught a real defect in our own canonical example:
+  the format-spec §6 example (and its fixture) had a circuit referencing
+  interface `Gi0/0/0` that was never declared — the parent interface is
+  now declared, so the documented example validates clean.
+
 - NetBox sync notes became an OPT-IN guide section (not every user runs
   NetBox): the default AGENTS.md guide is NetBox-free again, and a separate
   marker-delimited section is written only via the ✨ AI Guide dialog's new

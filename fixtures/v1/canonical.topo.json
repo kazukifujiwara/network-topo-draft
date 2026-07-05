@@ -25,10 +25,14 @@
           "lag": "Po1"
         },
         {
+          "name": "Gi0/0/0",
+          "description": "WAN uplink to the interconnect"
+        },
+        {
           "name": "Gi0/0/0.100",
           "ip_address": "169.254.10.1/30",
           "type": "virtual",
-          "description": "DX VIF",
+          "description": "interconnect VIF",
           "vrf": "PROD"
         }
       ],
