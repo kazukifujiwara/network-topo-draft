@@ -51,4 +51,5 @@ await copyFile(
 // vsce packages LICENSE/CHANGELOG from the extension folder — copy the
 // repo-level ones (both build outputs, gitignored)
 await copyFile(resolve(here, '../../LICENSE'), resolve(here, 'LICENSE'));
+await copyFile(resolve(here, '../../NOTICE'), resolve(here, 'NOTICE'));
 await copyFile(resolve(here, '../../CHANGELOG.md'), resolve(here, 'CHANGELOG.md'));

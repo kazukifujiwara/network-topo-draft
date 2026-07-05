@@ -61,3 +61,7 @@ for how to verify the supply chain yourself.
 ## Privacy
 
 No telemetry. No remote code.
+
+## License
+
+[Apache License 2.0](https://github.com/kazukifujiwara/network-topo-draft/blob/main/LICENSE).

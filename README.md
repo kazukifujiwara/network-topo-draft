@@ -182,5 +182,6 @@ The extension collects no telemetry and loads no remote code.
 
 ## License
 
-See [LICENSE](LICENSE). The license is not finalized yet; all rights reserved
-until it is.
+[Apache License 2.0](LICENSE) — Copyright 2026 Kazuki Fujiwara. Permissive
+use, modification, and redistribution with an explicit patent grant; the
+TopoDraft name is not licensed (Apache-2.0 §6).

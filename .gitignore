@@ -9,4 +9,7 @@ coverage/
 # build-time copies for the packaged extension (see build.mjs)
 packages/extension/schema/
 packages/extension/LICENSE
+packages/extension/NOTICE
 packages/extension/CHANGELOG.md
+packages/cli/LICENSE
+packages/cli/NOTICE

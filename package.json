@@ -1,6 +1,7 @@
 {
   "name": "topodraft-monorepo",
   "version": "0.0.1",
+  "license": "Apache-2.0",
   "private": true,
   "type": "module",
   "description": "TopoDraft — Network Topology as Code: a graphical network-topology editor for *.topo.json files (VSCode extension monorepo)",

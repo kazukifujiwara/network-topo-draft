@@ -221,7 +221,7 @@ Initial rule set:
 ## 9. Marketplace readiness checklist (D8: satisfied from the start)
 
 - [ ] Obtain a publisher ID; fill in `package.json` name/displayName/description/categories/keywords
-- [ ] LICENSE (decide whether to open-source; "all rights reserved" still allows publication for personal use)
+- [x] LICENSE — **Apache-2.0 (ruled 2026-07-06)**: permissive for enterprise adoption, explicit patent grant + retaliation, trademark non-grant protects the name, §5 lets contributions in without a CLA
 - [ ] README (English-first, screenshots/GIFs) and CHANGELOG
 - [ ] Icon (128px) and gallery banner
 - [ ] Sensible `engines.vscode` floor / minimal activationEvents (lazy activation)
@@ -266,4 +266,5 @@ this table records the editor-behavior side.
 | 2026-07-05 | **QuickPick is never triggered from webview messages**: the ＋New toolbar menu lives in the webview and passes a preselected template key; only the command-palette path shows a QuickPick | A QuickPick opened from a webview message is dismissed by the webview re-taking focus (microsoft/vscode#214787) |
 | 2026-07-05 | **Stale-host detection**: one esbuild-defined build id in both bundles; the webview compares the host's `data-build` stamp and shows a persistent reload hint on mismatch | Reinstalling a same-version VSIX leaves the old extension host in memory while new webview assets load from disk |
 | 2026-07-05 | **Collapsible properties panel** (strip button, persisted per editor; new selections re-open it) | Maximize canvas space on demand |
+| 2026-07-06 | **License ruled: Apache-2.0** (was all-rights-reserved placeholder); NOTICE added; every package.json carries the SPDX id; LICENSE/NOTICE ship in the VSIX and the npm package | Enterprise legal approval, patent grant/retaliation, trademark non-grant — decided before first publication while relicensing was still free |
 | 2026-07-06 | **`topodraft-cli` package** (`topodraft validate`, bundled core + the extension's pure diagnostics) | Headless agents cannot read the Problems panel; observed hand-rolling partial validators. npm publish pending (claim `topodraft-cli`, consider also `topodraft`) |

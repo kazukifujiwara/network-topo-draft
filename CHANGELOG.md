@@ -47,6 +47,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- License decided: **Apache License 2.0** (was an all-rights-reserved
+  placeholder). LICENSE carries the canonical text, a NOTICE file names
+  the project and copyright holder, every package declares the SPDX id,
+  and both the VSIX and the npm package ship LICENSE + NOTICE.
+
 - `topodraft validate` CLI (new package `topodraft-cli`, command
   `topodraft`): the editor's full validation loop for headless use — AI
   agents running outside VSCode and CI pipelines get the same diagnostics

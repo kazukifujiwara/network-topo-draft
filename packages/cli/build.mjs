@@ -1,6 +1,7 @@
 // CLI build: one self-contained executable bundle (core + the extension's
 // pure diagnostics module + jsonc-parser), same approach as the extension.
 import { build } from 'esbuild';
+import { copyFile } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,3 +22,7 @@ await build({
   outfile: resolve(here, 'dist/cli.js'),
   logLevel: 'warning',
 });
+
+// npm includes LICENSE/NOTICE from the package root automatically
+await copyFile(resolve(here, '../../LICENSE'), resolve(here, 'LICENSE'));
+await copyFile(resolve(here, '../../NOTICE'), resolve(here, 'NOTICE'));
