@@ -1,11 +1,13 @@
 node_modules/
 dist/
 dist-e2e/
+dist-web/
 coverage/
 *.vsix
 *.tsbuildinfo
 .DS_Store
 .vscode-test/
+.vscode-test-web/
 # build-time copies for the packaged extension (see build.mjs)
 packages/extension/schema/
 packages/extension/LICENSE
