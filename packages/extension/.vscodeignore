@@ -6,6 +6,8 @@ src/**
 test/**
 test-e2e/**
 dist-e2e/**
+test-web/**
+dist-web/**
 build.mjs
 tsconfig.json
 vitest.config.ts

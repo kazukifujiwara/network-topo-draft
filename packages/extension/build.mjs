@@ -32,6 +32,22 @@ await build({
   logLevel: 'warning',
 });
 
+// Web extension host (vscode.dev / github.dev): the same sources compiled
+// for a browser Web Worker (additive — the desktop `main` bundle above is
+// untouched). Workers have no `process`, so the desktop-only E2E hook gate
+// is folded out at build time via define.
+await build({
+  entryPoints: [resolve(here, 'src/extension.ts')],
+  bundle: true,
+  platform: 'browser',
+  format: 'cjs',
+  external: ['vscode'],
+  mainFields: ['module', 'main'],
+  define: { ...define, 'process.env.TOPODRAFT_E2E': 'undefined' },
+  outfile: resolve(here, 'dist/extension-web.js'),
+  logLevel: 'warning',
+});
+
 await build({
   entryPoints: [resolve(here, '../webview-ui/src/main.ts')],
   define,
