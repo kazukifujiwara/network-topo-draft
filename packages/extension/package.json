@@ -9,6 +9,9 @@
     "theme": "dark"
   },
   "qna": false,
+  "capabilities": {
+    "virtualWorkspaces": true
+  },
   "private": true,
   "publisher": "kazukifujiwara",
   "description": "%extension.description%",
@@ -20,6 +23,7 @@
     "Other"
   ],
   "main": "./dist/extension.js",
+  "browser": "./dist/extension-web.js",
   "l10n": "./l10n",
   "activationEvents": [],
   "contributes": {
@@ -144,7 +148,8 @@
     "typecheck": "tsc --noEmit",
     "build": "node build.mjs",
     "test:e2e": "node build.mjs && node test-e2e/run.mjs",
-    "package": "node build.mjs && vsce package --no-dependencies"
+    "package": "node build.mjs && vsce package --no-dependencies",
+    "test:web": "node build.mjs && node test-web/run.mjs"
   },
   "dependencies": {
     "@topodraft/core": "0.0.1",

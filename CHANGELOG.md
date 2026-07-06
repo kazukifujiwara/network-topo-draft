@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Web extension support: TopoDraft now runs on vscode.dev / github.dev.
+  A second, additive browser bundle (`dist/extension-web.js`) targets the
+  Web Worker extension host; the desktop build and behavior are unchanged.
+  The manifest declares `virtualWorkspaces: true` — every feature already
+  works through `vscode.workspace.fs` and TextDocuments, so virtual
+  (non-file) workspaces are fully supported. A @vscode/test-web smoke test
+  (activation, custom editor, diagnostics on a virtual workspace) runs in
+  CI alongside the existing desktop suites.
+
 ### Changed
 
 - The agent guide's headless-validation step now points at the published

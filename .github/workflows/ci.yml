@@ -44,6 +44,19 @@ jobs:
           name: topodraft-vsix
           path: packages/extension/*.vsix
 
+  web:
+    name: web (vscode.dev smoke, node 22)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:web
+
   e2e:
     name: e2e (vscode, node 22)
     runs-on: ubuntu-latest
