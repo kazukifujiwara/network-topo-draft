@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- "Get Started with TopoDraft" walkthrough on VS Code's Welcome page —
+  shown right after install (before any .topo file exists): open the
+  bundled example, draw a first change, create your own file from a
+  template, set up the AI-agent flow (AGENTS.md), and validate. Steps
+  auto-complete as the commands run; localized (en/ja) with illustrated
+  media (VSIX grows ~120 KB of optimized images).
+
 - First-run onboarding: a truly empty `*.topo.json` / `*.topo` file now
   opens as a scaffold — the friendly empty-canvas hint (which now also
   points at the ＋ New template menu) with editing enabled, instead of the

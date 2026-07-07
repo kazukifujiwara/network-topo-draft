@@ -13,5 +13,22 @@
   "config.templatesFolder": "「新しいトポロジファイル」コマンドが参照するユーザーテンプレート (*.topo.json) のフォルダ。絶対パスまたは完全な URI(仮想ワークスペースでは vscode-vfs://… など)でなければワークスペース相対。",
   "command.writeAgentGuide": "AIエージェント用ガイドを書き出す (AGENTS.md)",
   "command.writeNetboxGuide": "NetBox 参照ノートを書き出す (AGENTS.md)",
-  "command.openExample": "サンプルトポロジを開く"
+  "command.openExample": "サンプルトポロジを開く",
+  "walkthrough.title": "TopoDraft をはじめる",
+  "walkthrough.description": "インストールから最初の「生きた」ネットワーク構成図まで — 人と AI エージェントが同じファイルを編集します。",
+  "walkthrough.openExample.title": "サンプルトポロジを開く",
+  "walkthrough.openExample.description": "ワンクリックでライブキャンバスを体験: 同梱サンプルが無題ドキュメントとして開きます — 保存しない限りディスクには何も書き込まれません。\n[サンプルを開く](command:topodraft.openExample)",
+  "walkthrough.openExample.alt": "TopoDraft キャンバス上の2拠点サンプルトポロジ(物理ビュー)",
+  "walkthrough.draw.title": "はじめての編集",
+  "walkthrough.draw.description": "左のパレットからノードをキャンバスへドラッグ。ノードにホバーして ◦ ポートからドラッグすると結線、ダブルクリックでリネーム。Undo は普通の Ctrl/Cmd+Z — キャンバス操作はすべてファイルへのテキスト編集です。",
+  "walkthrough.draw.alt": "パレットからノードをドラッグし、ポート経由で結線する様子",
+  "walkthrough.newFile.title": "自分のトポロジを作る",
+  "walkthrough.newFile.description": "ビルトインテンプレート(2拠点WAN、HSRPセグメント、LAGペアなど)から始めるか、空ファイルからでも: 空の .topo.json は下書きキャンバスとして開きます。\n[新しいトポロジファイル](command:topodraft.newFile)",
+  "walkthrough.newFile.alt": "VRF コンパートメントと VRRP セグメントが見える論理ビュー",
+  "walkthrough.agentGuide.title": "AI エージェントに描かせる",
+  "walkthrough.agentGuide.description": "ファイル形式の契約を AGENTS.md に書き出します — コーディングエージェントが自動で読み取り、同じ JSON をテキストとして編集し、キャンバスがリアルタイムに追従します。\n[AI エージェントガイドを書き出す](command:topodraft.writeAgentGuide)",
+  "walkthrough.agentGuide.alt": "左でエージェントが JSON を編集し、右のキャンバスにトポロジが描かれる図",
+  "walkthrough.validate.title": "どこでも検証",
+  "walkthrough.validate.description": "意味的な診断が正確な位置と did-you-mean 提案つきで Problems パネルに表示されます。CI やヘッドレスのエージェントでは `npx topodraft-cli validate` で同じ検査を実行できます。\n[現在のファイルを検証](command:topodraft.validate)",
+  "walkthrough.validate.alt": "did-you-mean 提案つきの診断と合格チェックマーク"
 }

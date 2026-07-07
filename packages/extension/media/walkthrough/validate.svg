@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400">
+  <rect width="640" height="400" rx="18" fill="#0E1621"/>
+  <rect x="150" y="56" width="340" height="288" rx="12" fill="#141E2B" stroke="#2C3B50" stroke-width="2.5"/>
+  <g fill="#3D5271">
+    <rect x="182" y="92" width="180" height="10" rx="5"/>
+    <rect x="198" y="120" width="240" height="10" rx="5"/>
+    <rect x="198" y="176" width="220" height="10" rx="5"/>
+    <rect x="198" y="204" width="150" height="10" rx="5"/>
+    <rect x="182" y="260" width="120" height="10" rx="5"/>
+  </g>
+  <!-- the offending value with a squiggle -->
+  <rect x="198" y="148" width="96" height="10" rx="5" fill="#F2994A"/>
+  <path d="M 198 166 q 6 6 12 0 t 12 0 t 12 0 t 12 0 t 12 0 t 12 0 t 12 0 t 12 0"
+        fill="none" stroke="#E5636C" stroke-width="3" stroke-linecap="round"/>
+  <!-- did-you-mean chip -->
+  <rect x="310" y="140" width="150" height="28" rx="14" fill="#1E2A3A" stroke="#6AA9FF" stroke-width="2"/>
+  <rect x="326" y="151" width="118" height="7" rx="3.5" fill="#6AA9FF"/>
+  <!-- green check -->
+  <circle cx="484" cy="300" r="46" fill="#4CC38A"/>
+  <path d="M 462 300 L 478 317 L 508 284" fill="none" stroke="#0E1621" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

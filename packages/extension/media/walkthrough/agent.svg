@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400">
+  <rect width="640" height="400" rx="18" fill="#0E1621"/>
+  <!-- agent's file (JSON) -->
+  <rect x="52" y="84" width="220" height="232" rx="12" fill="#141E2B" stroke="#2C3B50" stroke-width="2.5"/>
+  <g fill="#3D5271">
+    <rect x="76" y="116" width="120" height="10" rx="5"/>
+    <rect x="92" y="140" width="150" height="10" rx="5"/>
+    <rect x="92" y="164" width="128" height="10" rx="5"/>
+    <rect x="92" y="212" width="150" height="10" rx="5"/>
+    <rect x="92" y="236" width="104" height="10" rx="5"/>
+    <rect x="76" y="284" width="60" height="10" rx="5"/>
+  </g>
+  <g fill="#4CC38A">
+    <rect x="92" y="188" width="138" height="10" rx="5"/>
+    <rect x="92" y="260" width="120" height="10" rx="5"/>
+  </g>
+  <!-- sparkle: the agent at work -->
+  <path d="M 258 62 l 9 22 l 22 9 l -22 9 l -9 22 l -9 -22 l -22 -9 l 22 -9 z" fill="#F2994A"/>
+  <path d="M 292 104 l 5 12 l 12 5 l -12 5 l -5 12 l -5 -12 l -12 -5 l 12 -5 z" fill="#EAF2FF"/>
+  <!-- arrow: text edits flow to the canvas -->
+  <g stroke="#6AA9FF" stroke-width="5" stroke-linecap="round">
+    <line x1="296" y1="200" x2="352" y2="200"/>
+    <path d="M 340 186 L 356 200 L 340 214" fill="none"/>
+  </g>
+  <!-- live canvas: the N topology -->
+  <rect x="380" y="84" width="220" height="232" rx="12" fill="#141E2B" stroke="#2C3B50" stroke-width="2.5"/>
+  <g stroke="#6AA9FF" stroke-width="8" stroke-linecap="round">
+    <line x1="438" y1="272" x2="438" y2="128"/>
+    <line x1="542" y1="272" x2="542" y2="128"/>
+  </g>
+  <g fill="#4CC38A">
+    <circle cx="459" cy="157" r="6"/>
+    <circle cx="480" cy="186" r="6"/>
+    <circle cx="500" cy="214" r="6"/>
+    <circle cx="521" cy="243" r="6"/>
+  </g>
+  <g fill="#EAF2FF">
+    <circle cx="438" cy="128" r="12"/><circle cx="438" cy="272" r="12"/>
+    <circle cx="542" cy="128" r="12"/><circle cx="542" cy="272" r="12"/>
+  </g>
+</svg>
