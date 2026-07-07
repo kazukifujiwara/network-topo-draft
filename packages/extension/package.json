@@ -49,6 +49,11 @@
         "category": "TopoDraft"
       },
       {
+        "command": "topodraft.openExample",
+        "title": "%command.openExample%",
+        "category": "TopoDraft"
+      },
+      {
         "command": "topodraft.saveAsTemplate",
         "title": "%command.saveAsTemplate%",
         "category": "TopoDraft"

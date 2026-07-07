@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- First-run onboarding: a truly empty `*.topo.json` / `*.topo` file now
+  opens as a scaffold — the friendly empty-canvas hint (which now also
+  points at the ＋ New template menu) with editing enabled, instead of the
+  "Invalid JSON" error view; the first canvas edit writes valid JSON.
+  Malformed non-empty documents keep the exact error behavior.
+- `TopoDraft: Open Example Topology`: opens a bundled example as an
+  untitled document — no save dialog, nothing written to disk unless you
+  save. Works on vscode.dev / github.dev.
+- A "Getting started" section at the top of the Marketplace page.
+
 ### Fixed
 
 - `topodraft.templatesFolder` now accepts a full URI (e.g. `vscode-vfs://…`),

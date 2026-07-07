@@ -43,7 +43,8 @@ const EN = {
   gm_write: 'Write AGENTS.md',
   gm_saveas: 'Save as…',
   tt_gm_saveas: 'Write the guide to a different file instead of AGENTS.md',
-  empty_hint: 'The canvas is empty<br><b>Drag a node from the left palette</b> — or edit the JSON as text',
+  empty_hint:
+    'The canvas is empty<br><b>Drag a node from the left palette</b>, pick a template from <b>＋ New</b> — or edit the JSON as text',
   err_invalid: 'Invalid JSON',
   t_snap_on: 'Grid snap ON — positions snap to a 10px grid',
   t_snap_off: 'Grid snap OFF — free positioning',
@@ -199,7 +200,8 @@ const JA: Record<StringKey, string> = {
   gm_write: 'AGENTS.md に書き出す',
   gm_saveas: '別名で保存…',
   tt_gm_saveas: 'AGENTS.md ではなく別のファイルにガイドを書き出します',
-  empty_hint: 'キャンバスは空です<br><b>左のパレットからノードをドラッグ</b>するか、テキストとしてJSONを編集してください',
+  empty_hint:
+    'キャンバスは空です<br><b>左のパレットからノードをドラッグ</b>、<b>＋ New</b> からテンプレートを選択、またはテキストとしてJSONを編集してください',
   err_invalid: 'JSONが不正です',
   t_snap_on: 'グリッドスナップ ON — 10pxグリッドに吸着します',
   t_snap_off: 'グリッドスナップ OFF — 自由配置',

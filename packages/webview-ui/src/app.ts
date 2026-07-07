@@ -372,7 +372,12 @@ export function createApp(root: HTMLElement, host: AppHost): App {
     queuedCommit = false;
     const hadModel = model !== null;
     try {
-      model = parse(message.text);
+      // A brand-new empty file is a scaffold, not an error (#4): show the
+      // empty-canvas hint and enable editing — the first canvas edit
+      // commits valid JSON. Nothing is written back until then, and
+      // malformed NON-empty text keeps the D11 error view.
+      model =
+        message.text.trim() === '' ? parse('{"version":1,"devices":[]}') : parse(message.text);
       parseError = null;
       lastSyncedText = message.text;
     } catch (e) {

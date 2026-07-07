@@ -77,6 +77,32 @@ describe('following document updates (Phase 1 exit criterion)', () => {
     expect(app.getView().vt).not.toEqual(before);
   });
 
+  it('a truly empty (0-byte / whitespace) file is a scaffold, not an error (#4)', () => {
+    for (const text of ['', '   \n\t']) {
+      const root = mount();
+      const app = createApp(root, fakeHost().host);
+      app.handleMessage(update(text));
+      // no D11 error view — the friendly empty-canvas hint instead
+      expect(root.querySelector('#errorBar')).toHaveProperty('style.display', 'none');
+      expect(root.querySelector('#app')?.classList.contains('invalid')).toBe(false);
+      expect(root.querySelector('#emptyHint')).toHaveProperty('style.display', 'block');
+      // and editing is ENABLED: the model is a valid empty topology
+      expect(app.getDocState().parseError).toBeNull();
+      expect(app.getDocState().topology).toEqual({ version: 1, devices: [] });
+      document.body.innerHTML = '';
+    }
+  });
+
+  it('the first canvas edit on an empty file commits valid JSON', () => {
+    const root = mount();
+    const app = createApp(root, fakeHost().host);
+    app.handleMessage(update(''));
+    app.api.addNodeAt('router', 100, 100);
+    const state = app.getDocState();
+    expect(state.parseError).toBeNull();
+    expect(state.topology?.devices).toHaveLength(1);
+  });
+
   it('renders an empty file with the empty hint', () => {
     const root = mount();
     const app = createApp(root, fakeHost().host);

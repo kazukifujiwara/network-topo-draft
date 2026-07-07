@@ -114,7 +114,9 @@ Extension Development Host opens on `fixtures/`; open any `*.topo.json` there.
   where coding agents (Claude Code, Copilot, …) discover it automatically
   (idempotent marker-based section; "Save as…" writes elsewhere). New files
   also carry a `$schema` URL pointing at the published schema.
-- **Commands**: `New Topology File` (built-in templates + your own — any
+- **Commands**: `Open Example Topology` (instant canvas from a bundled
+  example — an untitled document, no file setup), `New Topology File`
+  (built-in templates + your own — any
   `*.topo.json` under `topodraft.templatesFolder`, default
   `.topodraft/templates`), `Save as Template`, and `Export as Markdown /
   for AI / Import-Schema / draw.io`. The canvas toolbar mirrors the common
