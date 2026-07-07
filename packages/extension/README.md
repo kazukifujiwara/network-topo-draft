@@ -19,6 +19,9 @@ NetBox-friendly serialization.
 
 ## Getting started
 
+A **Get Started with TopoDraft** walkthrough opens on VS Code's Welcome page
+after install (also: `Welcome: Open Walkthrough…`). The short version:
+
 1. Open the Command Palette (`Ctrl/Cmd+Shift+P`) and run
    **TopoDraft: Open Example Topology** — a live canvas opens instantly,
    nothing to set up (works on vscode.dev / github.dev too).

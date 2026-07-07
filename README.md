@@ -80,6 +80,10 @@ as a workflow artifact on every push.
 
 ### Trying the editor
 
+After installing, the **Get Started with TopoDraft** walkthrough on VS Code's
+Welcome page walks through the first topology and the AI-agent flow
+(`Welcome: Open Walkthrough…` re-opens it anytime).
+
 Open this repo in VSCode and press **F5** ("Run TopoDraft Extension"). The
 Extension Development Host opens on `fixtures/`; open any `*.topo.json` there.
 

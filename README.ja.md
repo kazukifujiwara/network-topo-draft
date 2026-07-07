@@ -79,6 +79,11 @@ VSIX をワークフローアーティファクトとしてアップロードし
 
 ### エディタを試す
 
+インストール後、VSCode の Welcome ページに表示される
+**「TopoDraft をはじめる」ウォークスルー**が、最初のトポロジ作成から
+AI エージェント連携までを案内します(「Welcome: Open Walkthrough…」で
+いつでも再表示できます)。
+
 このリポジトリを VSCode で開いて **F5**(「Run TopoDraft Extension」)を押すと、
 Extension Development Host が `fixtures/` を開いた状態で起動します。そこにある
 `*.topo.json` を開いてください。
