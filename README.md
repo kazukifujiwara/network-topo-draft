@@ -1,5 +1,7 @@
 # TopoDraft — Network Topology as Code
 
+**English** | [日本語](README.ja.md)
+
 [![CI](https://github.com/kazukifujiwara/network-topo-draft/actions/workflows/ci.yml/badge.svg)](https://github.com/kazukifujiwara/network-topo-draft/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![VS Marketplace](https://img.shields.io/github/v/release/kazukifujiwara/network-topo-draft?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=kazukifujiwara.topodraft)

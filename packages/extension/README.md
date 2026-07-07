@@ -3,6 +3,8 @@
 Draw network topologies on a canvas, store them as clean JSON, and let AI
 agents edit the very same file as text — the canvas follows live.
 
+日本語の README は[こちら](https://github.com/kazukifujiwara/network-topo-draft/blob/main/README.ja.md)。
+
 TopoDraft is a graphical editor for `*.topo.json` files: physical view
 (cables, carrier circuits, sites) and logical view (VRF compartments
 connected by L3 links). The **text document is authoritative for the
