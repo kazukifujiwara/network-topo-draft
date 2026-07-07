@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ensureTopoJsonPath, isTopoPath } from '../src/uriUtils';
+import { ensureTopoJsonPath, isTopoPath, templatesFolderKind } from '../src/uriUtils';
 
 describe('isTopoPath', () => {
   it('matches everything the customEditors glob *.topo.json claims', () => {
@@ -31,3 +31,25 @@ describe('ensureTopoJsonPath', () => {
     expect(ensureTopoJsonPath('/ws/new')).toBe('/ws/new.topo.json');
   });
 });
+
+describe('templatesFolderKind (#3: templatesFolder on virtual workspaces)', () => {
+  it('classifies full URIs so virtual-workspace folders can be configured', () => {
+    expect(templatesFolderKind('vscode-vfs://github/user/repo/tpl')).toBe('uri');
+    expect(templatesFolderKind('file:///Users/me/templates')).toBe('uri');
+    expect(templatesFolderKind('untitled://x')).toBe('uri');
+  });
+
+  it('keeps absolute file-system paths as paths (POSIX and Windows)', () => {
+    expect(templatesFolderKind('/Users/me/templates')).toBe('absolute-path');
+    expect(templatesFolderKind('C:\\templates')).toBe('absolute-path');
+    // a Windows drive with forward slash is a path, not a one-letter scheme
+    expect(templatesFolderKind('C:/templates')).toBe('absolute-path');
+  });
+
+  it('everything else stays workspace-relative (the default)', () => {
+    expect(templatesFolderKind('.topodraft/templates')).toBe('relative');
+    expect(templatesFolderKind('templates')).toBe('relative');
+    expect(templatesFolderKind('')).toBe('relative');
+  });
+});
+

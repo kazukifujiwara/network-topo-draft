@@ -11,7 +11,7 @@ import { exportContent } from './exportContent';
 import type { ExportKind } from './exportContent';
 import { BUILTIN_TEMPLATES, templateText } from './templates';
 import { log } from './log';
-import { ensureTopoJsonPath } from './uriUtils';
+import { ensureTopoJsonPath, templatesFolderKind } from './uriUtils';
 import { upsertAgentGuide, upsertNetboxGuide } from './agentGuide';
 
 const t = vscode.l10n.t;
@@ -80,9 +80,22 @@ function templatesFolderUri(): vscode.Uri | undefined {
   const configured = vscode.workspace
     .getConfiguration('topodraft')
     .get<string>('templatesFolder', '.topodraft/templates');
-  if (/^(\/|[a-zA-Z]:[\\/])/.test(configured)) return vscode.Uri.file(configured);
-  const root = vscode.workspace.workspaceFolders?.[0];
-  return root ? vscode.Uri.joinPath(root.uri, configured) : undefined;
+  switch (templatesFolderKind(configured)) {
+    case 'uri':
+      // full URIs make the setting usable on virtual workspaces
+      // (vscode.dev / github.dev), where file paths cannot resolve (#3)
+      try {
+        return vscode.Uri.parse(configured, true);
+      } catch {
+        return undefined;
+      }
+    case 'absolute-path':
+      return vscode.Uri.file(configured);
+    case 'relative': {
+      const root = vscode.workspace.workspaceFolders?.[0];
+      return root ? vscode.Uri.joinPath(root.uri, configured) : undefined;
+    }
+  }
 }
 
 async function listUserTemplates(): Promise<{ label: string; uri: vscode.Uri }[]> {

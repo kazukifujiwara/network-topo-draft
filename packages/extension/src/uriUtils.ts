@@ -20,3 +20,20 @@ export function isTopoPath(path: string): boolean {
   if (path.endsWith('.topo.json') || path.endsWith('.topo')) return true;
   return path === 'topo.json' || path.endsWith('/topo.json');
 }
+
+/**
+ * How a `topodraft.templatesFolder` setting value should be resolved.
+ * - 'uri': a full URI with a scheme (e.g. vscode-vfs://github/o/r/tpl) —
+ *   required on virtual workspaces, where file-system paths cannot resolve
+ * - 'absolute-path': an absolute file-system path (POSIX or Windows drive)
+ * - 'relative': joined onto the first workspace folder (any scheme)
+ *
+ * A Windows drive spec ("C:\tpl", "C:/tpl") is NOT a URI: schemes here
+ * require at least two characters and the "://" separator.
+ */
+export function templatesFolderKind(value: string): 'uri' | 'absolute-path' | 'relative' {
+  if (/^[a-z][a-z0-9+.-]+:\/\//i.test(value)) return 'uri';
+  if (/^(\/|[a-zA-Z]:[\\/])/.test(value)) return 'absolute-path';
+  return 'relative';
+}
+

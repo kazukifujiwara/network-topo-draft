@@ -10,7 +10,7 @@
   "command.exportDrawio": "Export as draw.io Diagram",
   "command.openAsText": "Open as Text",
   "command.openInTopologyEditor": "Open in Topology Editor",
-  "config.templatesFolder": "Folder holding user templates (*.topo.json files) for the New Topology File command. Workspace-relative unless absolute.",
+  "config.templatesFolder": "Folder holding user templates (*.topo.json files) for the New Topology File command. Workspace-relative unless an absolute path or a full URI (e.g. vscode-vfs://… on virtual workspaces).",
   "command.writeAgentGuide": "Write AI Agent Guide (AGENTS.md)",
   "command.writeNetboxGuide": "Write NetBox Reference Notes (AGENTS.md)"
 }
