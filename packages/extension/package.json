@@ -147,6 +147,72 @@
           ".topo"
         ]
       }
+    ],
+    "walkthroughs": [
+      {
+        "id": "topodraft.gettingStarted",
+        "title": "%walkthrough.title%",
+        "description": "%walkthrough.description%",
+        "steps": [
+          {
+            "id": "openExample",
+            "title": "%walkthrough.openExample.title%",
+            "description": "%walkthrough.openExample.description%",
+            "media": {
+              "image": "media/walkthrough/example.png",
+              "altText": "%walkthrough.openExample.alt%"
+            },
+            "completionEvents": [
+              "onCommand:topodraft.openExample"
+            ]
+          },
+          {
+            "id": "draw",
+            "title": "%walkthrough.draw.title%",
+            "description": "%walkthrough.draw.description%",
+            "media": {
+              "svg": "media/walkthrough/draw.svg",
+              "altText": "%walkthrough.draw.alt%"
+            }
+          },
+          {
+            "id": "newFile",
+            "title": "%walkthrough.newFile.title%",
+            "description": "%walkthrough.newFile.description%",
+            "media": {
+              "image": "media/walkthrough/logical.png",
+              "altText": "%walkthrough.newFile.alt%"
+            },
+            "completionEvents": [
+              "onCommand:topodraft.newFile"
+            ]
+          },
+          {
+            "id": "agentGuide",
+            "title": "%walkthrough.agentGuide.title%",
+            "description": "%walkthrough.agentGuide.description%",
+            "media": {
+              "svg": "media/walkthrough/agent.svg",
+              "altText": "%walkthrough.agentGuide.alt%"
+            },
+            "completionEvents": [
+              "onCommand:topodraft.writeAgentGuide"
+            ]
+          },
+          {
+            "id": "validate",
+            "title": "%walkthrough.validate.title%",
+            "description": "%walkthrough.validate.description%",
+            "media": {
+              "svg": "media/walkthrough/validate.svg",
+              "altText": "%walkthrough.validate.alt%"
+            },
+            "completionEvents": [
+              "onCommand:topodraft.validate"
+            ]
+          }
+        ]
+      }
     ]
   },
   "scripts": {

@@ -13,5 +13,22 @@
   "config.templatesFolder": "Folder holding user templates (*.topo.json files) for the New Topology File command. Workspace-relative unless an absolute path or a full URI (e.g. vscode-vfs://… on virtual workspaces).",
   "command.writeAgentGuide": "Write AI Agent Guide (AGENTS.md)",
   "command.writeNetboxGuide": "Write NetBox Reference Notes (AGENTS.md)",
-  "command.openExample": "Open Example Topology"
+  "command.openExample": "Open Example Topology",
+  "walkthrough.title": "Get Started with TopoDraft",
+  "walkthrough.description": "From install to your first living network diagram — humans and AI agents editing the same file.",
+  "walkthrough.openExample.title": "Open an example topology",
+  "walkthrough.openExample.description": "See a live canvas in one click: a bundled example opens as an untitled document — nothing is saved to disk unless you decide to.\n[Open Example](command:topodraft.openExample)",
+  "walkthrough.openExample.alt": "The physical view of an example two-site topology on the TopoDraft canvas",
+  "walkthrough.draw.title": "Draw your first change",
+  "walkthrough.draw.description": "Drag node types from the left palette onto the canvas. Hover a node and drag from its ◦ port to connect; double-click to rename. Undo is plain Ctrl/Cmd+Z — every canvas action is just a text edit on the file.",
+  "walkthrough.draw.alt": "Dragging a node from the palette and connecting nodes via a port",
+  "walkthrough.newFile.title": "Create your own topology",
+  "walkthrough.newFile.description": "Start from a built-in template (two-site WAN, HSRP segment, routed LAG pair, …) — or from an empty file: a blank .topo.json opens as a scaffold, ready to draw on.\n[New Topology File](command:topodraft.newFile)",
+  "walkthrough.newFile.alt": "The logical view with VRF compartments and VRRP segments",
+  "walkthrough.agentGuide.title": "Let your AI agent draw",
+  "walkthrough.agentGuide.description": "Write the file-format contract into AGENTS.md — coding agents pick it up automatically, edit the same JSON as text, and the canvas follows live.\n[Write AI Agent Guide](command:topodraft.writeAgentGuide)",
+  "walkthrough.agentGuide.alt": "An agent edits the JSON on the left and the canvas draws the topology on the right",
+  "walkthrough.validate.title": "Validate anywhere",
+  "walkthrough.validate.description": "Semantic diagnostics land in the Problems panel with exact ranges and did-you-mean hints. In CI or for headless agents, the same checks run as `npx topodraft-cli validate`.\n[Validate Current File](command:topodraft.validate)",
+  "walkthrough.validate.alt": "A diagnostic with a did-you-mean suggestion and a passing check mark"
 }
