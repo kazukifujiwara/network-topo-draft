@@ -6,7 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Nothing yet.
+### Fixed
+
+- `topodraft.templatesFolder` now accepts a full URI (e.g. `vscode-vfs://…`),
+  so user templates resolve on virtual workspaces (vscode.dev / github.dev).
+  Absolute file-system paths and workspace-relative values are unchanged.
 
 ## [0.2.0] — 2026-07-07
 
