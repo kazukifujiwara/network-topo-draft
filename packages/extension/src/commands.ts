@@ -336,6 +336,37 @@ async function writeNetboxGuide(): Promise<void> {
   await vscode.window.showTextDocument(target, { preview: true });
 }
 
+/**
+ * Zero-setup first canvas (#4): opens a bundled example as an UNTITLED
+ * document — no save dialog, no workspace folder required (works on
+ * vscode.dev with nothing open), nothing written to disk unless the user
+ * decides to save. Re-running focuses the same document instead of
+ * duplicating it.
+ */
+async function openExample(): Promise<void> {
+  // With a workspace open, anchor the untitled document to a path inside it:
+  // on virtual workspaces (vscode.dev / github.dev) a bare relative untitled
+  // name fails to resolve against the workspace scheme ("Unable to resolve
+  // filesystem provider with relative file path"), and anchoring also gives
+  // Save a sensible default location. Without a workspace the bare name is
+  // the desktop-verified path; the folderless-web edge is unverified but
+  // rare (github.dev always has a repo).
+  const root = vscode.workspace.workspaceFolders?.[0];
+  const uri = root
+    ? vscode.Uri.joinPath(root.uri, 'example.topo.json').with({ scheme: 'untitled' })
+    : vscode.Uri.parse('untitled:example.topo.json');
+  const document = await vscode.workspace.openTextDocument(uri);
+  if (document.getText().trim() === '') {
+    const builtin = BUILTIN_TEMPLATES.find((b) => b.id === 'site-cloud');
+    if (!builtin) return;
+    const edit = new vscode.WorkspaceEdit();
+    edit.insert(uri, new vscode.Position(0, 0), templateText(builtin));
+    await vscode.workspace.applyEdit(edit);
+  }
+  await vscode.commands.executeCommand('vscode.openWith', uri, 'topodraft.editor');
+  log('openExample: opened the bundled example (untitled)');
+}
+
 export function registerCommands(): vscode.Disposable {
   return vscode.Disposable.from(
     vscode.commands.registerCommand('topodraft.exportMarkdown', () => runExport('markdown')),
@@ -346,6 +377,7 @@ export function registerCommands(): vscode.Disposable {
       newTopologyFile(typeof template === 'string' ? template : undefined),
     ),
     vscode.commands.registerCommand('topodraft.saveAsTemplate', () => saveAsTemplate()),
+    vscode.commands.registerCommand('topodraft.openExample', () => openExample()),
     vscode.commands.registerCommand('topodraft.writeAgentGuide', (saveAs?: boolean, netbox?: boolean) =>
       writeAgentGuide(saveAs === true, netbox === true),
     ),

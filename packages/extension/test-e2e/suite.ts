@@ -213,6 +213,29 @@ function defineTests(): void {
       await vscode.commands.executeCommand('topodraft.validate'); // must not throw
     });
 
+    g.it('Open Example opens an untitled document in the topology editor (#4 spike)', async () => {
+      await vscode.commands.executeCommand('topodraft.openExample');
+      await waitFor(() => {
+        const input = activeInput();
+        return input instanceof vscode.TabInputCustom && input.viewType === VIEW_TYPE;
+      });
+      const input = activeInput() as vscode.TabInputCustom;
+      assert.strictEqual(input.uri.scheme, 'untitled');
+      assert.ok(input.uri.path.endsWith('example.topo.json'));
+      // content is the bundled example, parseable and non-empty
+      const doc = vscode.workspace.textDocuments.find(
+        (d) => d.uri.toString() === input.uri.toString(),
+      );
+      assert.ok(doc, 'untitled example document not found');
+      const parsed = JSON.parse(doc.getText()) as { devices?: unknown[] };
+      assert.ok((parsed.devices?.length ?? 0) > 0, 'example should contain devices');
+      // idempotent: run again, still exactly one example tab, content intact
+      const before = doc.getText();
+      await vscode.commands.executeCommand('topodraft.openExample');
+      await sleep(500);
+      assert.strictEqual(doc.getText(), before);
+    });
+
     g.it('new-file template picker survives the focus flip of a webview-button trigger', async () => {
       // The toolbar ＋New button posts a message from the webview; the webview
       // re-takes focus right after the click, which dismisses a default

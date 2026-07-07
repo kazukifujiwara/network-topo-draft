@@ -48,6 +48,17 @@ export async function run(): Promise<void> {
     return input instanceof vscode.TabInputCustom && input.viewType === VIEW_TYPE;
   });
 
+  // zero-setup onboarding: the example opens as an untitled doc on web too
+  await vscode.commands.executeCommand('topodraft.openExample');
+  await waitFor('the example topology tab', () => {
+    const input = vscode.window.tabGroups.activeTabGroup.activeTab?.input;
+    return (
+      input instanceof vscode.TabInputCustom &&
+      input.viewType === VIEW_TYPE &&
+      input.uri.scheme === 'untitled'
+    );
+  });
+
   // semantic diagnostics run inside the worker (core + jsonc-parser bundled)
   const bad = vscode.Uri.joinPath(root, 'dangling.topo.json');
   await vscode.commands.executeCommand('vscode.open', bad);
