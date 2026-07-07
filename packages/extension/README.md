@@ -15,6 +15,18 @@ NetBox-friendly serialization.
 
 *An AI agent builds a two-site network by editing the JSON — the canvas follows every step live.*
 
+## Getting started
+
+1. Open the Command Palette (`Ctrl/Cmd+Shift+P`) and run
+   **TopoDraft: Open Example Topology** — a live canvas opens instantly,
+   nothing to set up (works on vscode.dev / github.dev too).
+2. Make it yours: **TopoDraft: New Topology File** offers built-in
+   templates — or simply create any file ending in `.topo.json` and start
+   dragging nodes onto the blank canvas.
+3. Working with an AI agent? Click **✨ AI Guide** in the canvas toolbar to
+   write the file-format contract into `AGENTS.md`, then ask your agent for
+   a network diagram — the canvas follows its edits live.
+
 ## Features
 
 - **Custom editor for `*.topo.json`** (alias: `*.topo`) — open a file, get
