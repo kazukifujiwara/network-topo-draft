@@ -4,8 +4,8 @@
  * folder configured by `topodraft.templatesFolder` (O2: file-based).
  */
 import * as vscode from 'vscode';
-import type { TemplateItem } from '@topodraft/protocol';
-import { TopoParseError, parse, serialize } from '@topodraft/core';
+import type { ImageFormat, SaveImageMessage, TemplateItem } from '@topodraft/protocol';
+import { TopoParseError, genSvg, parse, serialize } from '@topodraft/core';
 import { activeTopoUri } from './activeDocument';
 import { exportContent } from './exportContent';
 import type { ExportKind } from './exportContent';
@@ -13,6 +13,7 @@ import { BUILTIN_TEMPLATES, templateText } from './templates';
 import { log } from './log';
 import { ensureTopoJsonPath, templatesFolderKind } from './uriUtils';
 import { upsertAgentGuide, upsertNetboxGuide } from './agentGuide';
+import { requestImageFromEditor } from './panelRegistry';
 
 const t = vscode.l10n.t;
 
@@ -72,6 +73,89 @@ export async function runExport(kind: ExportKind, uri?: vscode.Uri): Promise<voi
     content: result.content,
   });
   await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+}
+
+/* ---------- image exports (#10) ---------- */
+
+function base64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+/** Save dialog + write for a rendered image (also the save-image handler). */
+export async function saveImageExport(
+  docUri: vscode.Uri,
+  message: SaveImageMessage,
+): Promise<void> {
+  // untitled documents have no directory to anchor the dialog to
+  const dir =
+    docUri.scheme === 'untitled'
+      ? vscode.workspace.workspaceFolders?.[0]?.uri
+      : docUri.with({ path: docUri.path.replace(/[^/]+$/, '') });
+  const target = await vscode.window.showSaveDialog({
+    defaultUri: dir
+      ? vscode.Uri.joinPath(dir, `${basenameNoExt(docUri)}.${message.format}`)
+      : undefined,
+    filters: message.format === 'svg' ? { 'SVG image': ['svg'] } : { 'PNG image': ['png'] },
+  });
+  if (!target) return;
+  const bytes =
+    message.format === 'svg'
+      ? new TextEncoder().encode(message.text ?? '')
+      : base64ToBytes(message.dataBase64 ?? '');
+  await vscode.workspace.fs.writeFile(target, bytes);
+  log(`imageExport: wrote ${bytes.length} bytes to ${target.toString()}`);
+  void vscode.window.showInformationMessage(
+    t('Exported {0}.', target.path.split('/').pop() ?? ''),
+  );
+}
+
+interface ViewPick extends vscode.QuickPickItem {
+  view: 'physical' | 'logical';
+}
+
+/**
+ * Palette entry points. With the editor open, the webview renders its
+ * CURRENT view (and owns the only canvas, so PNG requires it); without one,
+ * SVG falls back to a host-side render after asking which view to draw.
+ */
+export async function runImageExport(format: ImageFormat, uri?: vscode.Uri): Promise<void> {
+  const active = await topoText(uri);
+  if (!active) return;
+  if (requestImageFromEditor(active.uri, format)) return; // webview replies save-image
+  if (format === 'png') {
+    void vscode.window.showErrorMessage(
+      t('Open the file in the Topology Editor first — PNG export renders on its canvas.'),
+    );
+    return;
+  }
+  let topology;
+  try {
+    topology = parse(active.text);
+  } catch (e) {
+    if (e instanceof TopoParseError) {
+      void vscode.window.showErrorMessage(
+        t('Cannot export: the document does not parse ({0})', e.message),
+      );
+      return;
+    }
+    throw e;
+  }
+  const picks: ViewPick[] = [
+    { label: t('Physical view'), description: t('Cables and circuits'), view: 'physical' },
+    { label: t('Logical view'), description: t('VRF compartments and logical links'), view: 'logical' },
+  ];
+  const pick = await vscode.window.showQuickPick(picks, {
+    placeHolder: t('Which view should the image show?'),
+  });
+  if (!pick) return;
+  await saveImageExport(active.uri, {
+    type: 'save-image',
+    format: 'svg',
+    text: genSvg(topology, { view: pick.view }),
+  });
 }
 
 /* ---------- templates folder (O2: file-based) ---------- */
@@ -375,6 +459,8 @@ export function registerCommands(): vscode.Disposable {
     vscode.commands.registerCommand('topodraft.exportForAi', () => runExport('for-ai')),
     vscode.commands.registerCommand('topodraft.exportSchema', () => runExport('schema')),
     vscode.commands.registerCommand('topodraft.exportDrawio', () => runExport('drawio')),
+    vscode.commands.registerCommand('topodraft.exportSvg', () => runImageExport('svg')),
+    vscode.commands.registerCommand('topodraft.exportPng', () => runImageExport('png')),
     vscode.commands.registerCommand('topodraft.newFile', (template?: string) =>
       newTopologyFile(typeof template === 'string' ? template : undefined),
     ),

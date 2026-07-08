@@ -8,6 +8,8 @@
   "command.exportForAi": "Export for AI",
   "command.exportSchema": "Export Import-Schema for AI Agents",
   "command.exportDrawio": "Export as draw.io Diagram",
+  "command.exportSvg": "Export as Image (SVG)",
+  "command.exportPng": "Export as Image (PNG)",
   "command.openAsText": "Open as Text",
   "command.openInTopologyEditor": "Open in Topology Editor",
   "config.templatesFolder": "Folder holding user templates (*.topo.json files) for the New Topology File command. Workspace-relative unless an absolute path or a full URI (e.g. vscode-vfs://… on virtual workspaces).",
@@ -30,5 +32,6 @@
   "walkthrough.agentGuide.alt": "An agent edits the JSON on the left and the canvas draws the topology on the right",
   "walkthrough.validate.title": "Validate anywhere",
   "walkthrough.validate.description": "Semantic diagnostics land in the Problems panel with exact ranges and did-you-mean hints. In CI or for headless agents, the same checks run as `npx topodraft-cli validate`.\n[Validate Current File](command:topodraft.validate)",
-  "walkthrough.validate.alt": "A diagnostic with a did-you-mean suggestion and a passing check mark"
+  "walkthrough.validate.alt": "A diagnostic with a did-you-mean suggestion and a passing check mark",
+  "config.pngExportScale": "Rasterization scale for PNG export (1–4). 2 doubles the pixel dimensions for crisp embedding. Applies to editors opened after the change."
 }

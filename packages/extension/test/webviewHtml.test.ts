@@ -14,7 +14,7 @@ describe('buildWebviewHtml', () => {
   it('references the script with the nonce and the stylesheet', () => {
     expect(html).toContain('<script nonce="NONCE123" src="https://webview.test/dist/webview/webview.js">');
     expect(html).toContain('<link rel="stylesheet" href="https://webview.test/dist/webview/webview.css">');
-    expect(html).toContain('<div id="root" data-locale="ja" data-build="b-123">');
+    expect(html).toContain('<div id="root" data-locale="ja" data-build="b-123" data-png-scale="2">');
   });
 
   it('stamps the host build id for the stale-host check, rejecting junk', () => {
@@ -50,5 +50,21 @@ describe('buildWebviewHtml', () => {
     expect(csp).toContain('style-src https://webview.test');
     expect(csp).not.toContain('unsafe-inline');
     expect(csp).not.toContain('unsafe-eval');
+  });
+
+  it('stamps the PNG-export scale, clamped to 1–4 with a default of 2 (#10)', () => {
+    expect(html).toContain('data-png-scale="2"'); // default when omitted
+    const opts = {
+      cspSource: 'x',
+      nonce: 'n',
+      scriptUri: 's',
+      styleUri: 'c',
+      locale: 'en',
+      buildId: 'b',
+    };
+    expect(buildWebviewHtml({ ...opts, pngScale: 3 })).toContain('data-png-scale="3"');
+    expect(buildWebviewHtml({ ...opts, pngScale: 99 })).toContain('data-png-scale="4"');
+    expect(buildWebviewHtml({ ...opts, pngScale: -1 })).toContain('data-png-scale="1"');
+    expect(buildWebviewHtml({ ...opts, pngScale: Number.NaN })).toContain('data-png-scale="2"');
   });
 });

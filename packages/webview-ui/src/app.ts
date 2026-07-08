@@ -27,6 +27,7 @@ import {
   alignRow,
   anchor,
   autoLayout,
+  genSvg,
   deleteLink,
   deleteNodes,
   distributeH,
@@ -50,7 +51,12 @@ import {
   vrfRowRect,
 } from '@topodraft/core';
 import type { TopoClipboard } from '@topodraft/core';
-import type { HostToWebviewMessage, TemplateItem, WebviewToHostMessage } from '@topodraft/protocol';
+import type {
+  HostToWebviewMessage,
+  ImageFormat,
+  TemplateItem,
+  WebviewToHostMessage,
+} from '@topodraft/protocol';
 import type { EditorApi, InlineRenameTarget, LinkRef } from './api';
 import { linkRefKey, parseLinkRefKey } from './api';
 import type { NodeVM, SceneDom, ViewMode, ViewOptions } from './scene';
@@ -84,6 +90,8 @@ export interface AppHost {
    * window reload) — the app shows a persistent reload hint.
    */
   staleHost?: boolean;
+  /** PNG-export rasterization factor (topodraft.pngExportScale, default 2). */
+  pngScale?: number;
 }
 
 export interface DocState {
@@ -174,6 +182,8 @@ export function createApp(root: HTMLElement, host: AppHost): App {
             <div class="ci" data-export="for-ai">${T('ex_ai')}</div>
             <div class="ci" data-export="schema">${T('ex_schema')}</div>
             <div class="ci" data-export="drawio">${T('ex_drawio')}</div>
+            <div class="ci" data-export-image="svg">${T('ex_svg')}</div>
+            <div class="ci" data-export-image="png">${T('ex_png')}</div>
           </div>
         </div>
       </div>
@@ -353,6 +363,11 @@ export function createApp(root: HTMLElement, host: AppHost): App {
     if (message.type === 'templates') {
       templates = message.items;
       renderNewMenu();
+      return;
+    }
+    if (message.type === 'export-image') {
+      // palette command routed through the open editor (#10)
+      void exportImage(message.format);
       return;
     }
     if (message.type !== 'update') return;
@@ -1189,6 +1204,58 @@ export function createApp(root: HTMLElement, host: AppHost): App {
     newMenu.style.display = newMenu.style.display === 'block' ? 'none' : 'block';
   });
 
+  /* image export (#10): the webview renders its CURRENT view — genSvg for
+     SVG, plus a canvas rasterization pass for PNG (the only canvas in the
+     product lives here). The host saves the bytes via workspace.fs. */
+  const rasterizePng = (svg: string, scale: number): Promise<string> =>
+    new Promise((done, fail) => {
+      const img = new Image();
+      const timer = setTimeout(() => fail(new Error('SVG rasterization timed out')), 10_000);
+      img.onload = () => {
+        clearTimeout(timer);
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+          canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+          const ctx = canvas.getContext('2d');
+          if (!ctx) throw new Error('no 2d context');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/png');
+          done(dataUrl.slice(dataUrl.indexOf(',') + 1));
+        } catch (e) {
+          fail(e as Error);
+        }
+      };
+      img.onerror = () => {
+        clearTimeout(timer);
+        fail(new Error('SVG rasterization failed'));
+      };
+      // data: URL — allowed by the webview CSP (img-src … data:), no fetch
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    });
+
+  const exportImage = async (format: ImageFormat): Promise<void> => {
+    if (!editable()) {
+      toast(T('t_export_invalid'));
+      return;
+    }
+    const svg = genSvg(model as Topology, {
+      view: view.viewMode,
+      showGlobal: view.showGlobal,
+      underlay: view.underlayOn,
+    });
+    if (format === 'svg') {
+      host.postMessage({ type: 'save-image', format: 'svg', text: svg });
+      return;
+    }
+    try {
+      const dataBase64 = await rasterizePng(svg, host.pngScale ?? 2);
+      host.postMessage({ type: 'save-image', format: 'png', dataBase64 });
+    } catch {
+      toast(T('t_export_png_fail'));
+    }
+  };
+
   /* export menu (v7's Export button; generation runs on the host) */
   const exportMenu = $('#exportMenu');
   $('#btnExport').addEventListener('click', (e) => {
@@ -1206,6 +1273,12 @@ export function createApp(root: HTMLElement, host: AppHost): App {
         type: 'export',
         kind: item.getAttribute('data-export') as 'markdown' | 'for-ai' | 'schema' | 'drawio',
       });
+    }),
+  );
+  exportMenu.querySelectorAll<HTMLElement>('[data-export-image]').forEach((item) =>
+    item.addEventListener('click', () => {
+      exportMenu.style.display = 'none';
+      void exportImage(item.getAttribute('data-export-image') as ImageFormat);
     }),
   );
 

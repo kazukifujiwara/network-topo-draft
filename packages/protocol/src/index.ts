@@ -9,6 +9,9 @@ export type {
   TemplateItem,
   ListTemplatesRequestMessage,
   TemplatesMessage,
+  ImageFormat,
+  ImageExportRequestMessage,
+  SaveImageMessage,
   HostToWebviewMessage,
   WebviewToHostMessage,
 } from './messages';

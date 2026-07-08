@@ -17,10 +17,12 @@ import type {
   EditMessage,
   ExportRequestMessage,
   ReadyMessage,
+  SaveImageMessage,
   UpdateMessage,
 } from '@topodraft/protocol';
 
 const EXPORT_KINDS = ['markdown', 'for-ai', 'schema', 'drawio'];
+const IMAGE_FORMATS = ['svg', 'png'];
 
 export function isExportRequest(message: unknown): message is ExportRequestMessage {
   const m = message as { type?: unknown; kind?: unknown } | null;
@@ -87,6 +89,21 @@ export function isReadyMessage(message: unknown): message is ReadyMessage {
     typeof message === 'object' &&
     message !== null &&
     (message as { type?: unknown }).type === 'ready'
+  );
+}
+
+/** Rendered image from the webview to save (#10); content must match the format. */
+export function isSaveImageRequest(message: unknown): message is SaveImageMessage {
+  const m = message as
+    | { type?: unknown; format?: unknown; text?: unknown; dataBase64?: unknown }
+    | null;
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    m?.type === 'save-image' &&
+    typeof m.format === 'string' &&
+    IMAGE_FORMATS.includes(m.format) &&
+    (m.format === 'svg' ? typeof m.text === 'string' : typeof m.dataBase64 === 'string')
   );
 }
 
