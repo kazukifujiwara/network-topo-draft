@@ -6,7 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- (internal) Pure SVG renderer in `@topodraft/core` (`genSvg`): renders a
+  topology to a standalone SVG string with the same geometry and
+  view-model code as the canvas, in either view (physical/logical), with
+  optional transparent background. Foundation for the upcoming image
+  export commands (#9).
 
 ## [0.3.0] — 2026-07-08
 

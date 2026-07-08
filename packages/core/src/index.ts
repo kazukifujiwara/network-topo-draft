@@ -84,8 +84,22 @@ export {
   uniqueName,
 } from './operations';
 
+export type { GlyphKey } from './glyphs';
+export { GLYPHS } from './glyphs';
+
+export type { LinkKind, LinkVM, NodeVM, SceneView, ViewMode } from './sceneModel';
+export {
+  buildLinks,
+  buildNodes,
+  displayTopology,
+  logicalVrfOf,
+  sceneBounds,
+} from './sceneModel';
+
 export { genMarkdown } from './generators/markdown';
 export type { MarkdownOptions } from './generators/markdown';
 export { genForAi, schemaLegend } from './generators/forAi';
 export { genSchemaDoc, topoJsonSchema } from './generators/schema';
 export { genDrawio } from './generators/drawio';
+export { genSvg } from './generators/svg';
+export type { SvgOptions } from './generators/svg';
