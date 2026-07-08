@@ -348,13 +348,15 @@ async function openExample(): Promise<void> {
   // on virtual workspaces (vscode.dev / github.dev) a bare relative untitled
   // name fails to resolve against the workspace scheme ("Unable to resolve
   // filesystem provider with relative file path"), and anchoring also gives
-  // Save a sensible default location. Without a workspace the bare name is
-  // the desktop-verified path; the folderless-web edge is unverified but
-  // rare (github.dev always has a repo).
+  // Save a sensible default location. Without a workspace the path must be
+  // ABSOLUTE for the same reason: a bare relative name resolves against the
+  // web default file system ('tmp:') and fails (#16) — the leading slash
+  // keeps the untitled document purely virtual on desktop and web while
+  // preserving the .topo.json name (editor/schema association, tab title).
   const root = vscode.workspace.workspaceFolders?.[0];
   const uri = root
     ? vscode.Uri.joinPath(root.uri, 'example.topo.json').with({ scheme: 'untitled' })
-    : vscode.Uri.parse('untitled:example.topo.json');
+    : vscode.Uri.from({ scheme: 'untitled', path: '/example.topo.json' });
   const document = await vscode.workspace.openTextDocument(uri);
   if (document.getText().trim() === '') {
     const builtin = BUILTIN_TEMPLATES.find((b) => b.id === 'site-cloud');

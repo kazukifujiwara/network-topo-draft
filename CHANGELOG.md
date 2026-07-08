@@ -14,6 +14,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   optional transparent background. Foundation for the upcoming image
   export commands (#9).
 
+### Fixed
+
+- `Open Example Topology` (and the walkthrough's first step) failed on the
+  web (vscode.dev / vscode-test-web) when no workspace folder was open:
+  the untitled URI used a relative path that cannot resolve against the
+  web default file system. The untitled path is now absolute (#16).
+
 ## [0.3.0] — 2026-07-08
 
 ### Added
