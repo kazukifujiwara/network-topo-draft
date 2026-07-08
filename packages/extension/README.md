@@ -54,8 +54,9 @@ after install (also: `Welcome: Open Walkthrough…`). The short version:
   contract into your workspace's `AGENTS.md` so coding agents learn it up
   front.
 - **Export** — Markdown documentation, an AI-chat-ready description, the
-  import schema for agents, and draw.io diagrams (toolbar button or
-  `TopoDraft:` commands).
+  import schema for agents, draw.io diagrams, and images of the current
+  view — SVG or PNG in the editor's look, ready for READMEs and design
+  docs (toolbar button or `TopoDraft:` commands).
 - **Templates** — the toolbar **＋ New** menu (or `TopoDraft: New Topology
   File`) starts from built-ins or your own `*.topo.json` files in
   `topodraft.templatesFolder` (`TopoDraft: Save as Template`).

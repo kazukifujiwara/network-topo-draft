@@ -40,7 +40,7 @@ packages/
   core/        DOM- and Node-free pure TypeScript: model, parse (legacy
                absorption), canonical serialize, validate (diagnostics),
                operations, geometry, generators (markdown / for-ai / schema /
-               draw.io)
+               draw.io / svg)
   webview-ui/  Canvas UI: scene rendering, interactions, panels, toolbar
                (jsdom-tested; talks to the host only via protocol messages)
   extension/   VSCode extension host: custom editor, sync loop, diagnostics,
@@ -125,7 +125,9 @@ Extension Development Host opens on `fixtures/`; open any `*.topo.json` there.
   (built-in templates + your own — any
   `*.topo.json` under `topodraft.templatesFolder`, default
   `.topodraft/templates`), `Save as Template`, and `Export as Markdown /
-  for AI / Import-Schema / draw.io`. The canvas toolbar mirrors the common
+  for AI / Import-Schema / draw.io / Image (SVG, PNG)`. Image exports render
+  the current view (physical or logical) with the editor's look — PNG scale
+  via `topodraft.pngExportScale`. The canvas toolbar mirrors the common
   ones: **＋ New** (template menu) and **Export** dropdowns.
 - **Languages**: UI follows the VSCode display language (English/Japanese).
 

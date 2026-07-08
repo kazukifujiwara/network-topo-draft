@@ -11,6 +11,7 @@ import {
   isExportRequest,
   isListTemplatesRequest,
   isNewFileRequest,
+  isSaveImageRequest,
 } from '../src/documentSync';
 
 /** Minimal TextDocument stand-in: version bumps on every applied edit. */
@@ -145,5 +146,17 @@ describe('isExportRequest', () => {
     expect(isExportRequest({ type: 'export', kind: 'yaml' })).toBe(false); // ADR D2
     expect(isExportRequest({ type: 'export' })).toBe(false);
     expect(isExportRequest(null)).toBe(false);
+  });
+});
+
+describe('isSaveImageRequest', () => {
+  it('requires the content field matching the format (#10)', () => {
+    expect(isSaveImageRequest({ type: 'save-image', format: 'svg', text: '<svg/>' })).toBe(true);
+    expect(isSaveImageRequest({ type: 'save-image', format: 'png', dataBase64: 'aGk=' })).toBe(true);
+    expect(isSaveImageRequest({ type: 'save-image', format: 'svg' })).toBe(false);
+    expect(isSaveImageRequest({ type: 'save-image', format: 'png', text: 'x' })).toBe(false);
+    expect(isSaveImageRequest({ type: 'save-image', format: 'gif', text: 'x' })).toBe(false);
+    expect(isSaveImageRequest({ type: 'export', kind: 'markdown' })).toBe(false);
+    expect(isSaveImageRequest(null)).toBe(false);
   });
 });

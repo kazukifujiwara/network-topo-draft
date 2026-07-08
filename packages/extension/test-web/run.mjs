@@ -50,4 +50,8 @@ await runTests({
   // served as a virtual (vscode-test-web://) workspace — exactly the
   // environment vscode.dev / github.dev provide
   folderPath: workspace,
+  // default 3000 collides with a manual `npx vscode-test-web` session
+  // (runbook §2) — override with TOPODRAFT_WEB_PORT to run both at once
+  // (globalThis: eslint has no node-globals block for these run scripts)
+  port: Number(globalThis.process?.env?.TOPODRAFT_WEB_PORT) || undefined,
 });

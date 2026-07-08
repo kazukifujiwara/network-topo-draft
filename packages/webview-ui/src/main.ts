@@ -25,6 +25,7 @@ const app = createApp(root, {
   setState: (s) => vscode.setState(s),
   // old hosts stamp no data-build at all — that counts as a mismatch too
   staleHost: root.dataset.build !== BUILD_ID,
+  pngScale: Number(root.dataset.pngScale) || 2,
 });
 
 window.addEventListener('message', (e: MessageEvent) => {

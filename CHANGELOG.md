@@ -8,11 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Image export (#10): `TopoDraft: Export as Image (SVG / PNG)` commands and
+  matching entries in the canvas **Export** menu. Exports render the
+  CURRENT view (physical or logical, underlay and global-row toggles
+  respected) in the editor's look; SVG is a standalone vector file, PNG is
+  rasterized at `topodraft.pngExportScale` (default 2×, applies live to
+  open editors; the confirmation shows the pixel size). Logical-view
+  exports get a `.logical` filename suffix so both views of one topology
+  coexist. Works on the web build (vscode.dev) — files are written via
+  the workspace file system.
 - (internal) Pure SVG renderer in `@topodraft/core` (`genSvg`): renders a
   topology to a standalone SVG string with the same geometry and
   view-model code as the canvas, in either view (physical/logical), with
-  optional transparent background. Foundation for the upcoming image
-  export commands (#9).
+  optional transparent background — the engine behind the image export
+  (#9).
 
 ### Fixed
 

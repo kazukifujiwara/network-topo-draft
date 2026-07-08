@@ -27,5 +27,13 @@
   "Two routers uplinked to a switch pair over 2-member LAGs (lag interface examples)": "2本束ねたLAGでルータをスイッチペアに接続(lagインターフェース記法の例)",
   "Two gateways sharing a /28 multi-access segment with an HSRP virtual IP": "2台のゲートウェイが /28 マルチアクセスセグメントと HSRP 仮想IPを共有する構成",
   "Wrote the NetBox reference notes section to {0}.": "NetBox 参照ノートのセクションを {0} に書き出しました。",
-  "Updated the TopoDraft section in {0}.": "{0} 内の TopoDraft セクションを更新しました。"
+  "Updated the TopoDraft section in {0}.": "{0} 内の TopoDraft セクションを更新しました。",
+  "Exported {0}.": "{0} をエクスポートしました。",
+  "Open the file in the Topology Editor first — PNG export renders on its canvas.": "先にトポロジエディタでファイルを開いてください — PNG エクスポートはそのキャンバス上で描画されます。",
+  "Physical view": "物理ビュー",
+  "Logical view": "論理ビュー",
+  "Cables and circuits": "ケーブルとキャリア回線",
+  "VRF compartments and logical links": "VRF区画と論理リンク",
+  "Which view should the image show?": "どちらのビューを画像にしますか?",
+  "Exported {0} ({1}×{2}px).": "{0} をエクスポートしました ({1}×{2}px)。"
 }
