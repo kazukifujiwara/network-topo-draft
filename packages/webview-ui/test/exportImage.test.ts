@@ -26,6 +26,7 @@ describe('SVG export', () => {
     expect(saved[0]?.format).toBe('svg');
     expect(saved[0]?.text).toContain('<svg ');
     expect(saved[0]?.text).toContain('⌖ Tokyo-HQ'); // scene content, current view
+    expect(saved[0]?.view).toBe('physical'); // host keys the filename off this
   });
 
   it('renders the CURRENT view: logical view exports VRF compartments', () => {
@@ -41,12 +42,14 @@ describe('SVG export', () => {
     a.dom.app.querySelector<HTMLElement>('[data-export-image="svg"]')?.click();
     const saved = savedImages(f.posted);
     expect(saved[0]?.text).toContain('stroke-dasharray="1.5 6"'); // logical link style
+    expect(saved[0]?.view).toBe('logical'); // → .logical filename suffix on the host
   });
 
   it('the export-image host message (palette round-trip) also produces save-image', () => {
     const f = fakeHost();
     const a = createApp(mount(), f.host);
     a.handleMessage(update(readFixture('v6v7/two-site-wan.topo.json')));
+    a.handleMessage({ type: 'config', pngScale: 3 }); // live setting — must not crash
     a.handleMessage({ type: 'export-image', format: 'svg' });
     expect(savedImages(f.posted)).toHaveLength(1);
   });

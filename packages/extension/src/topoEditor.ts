@@ -104,8 +104,25 @@ export class TopoEditorProvider implements vscode.CustomTextEditorProvider {
         controller.handleDocumentChanged();
       }
     });
+    // live settings for the webview: initial values ride on the HTML data-*
+    // attributes, but setting changes must reach already-open editors (#10)
+    const postConfig = (): void => {
+      void webviewPanel.webview.postMessage({
+        type: 'config',
+        pngScale: vscode.workspace
+          .getConfiguration('topodraft')
+          .get<number>('pngExportScale', 2),
+      });
+    };
+    const configSub = vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration('topodraft.pngExportScale')) postConfig();
+    });
+
     const messageSub = webviewPanel.webview.onDidReceiveMessage((message: unknown) => {
-      if (isReadyMessage(message)) controller.handleReady();
+      if (isReadyMessage(message)) {
+        controller.handleReady();
+        postConfig();
+      }
       else if (isEditMessage(message)) void controller.handleEdit(message);
       else if (isExportRequest(message)) void runExport(message.kind, document.uri);
       else if (isSaveImageRequest(message)) void saveImageExport(document.uri, message);
@@ -132,6 +149,7 @@ export class TopoEditorProvider implements vscode.CustomTextEditorProvider {
     webviewPanel.onDidDispose(() => {
       changeSub.dispose();
       messageSub.dispose();
+      configSub.dispose();
       unregisterPanel(document.uri, webviewPanel);
       if (this.sessions.get(document.uri.toString()) === controller) {
         this.sessions.delete(document.uri.toString());

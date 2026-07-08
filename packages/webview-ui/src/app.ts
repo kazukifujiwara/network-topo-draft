@@ -370,6 +370,11 @@ export function createApp(root: HTMLElement, host: AppHost): App {
       void exportImage(message.format);
       return;
     }
+    if (message.type === 'config') {
+      // live settings — the data-* attributes only carry initial values
+      if (typeof message.pngScale === 'number') pngScale = message.pngScale;
+      return;
+    }
     if (message.type !== 'update') return;
     docVersion = message.docVersion;
     if (message.selfOriginated && message.text === lastSentText) {
@@ -1207,7 +1212,15 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   /* image export (#10): the webview renders its CURRENT view — genSvg for
      SVG, plus a canvas rasterization pass for PNG (the only canvas in the
      product lives here). The host saves the bytes via workspace.fs. */
-  const rasterizePng = (svg: string, scale: number): Promise<string> =>
+  let pngScale = host.pngScale ?? 2; // live-updated by config messages
+
+  interface RasterizedPng {
+    dataBase64: string;
+    width: number;
+    height: number;
+  }
+
+  const rasterizePng = (svg: string, scale: number): Promise<RasterizedPng> =>
     new Promise((done, fail) => {
       const img = new Image();
       const timer = setTimeout(() => fail(new Error('SVG rasterization timed out')), 10_000);
@@ -1221,7 +1234,11 @@ export function createApp(root: HTMLElement, host: AppHost): App {
           if (!ctx) throw new Error('no 2d context');
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           const dataUrl = canvas.toDataURL('image/png');
-          done(dataUrl.slice(dataUrl.indexOf(',') + 1));
+          done({
+            dataBase64: dataUrl.slice(dataUrl.indexOf(',') + 1),
+            width: canvas.width,
+            height: canvas.height,
+          });
         } catch (e) {
           fail(e as Error);
         }
@@ -1245,12 +1262,20 @@ export function createApp(root: HTMLElement, host: AppHost): App {
       underlay: view.underlayOn,
     });
     if (format === 'svg') {
-      host.postMessage({ type: 'save-image', format: 'svg', text: svg });
+      host.postMessage({ type: 'save-image', format: 'svg', text: svg, view: view.viewMode });
       return;
     }
     try {
-      const dataBase64 = await rasterizePng(svg, host.pngScale ?? 2);
-      host.postMessage({ type: 'save-image', format: 'png', dataBase64 });
+      const scale = Math.min(4, Math.max(1, pngScale));
+      const png = await rasterizePng(svg, scale);
+      host.postMessage({
+        type: 'save-image',
+        format: 'png',
+        dataBase64: png.dataBase64,
+        view: view.viewMode,
+        width: png.width,
+        height: png.height,
+      });
     } catch {
       toast(T('t_export_png_fail'));
     }

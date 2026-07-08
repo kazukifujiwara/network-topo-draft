@@ -94,10 +94,10 @@ export async function saveImageExport(
     docUri.scheme === 'untitled'
       ? vscode.workspace.workspaceFolders?.[0]?.uri
       : docUri.with({ path: docUri.path.replace(/[^/]+$/, '') });
+  // the logical view gets a suffix so both views of one topology coexist
+  const name = `${basenameNoExt(docUri)}${message.view === 'logical' ? '.logical' : ''}.${message.format}`;
   const target = await vscode.window.showSaveDialog({
-    defaultUri: dir
-      ? vscode.Uri.joinPath(dir, `${basenameNoExt(docUri)}.${message.format}`)
-      : undefined,
+    defaultUri: dir ? vscode.Uri.joinPath(dir, name) : undefined,
     filters: message.format === 'svg' ? { 'SVG image': ['svg'] } : { 'PNG image': ['png'] },
   });
   if (!target) return;
@@ -107,8 +107,11 @@ export async function saveImageExport(
       : base64ToBytes(message.dataBase64 ?? '');
   await vscode.workspace.fs.writeFile(target, bytes);
   log(`imageExport: wrote ${bytes.length} bytes to ${target.toString()}`);
+  const shownName = target.path.split('/').pop() ?? '';
   void vscode.window.showInformationMessage(
-    t('Exported {0}.', target.path.split('/').pop() ?? ''),
+    message.width && message.height
+      ? t('Exported {0} ({1}×{2}px).', shownName, message.width, message.height)
+      : t('Exported {0}.', shownName),
   );
 }
 
@@ -155,6 +158,7 @@ export async function runImageExport(format: ImageFormat, uri?: vscode.Uri): Pro
     type: 'save-image',
     format: 'svg',
     text: genSvg(topology, { view: pick.view }),
+    view: pick.view,
   });
 }
 

@@ -113,6 +113,23 @@ export interface SaveImageMessage {
   text?: string;
   /** Base64 PNG bytes (format 'png'). */
   dataBase64?: string;
+  /** View the image shows — logical gets a filename suffix so the two
+   *  views of one topology don't overwrite each other. */
+  view?: 'physical' | 'logical';
+  /** Pixel dimensions (png) — shown in the host's confirmation message. */
+  width?: number;
+  height?: number;
+}
+
+/**
+ * Host → Webview: live settings relevant to the webview. Sent on ready and
+ * whenever the configuration changes (the data-* attributes on the root
+ * element only carry the initial values).
+ */
+export interface ConfigMessage {
+  type: 'config';
+  /** topodraft.pngExportScale */
+  pngScale?: number;
 }
 
 /** Host → Webview: current template list for the ＋New menu. */
@@ -121,7 +138,11 @@ export interface TemplatesMessage {
   items: TemplateItem[];
 }
 
-export type HostToWebviewMessage = UpdateMessage | TemplatesMessage | ImageExportRequestMessage;
+export type HostToWebviewMessage =
+  | UpdateMessage
+  | TemplatesMessage
+  | ImageExportRequestMessage
+  | ConfigMessage;
 export type WebviewToHostMessage =
   | EditMessage
   | ReadyMessage

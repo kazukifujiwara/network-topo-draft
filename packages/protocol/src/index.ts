@@ -12,6 +12,7 @@ export type {
   ImageFormat,
   ImageExportRequestMessage,
   SaveImageMessage,
+  ConfigMessage,
   HostToWebviewMessage,
   WebviewToHostMessage,
 } from './messages';

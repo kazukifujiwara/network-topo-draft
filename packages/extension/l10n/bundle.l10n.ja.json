@@ -34,5 +34,6 @@
   "Logical view": "論理ビュー",
   "Cables and circuits": "ケーブルとキャリア回線",
   "VRF compartments and logical links": "VRF区画と論理リンク",
-  "Which view should the image show?": "どちらのビューを画像にしますか?"
+  "Which view should the image show?": "どちらのビューを画像にしますか?",
+  "Exported {0} ({1}×{2}px).": "{0} をエクスポートしました ({1}×{2}px)。"
 }
