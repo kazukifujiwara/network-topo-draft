@@ -45,6 +45,8 @@ packages/
                コマンド、テンプレート、エージェントガイド
   cli/         `topodraft` コマンド(パッケージ名: topodraft-cli): エディタの検証を
                CLI 化したもの。ヘッドレス環境・AI エージェント向け
+  mcp/         `topodraft-mcp` MCP サーバー: 読み取り / 検証 / 編集 / 描画ツールで
+               AI エージェントがこのフォーマットをネイティブに扱う
   protocol/    Webview ⇔ ホスト間メッセージ型(共有)
 schema/        形式 v1 の公開 JSON Schema
 fixtures/      ゴールデンファイル: レガシー v3–v7 のエクスポート形 + v1 正準形
@@ -147,6 +149,23 @@ network/dc-east.topo.json:9:31 warning unknown-field Unknown field "ip" — did 
 - `--json` で機械可読出力、`--strict` で警告も失敗扱い、
   終了コードは 0 / 1 / 2(クリーン / 検出あり / 使用法・IO エラー)
 - ランタイム依存は拡張に同梱済みのもの(core + jsonc-parser、バンドル済み)以外ゼロ
+
+## MCP サーバー(`topodraft-mcp`)
+
+AI エージェントは [MCP](https://modelcontextprotocol.io) 経由でこのフォーマットを
+ネイティブに扱えます: フォーマットの学習(`describe_format`)、読み取り・検証
+(`read_topology` / `validate_topology`)、編集後の診断が毎回の応答に含まれる
+構造化編集(`add_device`、`add_link`、`update_device` …)、そして図を*見る*
+(`render_svg` — エディタの画像エクスポートと同一の SVG)。VSCode で開いている
+ファイルを編集すると、キャンバスがライブで追従します。
+
+```sh
+claude mcp add topodraft -- npx -y topodraft-mcp   # Claude Code の例。任意の MCP クライアントで動作
+```
+
+推奨ワークフロー: 一括作成は JSON ファイルを直接生成、小さな変更は編集ツール、
+変更後は必ず検証、レイアウト確認は `render_svg`。編集ツールを完全に無効化する
+`--read-only` 起動もあります。詳細: [packages/mcp](packages/mcp/README.md)。
 
 ## テストポリシー
 

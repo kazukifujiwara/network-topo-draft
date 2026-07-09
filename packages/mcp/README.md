@@ -50,9 +50,14 @@ Any other MCP client: run `topodraft-mcp` as a stdio server.
 ## Typical agent flow
 
 1. `describe_format` — once, before the first edit
-2. Edit the `*.topo.json` file as text (the TopoDraft canvas follows live)
-3. `validate_topology` — after every edit; fix what it reports
-4. `render_svg` — look at the result; adjust `position` values if the layout overlaps
+2. Make the change — pick the right write path:
+   - **Bulk authoring** (a new file, a large rework): write the JSON file
+     directly; it is the fastest path and the canvas follows live
+   - **Small changes**: use the edit tools — each response already carries
+     the post-edit diagnostics, and renames follow every link reference
+3. `validate_topology` — after every change, whatever the write path
+4. `render_svg` — look at the result; adjust positions (`set_position`)
+   if the layout overlaps
 
 See the [TopoDraft repository](https://github.com/kazukifujiwara/network-topo-draft)
 for the VSCode extension, the file-format specification, and the

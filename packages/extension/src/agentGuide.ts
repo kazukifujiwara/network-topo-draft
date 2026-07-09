@@ -54,10 +54,12 @@ Workflow for agents:
 1. Follow the JSON Schema below exactly. Unknown fields fail validation and
    are DROPPED when the editor saves (the Problems panel suggests the field
    you probably meant, e.g. \`ip\` → \`ip_address\`).
-2. After editing, validate. If your environment surfaces the editor's
-   diagnostics (the VSCode Problems panel: source \`topodraft\` plus JSON
-   schema validation), read them and fix until clean; if you run headless,
-   run \`npx topodraft-cli validate <file>\` (add \`--json\` for
+2. After editing, validate — ALWAYS, whatever the write path. If your
+   environment surfaces the editor's diagnostics (the VSCode Problems
+   panel: source \`topodraft\` plus JSON schema validation), read them and
+   fix until clean; with the \`topodraft\` MCP server connected, call its
+   \`validate_topology\` tool; headless without either, run
+   \`npx topodraft-cli validate <file>\` (add \`--json\` for
    machine-readable output) — the same rules with file:line:col positions.
    Either way watch for: duplicate names, dangling
    \`device\`/\`provider_network\` references, interfaces or VRFs that do
@@ -80,6 +82,24 @@ Workflow for agents:
 7. While the file is open in the TopoDraft editor, saving normalizes it to
    the canonical style — RE-READ the file before your next edit instead of
    assuming it still matches what you last wrote.
+
+Using the TopoDraft MCP server (when connected):
+
+If the \`topodraft\` MCP server (npm: \`topodraft-mcp\`) is available in your
+environment, prefer this division of labor:
+
+- BULK authoring — a new file or a large rework: write the JSON file
+  directly (fastest), then call \`validate_topology\`.
+- SMALL changes to an existing file: use the structured edit tools
+  (\`add_device\` / \`update_device\` / \`remove_device\` / \`add_link\` /
+  \`remove_link\` / \`set_position\`) — every response already includes the
+  post-edit diagnostics, and renames follow link references for you.
+- LOOK at your work: \`render_svg\` returns the same image the editor
+  exports — check layout and overlaps (physical AND logical view when the
+  topology has VRFs or segments) before calling the task done, and fix
+  placement with \`set_position\`.
+- \`describe_format\` returns this same contract on demand;
+  \`read_topology\` summarizes a file without reading it whole.
 
 ${genSchemaDoc()}
 ${GUIDE_END}`;

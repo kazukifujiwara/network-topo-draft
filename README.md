@@ -47,6 +47,8 @@ packages/
                commands, templates, agent guide
   cli/         `topodraft` command (package: topodraft-cli): the editor's
                validation as a CLI, for headless use and AI agents
+  mcp/         `topodraft-mcp` MCP server: read / validate / edit / render
+               tools so AI agents work the format natively
   protocol/    Webview ⇔ host message types (shared)
 schema/        Published JSON Schema for format v1
 fixtures/      Golden files: legacy v3–v7 export shapes + v1 canonical forms
@@ -151,6 +153,25 @@ network/dc-east.topo.json:9:31 warning unknown-field Unknown field "ip" — did 
   exit codes 0 / 1 / 2 (clean / findings / usage-or-IO error)
 - Zero runtime dependencies beyond the ones already shipped in the
   extension (core + jsonc-parser, bundled)
+
+## MCP server (`topodraft-mcp`)
+
+AI agents get first-class tools over
+[MCP](https://modelcontextprotocol.io): learn the format
+(`describe_format`), read and validate topologies (`read_topology`,
+`validate_topology`), make structured edits with the post-edit
+diagnostics in every response (`add_device`, `add_link`, `update_device`,
+…), and *see* the diagram (`render_svg` — the same SVG the editor
+exports). Editing a file that is open in VSCode updates the canvas live.
+
+```sh
+claude mcp add topodraft -- npx -y topodraft-mcp   # Claude Code; any MCP client works
+```
+
+Recommended agent workflow: bulk authoring writes the JSON file directly;
+small changes go through the edit tools; every change is validated; and
+`render_svg` is the layout check. Start with `--read-only` to disable the
+edit tools entirely. Details: [packages/mcp](packages/mcp/README.md).
 
 ## Testing policy
 
