@@ -6,7 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- MCP server (#11): new `topodraft-mcp` package — a stdio Model Context
+  Protocol server so AI agents can learn the file format
+  (`describe_format`), read topologies (`read_topology`: summary +
+  canonical JSON), and validate edits (`validate_topology`: the editor's
+  full diagnostics incl. did-you-mean) through any MCP client. Read-only
+  v1; local file access only, no network, no telemetry, zero runtime
+  dependencies (self-contained bundle). Published separately to npm with
+  its own versioning.
 
 ## [0.4.0] — 2026-07-09
 

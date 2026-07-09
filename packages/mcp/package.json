@@ -1,0 +1,37 @@
+{
+  "name": "topodraft-mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "MCP server for TopoDraft topology files (*.topo.json) — AI agents read, validate, and learn the file format through Model Context Protocol tools.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kazukifujiwara/network-topo-draft.git",
+    "directory": "packages/mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/kazukifujiwara/network-topo-draft/issues"
+  },
+  "homepage": "https://github.com/kazukifujiwara/network-topo-draft#readme",
+  "bin": {
+    "topodraft-mcp": "./dist/mcp.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "NOTICE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@topodraft/core": "0.0.1",
+    "jsonc-parser": "^3.3.1",
+    "zod": "^3.25.76"
+  }
+}
