@@ -16,6 +16,7 @@ import {
   TOPO_FILE_RE,
   describeFormat,
   readTopologyText,
+  renderSvgText,
   validateTopologyText,
 } from './tools';
 
@@ -76,6 +77,46 @@ export function createServer(io: ServerIo, version: string): McpServer {
       try {
         return text(JSON.stringify({ file: path, ...validateTopologyText(readTopoFile(path)) }, null, 2));
       } catch (e) {
+        return errorText(`${path}: ${(e as Error).message}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    'render_svg',
+    {
+      title: TOOL_DOCS.render_svg.title,
+      description: TOOL_DOCS.render_svg.description,
+      inputSchema: {
+        path: z.string().describe(TOOL_DOCS.render_svg.pathDescription),
+        view: z
+          .enum(['physical', 'logical'])
+          .optional()
+          .describe(TOOL_DOCS.render_svg.viewDescription),
+        show_global: z.boolean().optional().describe(TOOL_DOCS.render_svg.showGlobalDescription),
+        underlay: z.boolean().optional().describe(TOOL_DOCS.render_svg.underlayDescription),
+        background: z
+          .enum(['canvas', 'transparent'])
+          .optional()
+          .describe(TOOL_DOCS.render_svg.backgroundDescription),
+      },
+    },
+    ({ path, view, show_global, underlay, background }) => {
+      try {
+        return text(
+          renderSvgText(readTopoFile(path), {
+            view,
+            showGlobal: show_global,
+            underlay,
+            background,
+          }),
+        );
+      } catch (e) {
+        if (e instanceof TopoParseError) {
+          return errorText(
+            `${path}: the document does not parse (${e.message}) — run validate_topology for line-level diagnostics`,
+          );
+        }
         return errorText(`${path}: ${(e as Error).message}`);
       }
     },

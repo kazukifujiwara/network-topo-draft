@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   v1; local file access only, no network, no telemetry, zero runtime
   dependencies (self-contained bundle). Published separately to npm with
   its own versioning.
+- MCP `render_svg` tool (#13): agents can see the diagram they are
+  editing — renders either view to the same standalone SVG as the
+  editor's image export (options for the global row, the physical
+  underlay, and a transparent background).
 
 ## [0.4.0] — 2026-07-09
 

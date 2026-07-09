@@ -11,6 +11,7 @@ the same validation loop the VSCode extension runs in its Problems panel.
 | `describe_format` | The format contract: editing rules, published JSON Schema, minimal example |
 | `read_topology` | Summary (devices/links/sites/VRFs, diagnostic counts) + canonical topology JSON |
 | `validate_topology` | Editor-grade diagnostics: JSON syntax, topology shape, semantic rules, unknown-field did-you-mean |
+| `render_svg` | The diagram as a standalone SVG (physical or logical view) — agents can *see* what they drew |
 
 Local file access only. No network, no telemetry, zero runtime dependencies
 (one self-contained bundle).
@@ -43,6 +44,7 @@ Any other MCP client: run `topodraft-mcp` as a stdio server.
 1. `describe_format` — once, before the first edit
 2. Edit the `*.topo.json` file as text (the TopoDraft canvas follows live)
 3. `validate_topology` — after every edit; fix what it reports
+4. `render_svg` — look at the result; adjust `position` values if the layout overlaps
 
 See the [TopoDraft repository](https://github.com/kazukifujiwara/network-topo-draft)
 for the VSCode extension, the file-format specification, and the

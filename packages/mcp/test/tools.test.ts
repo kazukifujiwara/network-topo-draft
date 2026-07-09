@@ -7,6 +7,7 @@ import {
   TOPO_FILE_RE,
   describeFormat,
   readTopologyText,
+  renderSvgText,
   validateTopologyText,
 } from '../src/tools';
 
@@ -67,6 +68,24 @@ describe('validate_topology', () => {
     const r = validateTopologyText('{ not json');
     expect(r.ok).toBe(false);
     expect(r.diagnostics[0]?.code).toBe('invalid-json');
+  });
+});
+
+describe('render_svg', () => {
+  it('renders the physical view byte-identically to the export golden', () => {
+    expect(renderSvgText(readFixture('v6v7/site-cloud.topo.json'))).toBe(
+      readFixture('expected/render/site-cloud.physical.svg'),
+    );
+  });
+
+  it('renders the logical view when asked', () => {
+    const svg = renderSvgText(readFixture('v3/wan-logical.topo.json'), { view: 'logical' });
+    expect(svg).toContain('<svg ');
+    expect(svg).toContain('stroke-dasharray="1.5 6"'); // logical link style
+  });
+
+  it('throws for text that does not parse (server maps it to isError)', () => {
+    expect(() => renderSvgText('{"version":1,"devices":{}}')).toThrow();
   });
 });
 
