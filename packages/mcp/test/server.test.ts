@@ -45,15 +45,18 @@ const firstText = (r: unknown): string =>
     .text;
 
 describe('tool listing', () => {
-  it('exposes exactly the three read-only v1 tools', async () => {
+  it('exposes exactly the four read-only tools', async () => {
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([
       'describe_format',
       'read_topology',
+      'render_svg',
       'validate_topology',
     ]);
     const read = tools.find((t) => t.name === 'read_topology');
     expect(read?.inputSchema.properties).toHaveProperty('path');
+    const render = tools.find((t) => t.name === 'render_svg');
+    expect(render?.inputSchema.properties).toHaveProperty('view');
   });
 });
 
@@ -83,6 +86,16 @@ describe('tool calls', () => {
     const parsed = JSON.parse(firstText(r));
     expect(parsed.ok).toBe(false);
     expect(parsed.diagnostics[0].code).toBe('invalid-json');
+  });
+
+  it('render_svg returns the SVG image of the requested view', async () => {
+    const r = await client.callTool({
+      name: 'render_svg',
+      arguments: { path: 'site-cloud.topo.json', view: 'logical' },
+    });
+    expect(r.isError).toBeFalsy();
+    expect(firstText(r).startsWith('<svg ')).toBe(true);
+    expect(firstText(r)).toContain('stroke-dasharray="1.5 6"');
   });
 
   it('rejects non-topology extensions with isError', async () => {

@@ -9,8 +9,8 @@
  * relies on — learn the format, read a topology, validate it — without
  * hand-crafting JSON or guessing field names.
  */
-import { allVrfs, genSchemaDoc, parse, sitesList, toCanonical } from '@topodraft/core';
-import type { Topology } from '@topodraft/core';
+import { allVrfs, genSchemaDoc, genSvg, parse, sitesList, toCanonical } from '@topodraft/core';
+import type { SvgOptions, Topology } from '@topodraft/core';
 import { validateText } from '../../cli/src/run';
 import type { CliDiagnostic } from '../../cli/src/run';
 
@@ -45,6 +45,22 @@ export const TOOL_DOCS = {
       'editor: JSON syntax, topology shape, semantic rules, and unknown-field ' +
       'did-you-mean suggestions. Run this after every edit.',
     pathDescription: 'Path to the topology file (*.topo.json or *.topo)',
+  },
+  render_svg: {
+    title: 'Render a topology as an SVG image',
+    description:
+      'Renders a *.topo.json / *.topo file to a standalone SVG string — the same image ' +
+      'the editor exports. Use it to SEE the diagram: check layout, overlaps, and ' +
+      'placement after editing positions. view "physical" shows cables and carrier ' +
+      'circuits; "logical" shows VRF compartments, logical links, and network segments.',
+    pathDescription: 'Path to the topology file (*.topo.json or *.topo)',
+    viewDescription: "Which editor view to render (default 'physical')",
+    showGlobalDescription:
+      'Logical view: include the implicit global routing-table compartment row (default true)',
+    underlayDescription:
+      'Logical view: draw the physical links dimmed underneath (default true)',
+    backgroundDescription:
+      "'canvas' paints the editor backdrop, 'transparent' omits it (default 'canvas')",
   },
 } as const;
 
@@ -107,4 +123,13 @@ export interface ValidateTopologyResult {
 export function validateTopologyText(text: string): ValidateTopologyResult {
   const diagnostics = validateText(text);
   return { ok: diagnostics.every((d) => d.severity !== 'error'), diagnostics };
+}
+
+/**
+ * SVG render of one document (#13): the core renderer the editor's image
+ * export uses — agents get the same picture the human sees. Throws
+ * TopoParseError for text that does not parse.
+ */
+export function renderSvgText(text: string, options: SvgOptions = {}): string {
+  return genSvg(parse(text), options);
 }
