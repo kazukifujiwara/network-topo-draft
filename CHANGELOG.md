@@ -20,6 +20,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   editing — renders either view to the same standalone SVG as the
   editor's image export (options for the global row, the physical
   underlay, and a transparent background).
+- MCP edit tools (#12): `add_device` / `update_device` / `remove_device` /
+  `add_link` / `remove_link` / `set_position` — structured mutations with
+  validation-in-the-loop: every edit goes parse → mutate → deterministic
+  serialize, endpoints and names are checked against the document, and
+  the response carries the post-edit diagnostics. `--read-only` starts
+  the server without the edit tools.
 
 ## [0.4.0] — 2026-07-09
 
