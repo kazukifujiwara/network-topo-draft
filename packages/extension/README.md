@@ -57,6 +57,12 @@ after install (also: `Welcome: Open Walkthrough…`). The short version:
   import schema for agents, draw.io diagrams, and images of the current
   view — SVG or PNG in the editor's look, ready for READMEs and design
   docs (toolbar button or `TopoDraft:` commands).
+- **MCP server** — the companion
+  [`topodraft-mcp`](https://www.npmjs.com/package/topodraft-mcp) package
+  gives AI agents native tools over Model Context Protocol: learn the
+  format, read, validate, make structured edits (post-edit diagnostics in
+  every response), and render the diagram as SVG to *see* their work.
+  Edits to a file open in VSCode appear on the canvas live.
 - **Templates** — the toolbar **＋ New** menu (or `TopoDraft: New Topology
   File`) starts from built-ins or your own `*.topo.json` files in
   `topodraft.templatesFolder` (`TopoDraft: Save as Template`).

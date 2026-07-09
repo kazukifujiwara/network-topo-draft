@@ -26,6 +26,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   serialize, endpoints and names are checked against the document, and
   the response carries the post-edit diagnostics. `--read-only` starts
   the server without the edit tools.
+- Docs (#14): the generated AI agent guide (AGENTS.md) now routes
+  MCP-connected agents — bulk authoring writes the file directly, small
+  changes use the edit tools, every change is validated, `render_svg` is
+  the layout check — and the READMEs (repo en/ja, Marketplace) describe
+  the MCP server and its setup.
 
 ## [0.4.0] — 2026-07-09
 

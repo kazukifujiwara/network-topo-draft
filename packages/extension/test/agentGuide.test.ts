@@ -26,6 +26,17 @@ describe('buildAgentGuideSection', () => {
     expect(section).toContain('npx topodraft-cli validate'); // headless loop (published CLI)
     expect(section).toContain('"$schema"'); // skeleton for new files
   });
+
+  it('routes MCP-connected agents: bulk = direct write, small edits = tools, always validate, render to check (#14)', () => {
+    expect(section).toContain('topodraft-mcp');
+    expect(section).toContain('validate_topology');
+    expect(section).toContain('render_svg');
+    expect(section).toContain('ALWAYS, whatever the write path');
+    expect(section).toContain('BULK authoring');
+    expect(section).toContain('SMALL changes');
+    // the MCP path is an option, never a prerequisite
+    expect(section).toContain('when connected');
+  });
 });
 
 describe('shipped agent-facing text', () => {
