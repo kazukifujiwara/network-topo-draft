@@ -2,12 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parse, serialize } from '@topodraft/core';
 import {
   TOOL_DOCS,
   TOPO_FILE_RE,
+  addDeviceText,
+  addLinkText,
   describeFormat,
   readTopologyText,
+  removeDeviceText,
+  removeLinkText,
   renderSvgText,
+  setPositionText,
+  updateDeviceText,
   validateTopologyText,
 } from '../src/tools';
 
@@ -95,6 +102,144 @@ describe('file-name gate', () => {
     expect(TOPO_FILE_RE.test('net.topo')).toBe(true);
     expect(TOPO_FILE_RE.test('net.json')).toBe(false);
     expect(TOPO_FILE_RE.test('net.yaml')).toBe(false);
+  });
+});
+
+/* ---------- edit tools (#12) ---------- */
+
+const BASE = JSON.stringify({
+  version: 1,
+  devices: [
+    { name: 'rt-01', role: 'router', site: 'S1', position: { x: 100, y: 60 } },
+    { name: 'sw-01', role: 'switch', site: 'S1', position: { x: 300, y: 60 } },
+  ],
+  cables: [{ a: { device: 'rt-01' }, b: { device: 'sw-01' }, type: 'cat6' }],
+});
+
+describe('add_device', () => {
+  it('adds with an explicit name and fields, placed right of the diagram', () => {
+    const r = addDeviceText(BASE, { name: 'fw-01', role: 'firewall', site: 'S1' });
+    const t = parse(r.text);
+    const fw = t.devices.find((d) => d.name === 'fw-01');
+    expect(fw?.role).toBe('firewall');
+    expect(fw?.site).toBe('S1');
+    expect(fw?.position?.x).toBeGreaterThan(300);
+    expect(r.applied).toContain('fw-01');
+  });
+
+  it('auto-generates a unique role-derived name when omitted', () => {
+    const r = addDeviceText(BASE, { role: 'switch' });
+    expect(parse(r.text).devices.some((d) => d.name === 'sw-01-2')).toBe(true); // sw-01 taken
+  });
+
+  it('rejects duplicate names', () => {
+    expect(() => addDeviceText(BASE, { name: 'rt-01' })).toThrow(/already exists/);
+  });
+
+  it('produces canonical text (deterministic round-trip)', () => {
+    const r = addDeviceText(BASE, { name: 'fw-01' });
+    expect(r.text).toBe(serialize(parse(r.text)));
+  });
+});
+
+describe('update_device', () => {
+  it('renames and follows link references', () => {
+    const r = updateDeviceText(BASE, { name: 'rt-01', new_name: 'rt-tokyo-01' });
+    const t = parse(r.text);
+    expect(t.devices.some((d) => d.name === 'rt-tokyo-01')).toBe(true);
+    expect((t.cables ?? [])[0]?.a.device).toBe('rt-tokyo-01');
+  });
+
+  it('sets and removes fields ("" removes)', () => {
+    const r = updateDeviceText(BASE, { name: 'rt-01', device_type: 'RT-X', site: '' });
+    const d = parse(r.text).devices.find((x) => x.name === 'rt-01');
+    expect(d?.device_type).toBe('RT-X');
+    expect(d?.site).toBeUndefined();
+  });
+
+  it('rejects unknown devices and empty updates', () => {
+    expect(() => updateDeviceText(BASE, { name: 'ghost', role: 'router' })).toThrow(/no device/);
+    expect(() => updateDeviceText(BASE, { name: 'rt-01' })).toThrow(/nothing to change/);
+  });
+});
+
+describe('remove_device', () => {
+  it('removes the device and its links, reporting the count', () => {
+    const r = removeDeviceText(BASE, 'rt-01');
+    const t = parse(r.text);
+    expect(t.devices).toHaveLength(1);
+    expect(t.cables).toBeUndefined();
+    expect(r.applied).toContain('1 attached link');
+  });
+});
+
+describe('add_link', () => {
+  it('adds a circuit with attributes', () => {
+    const r = addLinkText(BASE, {
+      kind: 'circuit',
+      a: { device: 'rt-01', interface: 'Gi0/0/0' },
+      b: { device: 'sw-01' },
+      attributes: { cid: 'CID-0001', commit_rate: '1Gbps' },
+    });
+    const c = (parse(r.text).circuits ?? [])[0];
+    expect(c?.cid).toBe('CID-0001');
+    expect(c?.a.interface).toBe('Gi0/0/0');
+  });
+
+  it('rejects endpoints that reference unknown nodes', () => {
+    expect(() =>
+      addLinkText(BASE, { kind: 'cable', a: { device: 'rt-01' }, b: { device: 'ghost' } }),
+    ).toThrow(/unknown node "ghost"/);
+  });
+});
+
+describe('remove_link', () => {
+  const PARALLEL = JSON.stringify({
+    version: 1,
+    devices: [{ name: 'a' }, { name: 'b' }],
+    cables: [
+      { a: { device: 'a' }, b: { device: 'b' }, label: 'L1' },
+      { a: { device: 'a' }, b: { device: 'b' }, label: 'L2' },
+    ],
+  });
+
+  it('removes a uniquely matching link (order-insensitive)', () => {
+    const r = removeLinkText(BASE, { kind: 'cable', a_name: 'sw-01', b_name: 'rt-01' });
+    expect(parse(r.text).cables).toBeUndefined();
+  });
+
+  it('demands match_index for parallel links, then honors it', () => {
+    expect(() => removeLinkText(PARALLEL, { kind: 'cable', a_name: 'a', b_name: 'b' })).toThrow(
+      /match_index/,
+    );
+    const r = removeLinkText(PARALLEL, {
+      kind: 'cable',
+      a_name: 'a',
+      b_name: 'b',
+      match_index: 1,
+    });
+    expect((parse(r.text).cables ?? [])[0]?.label).toBe('L1');
+  });
+
+  it('rejects when nothing matches', () => {
+    expect(() =>
+      removeLinkText(BASE, { kind: 'circuit', a_name: 'rt-01', b_name: 'sw-01' }),
+    ).toThrow(/no circuit link/);
+  });
+});
+
+describe('set_position', () => {
+  it('moves devices and reports the move', () => {
+    const r = setPositionText(BASE, 'sw-01', 500, 200);
+    expect(parse(r.text).devices.find((d) => d.name === 'sw-01')?.position).toEqual({
+      x: 500,
+      y: 200,
+    });
+    expect(r.applied).toContain('(500, 200)');
+  });
+
+  it('rejects unknown nodes', () => {
+    expect(() => setPositionText(BASE, 'ghost', 0, 0)).toThrow(/no node/);
   });
 });
 

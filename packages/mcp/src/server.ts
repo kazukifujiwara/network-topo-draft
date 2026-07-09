@@ -1,11 +1,13 @@
 /**
- * MCP server assembly (#11): registers the TopoDraft tools on an McpServer.
- * File access is injected so tests can drive the full client ⇄ server loop
- * over an in-memory transport without touching the disk; only mcp.ts binds
- * the real file system and the stdio transport.
+ * MCP server assembly (#11/#12): registers the TopoDraft tools on an
+ * McpServer. File access is injected so tests can drive the full client ⇄
+ * server loop over an in-memory transport without touching the disk; only
+ * mcp.ts binds the real file system and the stdio transport.
  *
- * Read-only by design for v1 (issue #12 tracks edit tools): local file
- * access only, no network, no telemetry.
+ * Local file access only, no network, no telemetry. Edit tools (#12) go
+ * parse → mutate → deterministic serialize with the post-edit diagnostics
+ * in every response; `--read-only` disables them entirely (they are not
+ * even listed).
  */
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
@@ -14,15 +16,29 @@ import { TopoParseError } from '@topodraft/core';
 import {
   TOOL_DOCS,
   TOPO_FILE_RE,
+  addDeviceText,
+  addLinkText,
   describeFormat,
   readTopologyText,
+  removeDeviceText,
+  removeLinkText,
   renderSvgText,
+  setPositionText,
+  updateDeviceText,
   validateTopologyText,
 } from './tools';
+import type { EditOutcome } from './tools';
 
 export interface ServerIo {
   /** Read a file as UTF-8; throw on failure. */
   readFile(path: string): string;
+  /** Write a file as UTF-8; throw on failure. Unused with --read-only. */
+  writeFile(path: string, text: string): void;
+}
+
+export interface ServerOptions {
+  /** Register only the read/render tools (edit tools are not listed). */
+  readOnly?: boolean;
 }
 
 const text = (s: string): CallToolResult => ({ content: [{ type: 'text', text: s }] });
@@ -31,7 +47,7 @@ const errorText = (s: string): CallToolResult => ({
   isError: true,
 });
 
-export function createServer(io: ServerIo, version: string): McpServer {
+export function createServer(io: ServerIo, version: string, options: ServerOptions = {}): McpServer {
   const server = new McpServer({ name: 'topodraft', version });
 
   const readTopoFile = (path: string): string => {
@@ -39,6 +55,33 @@ export function createServer(io: ServerIo, version: string): McpServer {
       throw new Error(`not a topology file (expected *.topo.json or *.topo): ${path}`);
     }
     return io.readFile(path);
+  };
+
+  /** Edit-tool wrapper: read → pure edit → write back → report + diagnostics. */
+  const applyEdit = (path: string, edit: (text: string) => EditOutcome): CallToolResult => {
+    try {
+      const outcome = edit(readTopoFile(path));
+      io.writeFile(path, outcome.text);
+      return text(
+        JSON.stringify(
+          {
+            file: path,
+            applied: outcome.applied,
+            ok: outcome.diagnostics.every((d) => d.severity !== 'error'),
+            diagnostics: outcome.diagnostics,
+          },
+          null,
+          2,
+        ),
+      );
+    } catch (e) {
+      if (e instanceof TopoParseError) {
+        return errorText(
+          `${path}: the document does not parse (${e.message}) — run validate_topology for line-level diagnostics`,
+        );
+      }
+      return errorText(`${path}: ${(e as Error).message}`);
+    }
   };
 
   server.registerTool('describe_format', TOOL_DOCS.describe_format, () =>
@@ -120,6 +163,132 @@ export function createServer(io: ServerIo, version: string): McpServer {
         return errorText(`${path}: ${(e as Error).message}`);
       }
     },
+  );
+
+  if (options.readOnly) return server;
+
+  /* ---------- edit tools (#12) ---------- */
+
+  const pathArg = z.string().describe('Path to the topology file (*.topo.json or *.topo)');
+  const endpointArg = (side: string): z.ZodTypeAny =>
+    z
+      .object({})
+      .passthrough()
+      .describe(
+        `Endpoint ${side}: an object like {"device":"rt-01","interface":"Gi0/0/0"} — ` +
+          'device / provider_network / network plus optional fields (see describe_format)',
+      );
+  const deviceFieldArgs = {
+    role: z.string().optional().describe('Device role (router, switch, …); "" removes it'),
+    site: z.string().optional().describe('Site name; "" removes it'),
+    device_type: z.string().optional().describe('Hardware model label; "" removes it'),
+    interfaces: z
+      .array(z.object({}).passthrough())
+      .optional()
+      .describe('Full replacement of the interfaces array; [] removes it (see describe_format)'),
+  };
+
+  server.registerTool(
+    'add_device',
+    {
+      title: TOOL_DOCS.add_device.title,
+      description: TOOL_DOCS.add_device.description,
+      inputSchema: {
+        path: pathArg,
+        name: z.string().optional().describe('Device name (auto-generated from role when omitted)'),
+        x: z.number().optional().describe('Canvas x (default: right of the current diagram)'),
+        y: z.number().optional().describe('Canvas y (default: 60)'),
+        ...deviceFieldArgs,
+      },
+    },
+    ({ path, ...params }) => applyEdit(path, (t) => addDeviceText(t, params)),
+  );
+
+  server.registerTool(
+    'update_device',
+    {
+      title: TOOL_DOCS.update_device.title,
+      description: TOOL_DOCS.update_device.description,
+      inputSchema: {
+        path: pathArg,
+        name: z.string().describe('Current device name'),
+        new_name: z.string().optional().describe('New name (link references are followed)'),
+        ...deviceFieldArgs,
+      },
+    },
+    ({ path, ...params }) => applyEdit(path, (t) => updateDeviceText(t, params)),
+  );
+
+  server.registerTool(
+    'remove_device',
+    {
+      title: TOOL_DOCS.remove_device.title,
+      description: TOOL_DOCS.remove_device.description,
+      inputSchema: { path: pathArg, name: z.string().describe('Device name') },
+    },
+    ({ path, name }) => applyEdit(path, (t) => removeDeviceText(t, name)),
+  );
+
+  server.registerTool(
+    'add_link',
+    {
+      title: TOOL_DOCS.add_link.title,
+      description: TOOL_DOCS.add_link.description,
+      inputSchema: {
+        path: pathArg,
+        kind: z.enum(['cable', 'circuit', 'logical']).describe('Link kind'),
+        a: endpointArg('a'),
+        b: endpointArg('b'),
+        attributes: z
+          .object({})
+          .passthrough()
+          .optional()
+          .describe('Extra top-level link fields: label, type, bandwidth, cid, provider, …'),
+      },
+    },
+    ({ path, kind, a, b, attributes }) =>
+      applyEdit(path, (t) =>
+        addLinkText(t, {
+          kind,
+          a: a as Record<string, unknown>,
+          b: b as Record<string, unknown>,
+          attributes: attributes as Record<string, unknown> | undefined,
+        }),
+      ),
+  );
+
+  server.registerTool(
+    'remove_link',
+    {
+      title: TOOL_DOCS.remove_link.title,
+      description: TOOL_DOCS.remove_link.description,
+      inputSchema: {
+        path: pathArg,
+        kind: z.enum(['cable', 'circuit', 'logical']).describe('Link kind'),
+        a_name: z.string().describe('Node name of one endpoint'),
+        b_name: z.string().describe('Node name of the other endpoint'),
+        match_index: z
+          .number()
+          .optional()
+          .describe('Disambiguates parallel links (indexes come from the error message)'),
+      },
+    },
+    ({ path, ...params }) => applyEdit(path, (t) => removeLinkText(t, params)),
+  );
+
+  server.registerTool(
+    'set_position',
+    {
+      title: TOOL_DOCS.set_position.title,
+      description: TOOL_DOCS.set_position.description,
+      inputSchema: {
+        path: pathArg,
+        name: z.string().describe('Device / provider network / network segment name'),
+        x: z.number().describe('Canvas x'),
+        y: z.number().describe('Canvas y'),
+      },
+    },
+    ({ path, name, x, y }) => applyEdit(path, (t) => setPositionText(t, name, x, y)),
   );
 
   return server;
