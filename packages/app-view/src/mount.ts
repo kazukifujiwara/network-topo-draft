@@ -29,6 +29,8 @@ export interface AppView {
    * view state (widgets have no saved viewport — every update re-fits).
    */
   update(text: string, settings?: ViewSettings): void;
+  /** Re-fit the viewport to the content (container size changed, #32). */
+  refit(): void;
   /** Surface a bridge-level problem in the canvas's own error bar (D11 UI). */
   showError(message: string): void;
 }
@@ -87,6 +89,9 @@ export function mountAppView(root: HTMLElement, options: MountOptions = {}): App
       };
       app.handleMessage(message);
       app.fit(); // widgets have no saved viewport — always show everything
+    },
+    refit(): void {
+      app.fit();
     },
     showError(message: string): void {
       app.dom.errorBar.style.display = 'flex';

@@ -75,17 +75,86 @@ export interface ToolResultSource {
     event: 'toolresult',
     handler: (params: { structuredContent?: Record<string, unknown> }) => void,
   ): void;
+  addEventListener(
+    event: 'hostcontextchanged',
+    handler: (params: HostContextPatch) => void,
+  ): void;
+  /**
+   * ui/resource-teardown handler slot (the App class resolves the request
+   * after the callback). Typed loosely — the real setter takes
+   * (params, extra) and our zero-arg cleanup is call-compatible.
+   */
+  onteardown?: unknown;
 }
 
 /**
- * Mount the canvas and subscribe it to tool results. Handlers must be
+ * The host-context fields phase 1 reacts to (#32). Theme is DELIBERATELY
+ * ignored: the canvas ships the fixed dark palette (v0.4.0 decision) — a
+ * light theme is a demand-driven follow-up, and an unknown theme value
+ * must never break the widget.
+ */
+export interface HostContextPatch {
+  theme?: 'light' | 'dark';
+  displayMode?: 'inline' | 'fullscreen' | 'pip';
+  [key: string]: unknown;
+}
+
+export interface BridgeLifecycle {
+  /** Container resized (window resize inside the iframe) → debounced refit. */
+  handleResize(): void;
+  /** ui/notifications/host-context-changed → refit; theme ignored (above). */
+  handleHostContext(patch: HostContextPatch): void;
+  /** ui/resource-teardown: stop the timers/listeners the bridge owns. */
+  teardown(): void;
+}
+
+type WindowSlice = Pick<Window, 'addEventListener' | 'removeEventListener'>;
+
+const REFIT_DEBOUNCE_MS = 100;
+
+/** Lifecycle handlers, separated from the wiring so tests drive them directly. */
+export function createLifecycle(view: Pick<AppView, 'refit'>, win: WindowSlice): BridgeLifecycle {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const refitSoon = (): void => {
+    clearTimeout(timer);
+    timer = setTimeout(() => view.refit(), REFIT_DEBOUNCE_MS);
+  };
+  const lifecycle: BridgeLifecycle = {
+    handleResize: refitSoon,
+    handleHostContext: (patch) => {
+      // any layout-affecting change (display mode, safe area, size hints)
+      // gets the same answer: re-fit the diagram. Theme: see HostContextPatch.
+      if (patch.theme !== undefined && Object.keys(patch).length === 1) return;
+      refitSoon();
+    },
+    teardown: () => {
+      clearTimeout(timer);
+      win.removeEventListener('resize', lifecycle.handleResize);
+    },
+  };
+  win.addEventListener('resize', lifecycle.handleResize);
+  return lifecycle;
+}
+
+export interface WiredBridge {
+  view: AppView;
+  lifecycle: BridgeLifecycle;
+}
+
+/**
+ * Mount the canvas and subscribe it to the host. Handlers must be
  * registered before `App.connect()` — main.ts calls this first, then
  * connects.
  */
-export function wireBridge(root: HTMLElement, source: ToolResultSource): AppView {
+export function wireBridge(
+  root: HTMLElement,
+  source: ToolResultSource,
+  win: WindowSlice = window,
+): WiredBridge {
   const view = mountAppView(root, {
     onMessage: (message) => void classifyOutbound(message), // dispositions above
   });
+  const lifecycle = createLifecycle(view, win);
   source.addEventListener('toolresult', (params) => {
     try {
       const { text, settings } = toolResultToUpdate(params.structuredContent);
@@ -94,5 +163,10 @@ export function wireBridge(root: HTMLElement, source: ToolResultSource): AppView
       view.showError((e as Error).message);
     }
   });
-  return view;
+  source.addEventListener('hostcontextchanged', (params) => lifecycle.handleHostContext(params));
+  source.onteardown = () => {
+    lifecycle.teardown();
+    return {}; // the iframe is unmounted right after — DOM state dies with it
+  };
+  return { view, lifecycle };
 }

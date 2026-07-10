@@ -27,6 +27,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (or on non-Apps hosts) behavior is unchanged from v0.5.0. A dev-only
   Streamable-HTTP harness (`packages/mcp/dev/serve-http.mjs`) serves the
   same server to the ext-apps basic-host for verification.
+- Host-context handling (#32): the widget re-fits on container resizes
+  (debounced) and display-mode changes (`inline` is the target;
+  `fullscreen` / `pip` do not break), ignores pure theme changes by
+  design (the canvas ships the fixed dark palette), and cleans up its
+  timers/listeners on `ui/resource-teardown`.
 - Capability gate (#31): the apps enrichment is decided PER CLIENT — only
   hosts that declared `capabilities.extensions
   ["io.modelcontextprotocol/ui"]` at initialize receive
