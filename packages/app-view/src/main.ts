@@ -22,7 +22,7 @@ const root = document.getElementById('root');
 if (!root) throw new Error('app-view root element missing');
 
 const app = new App({ name: 'topodraft', version: VERSION });
-window.topodraftAppView = wireBridge(root, app);
+window.topodraftAppView = wireBridge(root, app).view;
 app.connect().catch((e: Error) => {
   window.topodraftAppView.showError(`host connection failed: ${e.message}`);
 });

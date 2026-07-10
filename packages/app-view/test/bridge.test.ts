@@ -2,21 +2,28 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { classifyOutbound, toolResultToUpdate, wireBridge } from '../src/bridge';
-import type { ToolResultSource } from '../src/bridge';
+import { classifyOutbound, createLifecycle, toolResultToUpdate, wireBridge } from '../src/bridge';
+import type { HostContextPatch, ToolResultSource } from '../src/bridge';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const readFixture = (p: string): string =>
   readFileSync(resolve(HERE, '../../../fixtures', p), 'utf8');
 
-/** Fake slice of the ext-apps App: capture the handler, emit on demand. */
+/** Fake slice of the ext-apps App: capture handlers per event, emit on demand. */
 function fakeApp(): ToolResultSource & {
   emit(structuredContent?: Record<string, unknown>): void;
+  emitHostContext(patch: HostContextPatch): void;
 } {
-  const handlers: ((p: { structuredContent?: Record<string, unknown> }) => void)[] = [];
+  const byEvent = new Map<string, ((p: never) => void)[]>();
+  const fire = (event: string, params: unknown): void =>
+    (byEvent.get(event) ?? []).forEach((h) => (h as (p: unknown) => void)(params));
   return {
-    addEventListener: (_event, handler) => void handlers.push(handler),
-    emit: (structuredContent) => handlers.forEach((h) => h({ structuredContent })),
+    addEventListener: (event: string, handler: (p: never) => void) => {
+      byEvent.set(event, [...(byEvent.get(event) ?? []), handler]);
+    },
+    onteardown: undefined,
+    emit: (structuredContent) => fire('toolresult', { structuredContent }),
+    emitHostContext: (patch) => fire('hostcontextchanged', patch),
   };
 }
 
@@ -47,6 +54,65 @@ describe('classifyOutbound (phase-1 read-only policy)', () => {
     expect(classifyOutbound({ type: 'save-image', format: 'svg', text: '<svg/>' })).toBe(
       'dropped-unsupported',
     );
+  });
+});
+
+describe('host context lifecycle (#32)', () => {
+  function fakeWindow(): Pick<Window, 'addEventListener' | 'removeEventListener'> & {
+    listeners: Map<string, unknown[]>;
+  } {
+    const listeners = new Map<string, unknown[]>();
+    return {
+      listeners,
+      addEventListener: ((type: string, l: unknown) =>
+        listeners.set(type, [...(listeners.get(type) ?? []), l])) as Window['addEventListener'],
+      removeEventListener: ((type: string, l: unknown) =>
+        listeners.set(type, (listeners.get(type) ?? []).filter((x) => x !== l))) as Window['removeEventListener'],
+    };
+  }
+
+  it('debounces resize bursts into ONE refit', async () => {
+    let refits = 0;
+    const win = fakeWindow();
+    const lc = createLifecycle({ refit: () => void refits++ }, win);
+    lc.handleResize();
+    lc.handleResize();
+    lc.handleResize();
+    await new Promise((r) => setTimeout(r, 150));
+    expect(refits).toBe(1);
+    expect(win.listeners.get('resize')).toHaveLength(1); // registered on mount
+  });
+
+  it('display-mode changes refit; a pure theme change is deliberately ignored (dark palette stays)', async () => {
+    let refits = 0;
+    const lc = createLifecycle({ refit: () => void refits++ }, fakeWindow());
+    lc.handleHostContext({ theme: 'light' }); // ignored — v0.4.0 palette decision
+    await new Promise((r) => setTimeout(r, 150));
+    expect(refits).toBe(0);
+    lc.handleHostContext({ displayMode: 'fullscreen' });
+    lc.handleHostContext({ theme: 'light', displayMode: 'pip' }); // mixed → layout change
+    await new Promise((r) => setTimeout(r, 150));
+    expect(refits).toBe(1); // still debounced
+  });
+
+  it('teardown clears the pending refit and unhooks the resize listener', async () => {
+    let refits = 0;
+    const win = fakeWindow();
+    const lc = createLifecycle({ refit: () => void refits++ }, win);
+    lc.handleResize();
+    lc.teardown();
+    await new Promise((r) => setTimeout(r, 150));
+    expect(refits).toBe(0);
+    expect(win.listeners.get('resize')).toHaveLength(0);
+  });
+
+  it('wireBridge installs the teardown hook on the App slot', () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    const app = fakeApp();
+    wireBridge(root, app);
+    expect(typeof app.onteardown).toBe('function');
+    expect((app.onteardown as () => Record<string, never>)()).toEqual({});
   });
 });
 
