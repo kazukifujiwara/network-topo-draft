@@ -163,6 +163,10 @@ AI agents get first-class tools over
 diagnostics in every response (`add_device`, `add_link`, `update_device`,
 …), and *see* the diagram (`render_svg` — the same SVG the editor
 exports). Editing a file that is open in VSCode updates the canvas live.
+On [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview)-capable
+hosts, `render_svg` goes further: the result renders as an **interactive
+inline canvas** (pan/zoom, physical ⇄ logical views) in the conversation
+itself — every other host keeps receiving the plain SVG.
 
 ```sh
 claude mcp add topodraft -- npx -y topodraft-mcp   # Claude Code; any MCP client works

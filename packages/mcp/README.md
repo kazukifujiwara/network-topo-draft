@@ -21,6 +21,21 @@ and returns the post-edit diagnostics, so mistakes surface immediately.
 Start the server with `--read-only` to disable the edit tools entirely —
 they are not even listed.
 
+## Interactive canvas (MCP Apps)
+
+On hosts that support [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview)
+(Claude, Claude Desktop, and other clients that declare the
+`io.modelcontextprotocol/ui` capability), `render_svg` renders an
+**interactive TopoDraft canvas inline** in the conversation — pan/zoom,
+physical ⇄ logical view toggles, VRF compartments — instead of a static
+image. The widget is the same renderer the VSCode extension uses,
+shipped as one self-contained document (nothing is loaded remotely).
+
+- Read-only in this phase: the canvas is for exploring the render;
+  edits still go through the edit tools (or the file itself).
+- On every other host the tool returns the standalone SVG text,
+  byte-identical to previous releases — no configuration needed either way.
+
 Local file access only. No network, no telemetry, zero runtime dependencies
 (one self-contained bundle).
 
