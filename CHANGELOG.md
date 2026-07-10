@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.6.0] — 2026-07-11
+
+Ships as `topodraft-mcp@0.2.0` on npm. The VSCode extension is unchanged
+in this release (stays 0.5.0 — no Marketplace update).
+
 ### Added
 
 - (internal) `packages/app-view` (#28): the webview-ui canvas bundled as

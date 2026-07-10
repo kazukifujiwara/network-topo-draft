@@ -4,8 +4,10 @@
 
 [![CI](https://github.com/kazukifujiwara/network-topo-draft/actions/workflows/ci.yml/badge.svg)](https://github.com/kazukifujiwara/network-topo-draft/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![VS Marketplace](https://img.shields.io/github/v/release/kazukifujiwara/network-topo-draft?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=kazukifujiwara.topodraft)
+[![Release](https://img.shields.io/github/v/release/kazukifujiwara/network-topo-draft?label=release)](https://github.com/kazukifujiwara/network-topo-draft/releases)
+[![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-install-blue)](https://marketplace.visualstudio.com/items?itemName=kazukifujiwara.topodraft)
 [![npm](https://img.shields.io/npm/v/topodraft-cli?label=topodraft-cli)](https://www.npmjs.com/package/topodraft-cli)
+[![npm](https://img.shields.io/npm/v/topodraft-mcp?label=topodraft-mcp)](https://www.npmjs.com/package/topodraft-mcp)
 
 <img src="assets/logo.svg" width="112" align="right" alt="TopoDraft のロゴ: 4つのノードを2本の実線(物理リンク)と1本の点線(論理リンク)でつないで N の字を描いたネットワークトポロジ">
 
