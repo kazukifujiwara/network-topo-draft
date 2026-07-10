@@ -27,6 +27,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (or on non-Apps hosts) behavior is unchanged from v0.5.0. A dev-only
   Streamable-HTTP harness (`packages/mcp/dev/serve-http.mjs`) serves the
   same server to the ext-apps basic-host for verification.
+- (internal) Milestone test surface (#33): a fixture sweep renders every
+  repo fixture in the widget in both views with node/link counts derived
+  from core itself, and a contract-loop test drives the REAL server's
+  `structuredContent` through the REAL bridge into a rendered scene —
+  closing the #29 ⇄ #30 payload contract end to end.
 - Host-context handling (#32): the widget re-fits on container resizes
   (debounced) and display-mode changes (`inline` is the target;
   `fullscreen` / `pip` do not break), ignores pure theme changes by
