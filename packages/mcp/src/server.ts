@@ -13,6 +13,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import {
   RESOURCE_MIME_TYPE,
+  getUiCapability,
   registerAppResource,
   registerAppTool,
 } from '@modelcontextprotocol/ext-apps/server';
@@ -167,6 +168,17 @@ export function createServer(io: ServerIo, version: string, options: ServerOptio
     underlay?: boolean;
     background?: 'canvas' | 'transparent';
   };
+  /**
+   * Apps enrichment is gated PER CLIENT (#31): the host must have declared
+   * capabilities.extensions["io.modelcontextprotocol/ui"] at initialize.
+   * Non-capable hosts get results byte-identical to v0.5.0. (The tools/list
+   * `_meta.ui` and the ui:// resource stay statically registered — metadata
+   * is ignored by hosts that do not know the extension, which is exactly
+   * the forward-compatibility the spec designs for.)
+   */
+  const clientSupportsApps = (): boolean =>
+    getUiCapability(server.server.getClientCapabilities()) !== undefined;
+
   const renderHandler =
     (withWidget: boolean) =>
     ({ path, view, show_global, underlay, background }: RenderArgs): CallToolResult => {
@@ -178,7 +190,7 @@ export function createServer(io: ServerIo, version: string, options: ServerOptio
           background,
         });
         const result = text(rendered.svg);
-        if (withWidget) {
+        if (withWidget && clientSupportsApps()) {
           // the widget's contract (app-view bridge.ts RenderPayload):
           // canonical topology + the view toggles this render was asked for
           result.structuredContent = {
