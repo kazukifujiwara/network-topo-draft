@@ -19,6 +19,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   same `update` message the VSCode webview receives; canvas edits are
   dropped behind a marked phase-2 seam (#25), authoring chrome is hidden,
   and bridge errors surface in the canvas's own error bar.
+- MCP Apps server wiring (#30): `render_svg` now declares the interactive
+  canvas (`_meta.ui.resourceUri` → `ui://topodraft/canvas.html`,
+  registered as a `text/html;profile=mcp-app` resource) and delivers the
+  canonical topology + view options via `structuredContent`; the SVG text
+  stays in `content` as the model-visible fallback. Without the widget
+  (or on non-Apps hosts) behavior is unchanged from v0.5.0. A dev-only
+  Streamable-HTTP harness (`packages/mcp/dev/serve-http.mjs`) serves the
+  same server to the ext-apps basic-host for verification.
 
 ## [0.5.0] — 2026-07-10
 

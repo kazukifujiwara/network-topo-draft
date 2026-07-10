@@ -8,6 +8,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/dist-e2e/**',
       '**/dist-web/**',
+      '**/.build/**',
       '**/.vscode-test/**',
       '**/.vscode-test-web/**',
       'reference/**',

@@ -11,6 +11,11 @@
  */
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import {
+  RESOURCE_MIME_TYPE,
+  registerAppResource,
+  registerAppTool,
+} from '@modelcontextprotocol/ext-apps/server';
 import { z } from 'zod';
 import { TopoParseError } from '@topodraft/core';
 import {
@@ -22,7 +27,7 @@ import {
   readTopologyText,
   removeDeviceText,
   removeLinkText,
-  renderSvgText,
+  renderStructured,
   setPositionText,
   updateDeviceText,
   validateTopologyText,
@@ -39,7 +44,17 @@ export interface ServerIo {
 export interface ServerOptions {
   /** Register only the read/render tools (edit tools are not listed). */
   readOnly?: boolean;
+  /**
+   * The self-contained widget document (packages/app-view dist/app.html).
+   * When present, render_svg declares it as an MCP Apps UI resource
+   * (#30) and delivers the topology via structuredContent; without it the
+   * server behaves exactly like v0.5.0 (plain SVG text only).
+   */
+  appHtml?: string;
 }
+
+/** ui:// address of the interactive canvas (the tool's _meta.ui.resourceUri). */
+export const CANVAS_RESOURCE_URI = 'ui://topodraft/canvas.html';
 
 const text = (s: string): CallToolResult => ({ content: [{ type: 'text', text: s }] });
 const errorText = (s: string): CallToolResult => ({
@@ -125,35 +140,55 @@ export function createServer(io: ServerIo, version: string, options: ServerOptio
     },
   );
 
-  server.registerTool(
-    'render_svg',
-    {
-      title: TOOL_DOCS.render_svg.title,
-      description: TOOL_DOCS.render_svg.description,
-      inputSchema: {
-        path: z.string().describe(TOOL_DOCS.render_svg.pathDescription),
-        view: z
-          .enum(['physical', 'logical'])
-          .optional()
-          .describe(TOOL_DOCS.render_svg.viewDescription),
-        show_global: z.boolean().optional().describe(TOOL_DOCS.render_svg.showGlobalDescription),
-        underlay: z.boolean().optional().describe(TOOL_DOCS.render_svg.underlayDescription),
-        background: z
-          .enum(['canvas', 'transparent'])
-          .optional()
-          .describe(TOOL_DOCS.render_svg.backgroundDescription),
-      },
+  /* render_svg — one tool for both worlds (#30 decision): MCP Apps hosts
+     get the interactive canvas via _meta.ui + structuredContent, everyone
+     else keeps the plain SVG text that has been the contract since v0.5.0. */
+  const renderConfig = {
+    title: TOOL_DOCS.render_svg.title,
+    description: TOOL_DOCS.render_svg.description,
+    inputSchema: {
+      path: z.string().describe(TOOL_DOCS.render_svg.pathDescription),
+      view: z
+        .enum(['physical', 'logical'])
+        .optional()
+        .describe(TOOL_DOCS.render_svg.viewDescription),
+      show_global: z.boolean().optional().describe(TOOL_DOCS.render_svg.showGlobalDescription),
+      underlay: z.boolean().optional().describe(TOOL_DOCS.render_svg.underlayDescription),
+      background: z
+        .enum(['canvas', 'transparent'])
+        .optional()
+        .describe(TOOL_DOCS.render_svg.backgroundDescription),
     },
-    ({ path, view, show_global, underlay, background }) => {
+  };
+  type RenderArgs = {
+    path: string;
+    view?: 'physical' | 'logical';
+    show_global?: boolean;
+    underlay?: boolean;
+    background?: 'canvas' | 'transparent';
+  };
+  const renderHandler =
+    (withWidget: boolean) =>
+    ({ path, view, show_global, underlay, background }: RenderArgs): CallToolResult => {
       try {
-        return text(
-          renderSvgText(readTopoFile(path), {
-            view,
-            showGlobal: show_global,
-            underlay,
-            background,
-          }),
-        );
+        const rendered = renderStructured(readTopoFile(path), {
+          view,
+          showGlobal: show_global,
+          underlay,
+          background,
+        });
+        const result = text(rendered.svg);
+        if (withWidget) {
+          // the widget's contract (app-view bridge.ts RenderPayload):
+          // canonical topology + the view toggles this render was asked for
+          result.structuredContent = {
+            topology: rendered.topology as unknown as Record<string, unknown>,
+            view: view ?? 'physical',
+            show_global: show_global !== false,
+            underlay: underlay !== false,
+          };
+        }
+        return result;
       } catch (e) {
         if (e instanceof TopoParseError) {
           return errorText(
@@ -162,8 +197,31 @@ export function createServer(io: ServerIo, version: string, options: ServerOptio
         }
         return errorText(`${path}: ${(e as Error).message}`);
       }
-    },
-  );
+    };
+
+  if (options.appHtml === undefined) {
+    server.registerTool('render_svg', renderConfig, renderHandler(false));
+  } else {
+    const appHtml = options.appHtml;
+    registerAppTool(server, 'render_svg', {
+      ...renderConfig,
+      _meta: { ui: { resourceUri: CANVAS_RESOURCE_URI } },
+    }, renderHandler(true));
+    registerAppResource(
+      server,
+      'TopoDraft Canvas',
+      CANVAS_RESOURCE_URI,
+      {
+        description:
+          'Interactive TopoDraft canvas rendered inline by MCP Apps hosts: pan/zoom, ' +
+          'physical and logical views. Read-only; fully self-contained (no remote loads).',
+        _meta: { ui: { prefersBorder: true } },
+      },
+      (uri) => ({
+        contents: [{ uri: uri.toString(), mimeType: RESOURCE_MIME_TYPE, text: appHtml }],
+      }),
+    );
+  }
 
   if (options.readOnly) return server;
 

@@ -141,6 +141,68 @@ describe('tool calls', () => {
   });
 });
 
+describe('MCP Apps wiring (#30): UI resource + render tool enrichment', () => {
+  const FAKE_HTML = '<!DOCTYPE html><html><body><div id="root"></div></body></html>';
+  let appsClient: Client;
+
+  beforeAll(async () => {
+    const server = createServer(IO, '0.0.0-test', { appHtml: FAKE_HTML });
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await server.connect(st);
+    appsClient = new Client({ name: 'apps-client', version: '0.0.0' });
+    await appsClient.connect(ct);
+  });
+
+  it('render_svg declares the widget via _meta.ui.resourceUri', async () => {
+    const { tools } = await appsClient.listTools();
+    const render = tools.find((t) => t.name === 'render_svg');
+    expect((render?._meta as { ui?: { resourceUri?: string } })?.ui?.resourceUri).toBe(
+      'ui://topodraft/canvas.html',
+    );
+  });
+
+  it('the canvas resource reads back as text/html;profile=mcp-app', async () => {
+    const r = await appsClient.readResource({ uri: 'ui://topodraft/canvas.html' });
+    const item = r.contents[0] as { mimeType?: string; text?: string };
+    expect(item.mimeType).toBe('text/html;profile=mcp-app');
+    expect(item.text).toContain('<div id="root"');
+  });
+
+  it('render_svg delivers the widget contract in structuredContent, SVG stays in content', async () => {
+    const r = await appsClient.callTool({
+      name: 'render_svg',
+      arguments: { path: 'site-cloud.topo.json', view: 'logical' },
+    });
+    expect(r.isError).toBeFalsy();
+    expect(firstText(r).startsWith('<svg ')).toBe(true); // fallback untouched
+    const sc = r.structuredContent as {
+      topology?: { version?: number };
+      view?: string;
+      show_global?: boolean;
+      underlay?: boolean;
+    };
+    expect(sc?.topology?.version).toBe(1);
+    expect(sc?.view).toBe('logical');
+    expect(sc?.show_global).toBe(true);
+    expect(sc?.underlay).toBe(true);
+  });
+
+  it('without appHtml the server behaves exactly like v0.5.0', async () => {
+    // `client` from the outer scope was built WITHOUT appHtml
+    const { tools } = await client.listTools();
+    const render = tools.find((t) => t.name === 'render_svg');
+    expect(render?._meta).toBeUndefined();
+    const r = await client.callTool({
+      name: 'render_svg',
+      arguments: { path: 'site-cloud.topo.json', view: 'logical' },
+    });
+    expect(r.structuredContent).toBeUndefined();
+    expect(firstText(r).startsWith('<svg ')).toBe(true);
+    const resources = await client.listResources().catch(() => ({ resources: [] }));
+    expect(resources.resources).toHaveLength(0);
+  });
+});
+
 describe('edit tools (#12): read → mutate → write back → diagnostics', () => {
   it('add_device writes the file and reports post-edit validation', async () => {
     const r = await client.callTool({

@@ -198,6 +198,22 @@ export function renderSvgText(text: string, options: SvgOptions = {}): string {
   return genSvg(parse(text), options);
 }
 
+export interface StructuredRender {
+  svg: string;
+  /** Canonical topology — the widget's structuredContent payload (#30). */
+  topology: Topology;
+}
+
+/**
+ * SVG + canonical topology in one parse (#30): the MCP Apps variant of the
+ * render tool sends the topology to the widget via structuredContent while
+ * keeping the SVG as the fallback / model-visible content.
+ */
+export function renderStructured(text: string, options: SvgOptions = {}): StructuredRender {
+  const t = parse(text);
+  return { svg: genSvg(t, options), topology: toCanonical(t) };
+}
+
 /* ---------- edit tools (#12): parse → mutate → deterministic serialize ---------- */
 
 /**

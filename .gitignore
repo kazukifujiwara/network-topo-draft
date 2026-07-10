@@ -17,3 +17,4 @@ packages/cli/LICENSE
 packages/cli/NOTICE
 packages/mcp/LICENSE
 packages/mcp/NOTICE
+packages/mcp/dev/.build/
