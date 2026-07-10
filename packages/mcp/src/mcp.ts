@@ -6,6 +6,9 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createServer } from './server';
+// esbuild inlines the widget document as text (see build.mjs loader) — the
+// published bundle stays a single self-contained file
+import APP_HTML from '../../app-view/dist/app.html';
 
 declare const __MCP_VERSION__: string | undefined;
 const VERSION = typeof __MCP_VERSION__ === 'string' ? __MCP_VERSION__ : 'dev';
@@ -18,7 +21,7 @@ const server = createServer(
   VERSION,
   // MCP clients gate every call behind user approval already; --read-only
   // removes the edit tools entirely for deployments that want a hard gate
-  { readOnly: process.argv.includes('--read-only') },
+  { readOnly: process.argv.includes('--read-only'), appHtml: APP_HTML },
 );
 server.connect(new StdioServerTransport()).catch((e: Error) => {
   // stdout is the protocol channel — diagnostics go to stderr only
