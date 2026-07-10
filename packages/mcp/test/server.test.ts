@@ -141,16 +141,28 @@ describe('tool calls', () => {
   });
 });
 
-describe('MCP Apps wiring (#30): UI resource + render tool enrichment', () => {
+describe('MCP Apps wiring (#30/#31): UI resource, enrichment, capability gate', () => {
   const FAKE_HTML = '<!DOCTYPE html><html><body><div id="root"></div></body></html>';
+  /** Declares capabilities.extensions["io.modelcontextprotocol/ui"] (#31). */
   let appsClient: Client;
+  /** Same appHtml server, but the client never declared the capability. */
+  let plainClient: Client;
 
   beforeAll(async () => {
     const server = createServer(IO, '0.0.0-test', { appHtml: FAKE_HTML });
     const [ct, st] = InMemoryTransport.createLinkedPair();
     await server.connect(st);
-    appsClient = new Client({ name: 'apps-client', version: '0.0.0' });
+    appsClient = new Client(
+      { name: 'apps-client', version: '0.0.0' },
+      { capabilities: { extensions: { 'io.modelcontextprotocol/ui': {} } } },
+    );
     await appsClient.connect(ct);
+
+    const server2 = createServer(IO, '0.0.0-test', { appHtml: FAKE_HTML });
+    const [ct2, st2] = InMemoryTransport.createLinkedPair();
+    await server2.connect(st2);
+    plainClient = new Client({ name: 'plain-client', version: '0.0.0' });
+    await plainClient.connect(ct2);
   });
 
   it('render_svg declares the widget via _meta.ui.resourceUri', async () => {
@@ -185,6 +197,24 @@ describe('MCP Apps wiring (#30): UI resource + render tool enrichment', () => {
     expect(sc?.view).toBe('logical');
     expect(sc?.show_global).toBe(true);
     expect(sc?.underlay).toBe(true);
+  });
+
+  it('a client WITHOUT the ui capability gets results byte-identical to v0.5.0 (#31)', async () => {
+    const r = await plainClient.callTool({
+      name: 'render_svg',
+      arguments: { path: 'site-cloud.topo.json', view: 'logical' },
+    });
+    expect(r.structuredContent).toBeUndefined();
+    // golden-comparable: exactly the SVG the v0.5.0 server returned
+    expect(firstText(r)).toBe(fixture('expected/render/site-cloud.logical.svg'));
+  });
+
+  it('the static _meta.ui listing stays for everyone — metadata is ignorable by design', async () => {
+    const { tools } = await plainClient.listTools();
+    const render = tools.find((t) => t.name === 'render_svg');
+    expect((render?._meta as { ui?: { resourceUri?: string } })?.ui?.resourceUri).toBe(
+      'ui://topodraft/canvas.html',
+    );
   });
 
   it('without appHtml the server behaves exactly like v0.5.0', async () => {
