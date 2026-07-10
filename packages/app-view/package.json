@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.7.4",
     "@topodraft/core": "0.0.1",
     "@topodraft/protocol": "0.0.1",
     "@topodraft/webview-ui": "0.0.1"
