@@ -9,12 +9,16 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
+const version = JSON.parse(readFileSync(resolve(here, 'package.json'), 'utf8')).version;
 mkdirSync(resolve(here, 'dist'), { recursive: true });
 
 await build({
   entryPoints: [resolve(here, 'src/main.ts')],
   bundle: true,
   format: 'iife',
+  // the document is re-sent on every resources/read — keep it small
+  minify: true,
+  define: { __APP_VIEW_VERSION__: JSON.stringify(version) },
   outfile: resolve(here, 'dist/app.js'),
   logLevel: 'warning',
 });

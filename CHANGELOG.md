@@ -13,6 +13,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   MCP Apps support (#26). Renders from a plain DOM root through the same
   `AppHost` seam the VSCode webview uses; the build fails on any remote
   reference.
+- (internal) MCP Apps bridge (#29): the widget now speaks the MCP Apps
+  dialect via the ext-apps `App` client — `ui/notifications/tool-result`
+  `structuredContent` (canonical topology + view options) becomes the
+  same `update` message the VSCode webview receives; canvas edits are
+  dropped behind a marked phase-2 seam (#25), authoring chrome is hidden,
+  and bridge errors surface in the canvas's own error bar.
 
 ## [0.5.0] — 2026-07-10
 

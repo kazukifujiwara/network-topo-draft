@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TopoDraft</title>
 <style>/*__CSS__*/</style>
+<style>
+/* MCP Apps widget, read-only phase 1 (#29): hide the authoring chrome.
+   The canvas stays interactive (pan/zoom, view toggles, fit) — file
+   affordances are meaningless without a workspace behind them. */
+#palette, #panel, #panelStrip, #newWrap, #exportWrap, #btnAgentGuide { display: none !important; }
+</style>
 </head>
 <body>
 <div id="root" data-locale="en"></div>
