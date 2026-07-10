@@ -27,6 +27,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (or on non-Apps hosts) behavior is unchanged from v0.5.0. A dev-only
   Streamable-HTTP harness (`packages/mcp/dev/serve-http.mjs`) serves the
   same server to the ext-apps basic-host for verification.
+- Docs & ADR (#34): D15 records the MCP Apps adoption (spec 2026-01-26,
+  ext-apps 1.7.4, the AppHost reuse, the read-only phase-1 / edit phase-2
+  split, and the basic-host correctness bar); the topodraft-mcp README
+  gains the "Interactive canvas (MCP Apps)" section; the repo READMEs
+  (en/ja) describe the inline canvas on Apps-capable hosts.
 - (internal) Milestone test surface (#33): a fixture sweep renders every
   repo fixture in the widget in both views with node/link counts derived
   from core itself, and a contract-loop test drives the REAL server's
