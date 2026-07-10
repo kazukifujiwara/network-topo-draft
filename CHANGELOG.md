@@ -27,6 +27,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (or on non-Apps hosts) behavior is unchanged from v0.5.0. A dev-only
   Streamable-HTTP harness (`packages/mcp/dev/serve-http.mjs`) serves the
   same server to the ext-apps basic-host for verification.
+- Capability gate (#31): the apps enrichment is decided PER CLIENT — only
+  hosts that declared `capabilities.extensions
+  ["io.modelcontextprotocol/ui"]` at initialize receive
+  `structuredContent`; every other client gets render results
+  byte-identical to v0.5.0 (golden-verified). The `_meta.ui` listing and
+  the `ui://` resource stay statically registered (ignorable metadata by
+  spec design).
 
 ## [0.5.0] — 2026-07-10
 
