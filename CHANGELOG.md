@@ -6,7 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- (internal) `packages/app-view` (#28): the webview-ui canvas bundled as
+  ONE self-contained HTML document — the future `ui://` resource of the
+  MCP Apps support (#26). Renders from a plain DOM root through the same
+  `AppHost` seam the VSCode webview uses; the build fails on any remote
+  reference.
 
 ## [0.5.0] — 2026-07-10
 

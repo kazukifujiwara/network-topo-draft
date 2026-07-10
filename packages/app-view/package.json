@@ -1,0 +1,17 @@
+{
+  "name": "@topodraft/app-view",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "MCP Apps widget for TopoDraft: the webview-ui canvas bundled as one self-contained HTML document (ui:// resource of topodraft-mcp)",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@topodraft/core": "0.0.1",
+    "@topodraft/protocol": "0.0.1",
+    "@topodraft/webview-ui": "0.0.1"
+  }
+}
