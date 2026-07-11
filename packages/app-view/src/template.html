@@ -10,6 +10,13 @@
    The canvas stays interactive (pan/zoom, view toggles, fit) — file
    affordances are meaningless without a workspace behind them. */
 #palette, #panel, #panelStrip, #newWrap, #exportWrap, #btnAgentGuide { display: none !important; }
+/* Inline-widget sizing (#44): the host sizes the iframe from the
+   document's intrinsic height (the ext-apps App reports it via
+   size-changed). The editor's 100%/100vh chain is CIRCULAR inside an
+   iframe — the widget would stay at the host's small initial height.
+   Pin an intrinsic canvas height suited to inline display instead. */
+html, body { height: auto !important; overflow: visible !important; }
+#app { height: 560px !important; }
 </style>
 </head>
 <body>
