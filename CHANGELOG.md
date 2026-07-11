@@ -15,6 +15,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (verified with a stdio tap). The widget now remembers the tool input
   and recovers through the view-side `tools/call` — spec-compliant hosts
   never trigger the extra call.
+- MCP Apps widget inline height (#44): hosts size the inline iframe from
+  the document's intrinsic height, and the editor's `100%`/`100vh` chain
+  is circular inside an iframe — the widget collapsed to a short strip.
+  The widget template now pins an intrinsic canvas height (560px) suited
+  to inline display.
 
 ## [0.6.0] — 2026-07-11
 
