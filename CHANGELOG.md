@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.6.1] — 2026-07-11
+
+Ships as `topodraft-mcp@0.2.1` on npm. The VSCode extension is unchanged
+in this release (stays 0.5.0 — no Marketplace update).
+
 ### Fixed
 
 - MCP Apps widget on hosts with a pre-final Apps implementation (#42):

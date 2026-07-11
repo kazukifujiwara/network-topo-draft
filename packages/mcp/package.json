@@ -1,6 +1,6 @@
 {
   "name": "topodraft-mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "license": "Apache-2.0",
   "description": "MCP server for TopoDraft topology files (*.topo.json) — AI agents read, validate, and learn the file format through Model Context Protocol tools.",
