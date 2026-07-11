@@ -76,15 +76,30 @@ export interface ToolResultSource {
     handler: (params: { structuredContent?: Record<string, unknown> }) => void,
   ): void;
   addEventListener(
+    event: 'toolinput',
+    handler: (params: { arguments?: Record<string, unknown> }) => void,
+  ): void;
+  addEventListener(
     event: 'hostcontextchanged',
     handler: (params: HostContextPatch) => void,
   ): void;
+  /** View-side tools/call — used ONLY by the recovery path (#42). */
+  callServerTool?(params: {
+    name: string;
+    arguments?: Record<string, unknown>;
+  }): Promise<{ structuredContent?: Record<string, unknown>; isError?: boolean }>;
   /**
    * ui/resource-teardown handler slot (the App class resolves the request
    * after the callback). Typed loosely — the real setter takes
    * (params, extra) and our zero-arg cleanup is call-compatible.
    */
   onteardown?: unknown;
+}
+
+/** Does this payload carry a renderable topology? (pure, reused by recovery) */
+export function hasTopology(structuredContent: unknown): boolean {
+  const sc = structuredContent as { topology?: unknown } | null | undefined;
+  return sc !== null && typeof sc === 'object' && typeof sc.topology === 'object' && sc.topology !== null;
 }
 
 /**
@@ -155,13 +170,36 @@ export function wireBridge(
     onMessage: (message) => void classifyOutbound(message), // dispositions above
   });
   const lifecycle = createLifecycle(view, win);
+  // Recovery seam (#42): some hosts (observed: Claude Desktop with the
+  // pre-final protocolVersion 2025-11-25) forward ui/notifications/tool-result
+  // WITHOUT structuredContent even though the server returned it. The host
+  // does send ui/notifications/tool-input, so we remember the arguments and,
+  // when a result arrives empty, re-fetch through the view-side tools/call —
+  // that direct request/response path returns the raw CallToolResult.
+  // Spec-compliant hosts never trigger the extra call.
+  let lastToolInput: Record<string, unknown> | undefined;
+  source.addEventListener('toolinput', (params) => {
+    if (params.arguments !== undefined) lastToolInput = params.arguments;
+  });
   source.addEventListener('toolresult', (params) => {
-    try {
-      const { text, settings } = toolResultToUpdate(params.structuredContent);
-      view.update(text, settings);
-    } catch (e) {
-      view.showError((e as Error).message);
-    }
+    void (async () => {
+      try {
+        let structuredContent: unknown = params.structuredContent;
+        if (!hasTopology(structuredContent) && lastToolInput && source.callServerTool) {
+          const recovered = await source.callServerTool({
+            name: 'render_svg',
+            arguments: lastToolInput,
+          });
+          if (hasTopology(recovered.structuredContent)) {
+            structuredContent = recovered.structuredContent;
+          }
+        }
+        const { text, settings } = toolResultToUpdate(structuredContent);
+        view.update(text, settings);
+      } catch (e) {
+        view.showError((e as Error).message);
+      }
+    })();
   });
   source.addEventListener('hostcontextchanged', (params) => lifecycle.handleHostContext(params));
   source.onteardown = () => {

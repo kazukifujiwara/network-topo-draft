@@ -10,8 +10,11 @@ const readFixture = (p: string): string =>
   readFileSync(resolve(HERE, '../../../fixtures', p), 'utf8');
 
 /** Fake slice of the ext-apps App: capture handlers per event, emit on demand. */
-function fakeApp(): ToolResultSource & {
+function fakeApp(
+  callServerTool?: ToolResultSource['callServerTool'],
+): ToolResultSource & {
   emit(structuredContent?: Record<string, unknown>): void;
+  emitToolInput(args: Record<string, unknown>): void;
   emitHostContext(patch: HostContextPatch): void;
 } {
   const byEvent = new Map<string, ((p: never) => void)[]>();
@@ -21,11 +24,16 @@ function fakeApp(): ToolResultSource & {
     addEventListener: (event: string, handler: (p: never) => void) => {
       byEvent.set(event, [...(byEvent.get(event) ?? []), handler]);
     },
+    callServerTool,
     onteardown: undefined,
     emit: (structuredContent) => fire('toolresult', { structuredContent }),
+    emitToolInput: (args) => fire('toolinput', { arguments: args }),
     emitHostContext: (patch) => fire('hostcontextchanged', patch),
   };
 }
+
+/** Let the bridge's async tool-result handler settle. */
+const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
 
 describe('toolResultToUpdate (pure mapping)', () => {
   it('maps topology + view options; field names mirror the tool inputs', () => {
@@ -150,6 +158,61 @@ describe('wireBridge (tool-result → rendered canvas, jsdom)', () => {
     const bar = root.querySelector('#errorBar') as HTMLElement;
     expect(bar.style.display).toBe('flex');
     expect(root.querySelector('#errorBar .em')?.textContent).toContain('no topology');
+  });
+
+  it('recovers via callServerTool when the host omits structuredContent (#42)', async () => {
+    const topology = JSON.parse(readFixture('v6v7/two-site-wan.topo.json')) as Record<
+      string,
+      unknown
+    >;
+    const calls: { name: string; arguments?: Record<string, unknown> }[] = [];
+    const app = fakeApp(async (params) => {
+      calls.push(params);
+      return { structuredContent: { topology, view: 'physical' } };
+    });
+    const root = mount();
+    wireBridge(root, app);
+    app.emitToolInput({ path: '/tmp/x.topo.json', view: 'physical' });
+    app.emit(undefined); // the Claude Desktop 2025-11-25 behavior
+    await tick();
+    expect(calls).toEqual([
+      { name: 'render_svg', arguments: { path: '/tmp/x.topo.json', view: 'physical' } },
+    ]);
+    expect(root.querySelectorAll('[data-node]')).toHaveLength(6);
+  });
+
+  it('spec-compliant results never trigger the recovery call (#42)', async () => {
+    const calls: unknown[] = [];
+    const app = fakeApp(async (params) => {
+      calls.push(params);
+      return {};
+    });
+    const root = mount();
+    wireBridge(root, app);
+    app.emitToolInput({ path: 'x.topo.json' });
+    app.emit({ topology: JSON.parse(readFixture('v1/canonical.topo.json')) });
+    await tick();
+    expect(calls).toHaveLength(0);
+    expect(root.querySelectorAll('[data-node]').length).toBeGreaterThan(0);
+  });
+
+  it('falls back to the error surface when recovery is impossible (#42)', async () => {
+    // no tool-input seen → nothing to recover with
+    const root1 = mount();
+    const app1 = fakeApp(async () => ({}));
+    wireBridge(root1, app1);
+    app1.emit(undefined);
+    await tick();
+    expect((root1.querySelector('#errorBar') as HTMLElement).style.display).toBe('flex');
+
+    // recovery answered, but still without a topology
+    const root2 = mount();
+    const app2 = fakeApp(async () => ({ structuredContent: { nope: true } }));
+    wireBridge(root2, app2);
+    app2.emitToolInput({ path: 'x.topo.json' });
+    app2.emit(undefined);
+    await tick();
+    expect((root2.querySelector('#errorBar') as HTMLElement).style.display).toBe('flex');
   });
 
   it('canvas edit attempts do not crash the read-only widget', () => {
