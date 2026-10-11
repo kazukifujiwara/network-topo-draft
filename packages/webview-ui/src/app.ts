@@ -25,6 +25,7 @@ import {
   addProviderNetwork,
   alignCol,
   alignRow,
+  allVrfs,
   anchor,
   autoLayout,
   genSvg,
@@ -47,6 +48,7 @@ import {
   renameSite,
   serialize,
   snap,
+  vrfColor,
   vrfRowIndex,
   vrfRowRect,
 } from '@topodraft/core';
@@ -60,7 +62,7 @@ import type {
 import type { EditorApi, InlineRenameTarget, LinkRef } from './api';
 import { linkRefKey, parseLinkRefKey } from './api';
 import type { NodeVM, SceneDom, ViewMode, ViewOptions } from './scene';
-import { buildNodes, displayTopology, renderScene, sceneBounds } from './scene';
+import { buildNodes, displayTopology, renderScene, sceneBounds, sceneViewOf } from './scene';
 import { renderPanel } from './panel';
 import { createContextMenu } from './ctxmenu';
 import { createAgentGuideModal, createConfigContextModal } from './modal';
@@ -72,7 +74,10 @@ export interface PersistedViewState {
   vt: { x: number; y: number; k: number };
   viewMode: ViewMode;
   underlayOn: boolean;
-  showGlobal: boolean;
+  /** Logical view: VRFs hidden by the VRF filter ('' = the global row), #46. */
+  hiddenVrfs?: string[];
+  /** @deprecated pre-#46 Global toggle — `false` restores as a hidden global row. */
+  showGlobal?: boolean;
   gridOn: boolean;
   snapOn?: boolean;
   /** Right properties panel collapsed via its strip button. */
@@ -104,7 +109,7 @@ const DEFAULT_VIEW: PersistedViewState = {
   vt: { x: 60, y: 40, k: 1 },
   viewMode: 'physical',
   underlayOn: true,
-  showGlobal: true,
+  hiddenVrfs: [],
   gridOn: true,
   snapOn: true,
 };
@@ -132,7 +137,9 @@ export function createApp(root: HTMLElement, host: AppHost): App {
     vt: { ...(persisted?.vt ?? DEFAULT_VIEW.vt) },
     viewMode: persisted?.viewMode ?? DEFAULT_VIEW.viewMode,
     underlayOn: persisted?.underlayOn ?? DEFAULT_VIEW.underlayOn,
-    showGlobal: persisted?.showGlobal ?? DEFAULT_VIEW.showGlobal,
+    hiddenVrfs: new Set(
+      persisted?.hiddenVrfs ?? (persisted?.showGlobal === false ? [''] : DEFAULT_VIEW.hiddenVrfs),
+    ),
     gridOn: persisted?.gridOn ?? DEFAULT_VIEW.gridOn,
   };
   let snapOn = persisted?.snapOn ?? true;
@@ -168,7 +175,10 @@ export function createApp(root: HTMLElement, host: AppHost): App {
           <button id="btnLogi">${T('tb_logi')}</button>
         </div>
         <button class="tb-btn" id="btnUnder" title="${T('tt_under')}">${T('tb_under')}</button>
-        <button class="tb-btn" id="btnGlobal" title="${T('tt_global')}">${T('tb_global')}</button>
+        <div id="vrfWrap">
+          <button class="tb-btn" id="btnVrf" title="${T('tt_vrf')}">${T('tb_vrf')} ▾</button>
+          <div id="vrfMenu"></div>
+        </div>
         <div class="tb-sep"></div>
         <button class="tb-btn" id="btnSnap" title="${T('tt_snap')}">${T('tb_snap')}</button>
         <button class="tb-btn" id="btnGrid" title="${T('tt_grid')}">${T('tb_grid')}</button>
@@ -277,7 +287,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
       vt: { ...view.vt },
       viewMode: view.viewMode,
       underlayOn: view.underlayOn,
-      showGlobal: view.showGlobal,
+      hiddenVrfs: [...view.hiddenVrfs],
       gridOn: view.gridOn,
       snapOn,
       panelCollapsed,
@@ -326,9 +336,9 @@ export function createApp(root: HTMLElement, host: AppHost): App {
     $('#btnPhys').classList.toggle('on', view.viewMode === 'physical');
     $('#btnLogi').classList.toggle('on', view.viewMode === 'logical');
     ($('#btnUnder') as HTMLElement).style.display = view.viewMode === 'logical' ? '' : 'none';
-    ($('#btnGlobal') as HTMLElement).style.display = view.viewMode === 'logical' ? '' : 'none';
+    ($('#vrfWrap') as HTMLElement).style.display = view.viewMode === 'logical' ? '' : 'none';
     $('#btnUnder').classList.toggle('active', view.underlayOn);
-    $('#btnGlobal').classList.toggle('active', view.showGlobal);
+    syncVrfFilter();
     $('#btnGrid').classList.toggle('active', view.gridOn);
     $('#btnSnap').classList.toggle('active', snapOn);
   };
@@ -970,7 +980,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
         // anchor from the compartment in the logical view, else the node body
         let p: Point | null = null;
         if (view.viewMode === 'logical' && from.kind === 'device') {
-          const rowIdx = vrfRowIndex(from.rows, drag.fromVrf, view.showGlobal);
+          const rowIdx = vrfRowIndex(from.rows, drag.fromVrf);
           if (rowIdx >= 0) p = logAnchor(vrfRowRect(from.x, from.y, rowIdx), w.x, w.y);
         }
         p =
@@ -1163,10 +1173,60 @@ export function createApp(root: HTMLElement, host: AppHost): App {
     persist();
     render();
   });
-  $('#btnGlobal').addEventListener('click', () => {
-    view.showGlobal = !view.showGlobal;
+  /* VRF filter (#46): an autofilter-style checklist — the global row pinned
+     first, then every VRF in the file. State is the HIDDEN set so VRFs added
+     later (by an agent, say) show up without a click. */
+  const vrfMenu = $('#vrfMenu');
+  const vrfUniverse = (): string[] => (model ? ['', ...allVrfs(model)] : ['']);
+  const setVrfHidden = (names: string[], hidden: boolean): void => {
+    for (const v of names) {
+      if (hidden) view.hiddenVrfs.add(v);
+      else view.hiddenVrfs.delete(v);
+    }
     persist();
     render();
+  };
+  const renderVrfMenu = (): void => {
+    const all = vrfUniverse();
+    vrfMenu.textContent = '';
+    const actions = document.createElement('div');
+    actions.className = 'vf-actions';
+    const mk = (label: string, hidden: boolean): HTMLButtonElement => {
+      const b = document.createElement('button');
+      b.textContent = label;
+      b.addEventListener('click', () => setVrfHidden(all, hidden));
+      return b;
+    };
+    actions.append(mk(T('vf_all'), false), mk(T('vf_none'), true));
+    vrfMenu.appendChild(actions);
+    for (const v of all) {
+      const row = document.createElement('label');
+      row.className = 'vf-row';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = !view.hiddenVrfs.has(v);
+      cb.setAttribute('data-vrf', v);
+      cb.addEventListener('change', () => setVrfHidden([v], !cb.checked));
+      const dot = document.createElement('span');
+      dot.className = 'vrf-dot';
+      dot.style.background = vrfColor(v);
+      row.append(cb, dot, document.createTextNode(v || T('t_global_word')));
+      vrfMenu.appendChild(row);
+    }
+  };
+  const syncVrfFilter = (): void => {
+    const all = vrfUniverse();
+    const shown = all.filter((v) => !view.hiddenVrfs.has(v)).length;
+    const filtering = shown < all.length;
+    $('#btnVrf').textContent = `${T('tb_vrf')}${filtering ? ` ${shown}/${all.length}` : ''} ▾`;
+    $('#btnVrf').classList.toggle('active', filtering);
+    if (vrfMenu.style.display === 'block') renderVrfMenu(); // keep an open list current
+  };
+  $('#btnVrf').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = vrfMenu.style.display !== 'block';
+    if (open) renderVrfMenu();
+    vrfMenu.style.display = open ? 'block' : 'none';
   });
   $('#btnGrid').addEventListener('click', () => {
     view.gridOn = !view.gridOn;
@@ -1258,7 +1318,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
     }
     const svg = genSvg(model as Topology, {
       view: view.viewMode,
-      showGlobal: view.showGlobal,
+      vrfs: sceneViewOf(view, model as Topology).vrfs,
       underlay: view.underlayOn,
     });
     if (format === 'svg') {
@@ -1290,6 +1350,7 @@ export function createApp(root: HTMLElement, host: AppHost): App {
   document.addEventListener('mousedown', (e) => {
     if (!$('#exportWrap').contains(e.target as Node)) exportMenu.style.display = 'none';
     if (!$('#newWrap').contains(e.target as Node)) newMenu.style.display = 'none';
+    if (!$('#vrfWrap').contains(e.target as Node)) vrfMenu.style.display = 'none';
   });
   exportMenu.querySelectorAll<HTMLElement>('[data-export]').forEach((item) =>
     item.addEventListener('click', () => {

@@ -18,7 +18,7 @@ import {
   registerAppTool,
 } from '@modelcontextprotocol/ext-apps/server';
 import { z } from 'zod';
-import { TopoParseError } from '@topodraft/core';
+import { TopoParseError, vrfFilterOf } from '@topodraft/core';
 import {
   TOOL_DOCS,
   TOPO_FILE_RE,
@@ -153,6 +153,7 @@ export function createServer(io: ServerIo, version: string, options: ServerOptio
         .enum(['physical', 'logical'])
         .optional()
         .describe(TOOL_DOCS.render_svg.viewDescription),
+      vrfs: z.array(z.string()).optional().describe(TOOL_DOCS.render_svg.vrfsDescription),
       show_global: z.boolean().optional().describe(TOOL_DOCS.render_svg.showGlobalDescription),
       underlay: z.boolean().optional().describe(TOOL_DOCS.render_svg.underlayDescription),
       background: z
@@ -164,10 +165,13 @@ export function createServer(io: ServerIo, version: string, options: ServerOptio
   type RenderArgs = {
     path: string;
     view?: 'physical' | 'logical';
+    vrfs?: string[];
     show_global?: boolean;
     underlay?: boolean;
     background?: 'canvas' | 'transparent';
   };
+  // the tool speaks "global" for the global routing table; the scene model uses ''
+  const GLOBAL = 'global';
   /**
    * Apps enrichment is gated PER CLIENT (#31): the host must have declared
    * capabilities.extensions["io.modelcontextprotocol/ui"] at initialize.
@@ -181,10 +185,12 @@ export function createServer(io: ServerIo, version: string, options: ServerOptio
 
   const renderHandler =
     (withWidget: boolean) =>
-    ({ path, view, show_global, underlay, background }: RenderArgs): CallToolResult => {
+    ({ path, view, vrfs, show_global, underlay, background }: RenderArgs): CallToolResult => {
       try {
+        const named = vrfs?.map((v) => (v === GLOBAL ? '' : v));
         const rendered = renderStructured(readTopoFile(path), {
           view,
+          vrfs: named,
           showGlobal: show_global,
           underlay,
           background,
@@ -192,12 +198,15 @@ export function createServer(io: ServerIo, version: string, options: ServerOptio
         const result = text(rendered.svg);
         if (withWidget && clientSupportsApps()) {
           // the widget's contract (app-view bridge.ts RenderPayload):
-          // canonical topology + the view toggles this render was asked for
+          // canonical topology + the view toggles this render was asked for;
+          // the VRF filter travels resolved (show_global folded in, #46)
+          const filter = vrfFilterOf(rendered.topology, named, show_global);
           result.structuredContent = {
             topology: rendered.topology as unknown as Record<string, unknown>,
             view: view ?? 'physical',
-            show_global: show_global !== false,
+            show_global: filter ? filter.includes('') : true,
             underlay: underlay !== false,
+            ...(filter ? { vrfs: filter.map((v) => (v === '' ? GLOBAL : v)) } : {}),
           };
         }
         return result;

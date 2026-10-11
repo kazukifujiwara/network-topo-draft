@@ -18,6 +18,7 @@ const fixture = (p: string): string =>
 /** In-memory file system for the server under test (edit tools write back). */
 const FILES: Record<string, string> = {
   'site-cloud.topo.json': fixture('v6v7/site-cloud.topo.json'),
+  'vrf-lite.topo.json': fixture('v1/vrf-lite.topo.json'),
   'broken.topo.json': '{ not json',
   'small.topo.json': JSON.stringify({
     version: 1,
@@ -197,6 +198,36 @@ describe('MCP Apps wiring (#30/#31): UI resource, enrichment, capability gate', 
     expect(sc?.view).toBe('logical');
     expect(sc?.show_global).toBe(true);
     expect(sc?.underlay).toBe(true);
+  });
+
+  it('render_svg vrfs narrows the logical view; the widget gets the resolved filter (#46)', async () => {
+    const r = await appsClient.callTool({
+      name: 'render_svg',
+      arguments: { path: 'vrf-lite.topo.json', view: 'logical', vrfs: ['blue'] },
+    });
+    expect(r.isError).toBeFalsy();
+    expect(firstText(r)).toBe(fixture('expected/render/vrf-lite.logical.blue.svg'));
+    const sc = r.structuredContent as { vrfs?: string[]; show_global?: boolean };
+    expect(sc.vrfs).toEqual(['blue']);
+    expect(sc.show_global).toBe(false); // the global row is not in the list
+
+    // "global" is the tool's name for the global routing table
+    const g = await appsClient.callTool({
+      name: 'render_svg',
+      arguments: { path: 'vrf-lite.topo.json', view: 'logical', vrfs: ['global', 'red'] },
+    });
+    expect(firstText(g)).toContain('>global<');
+    expect(firstText(g)).not.toContain('>blue<');
+    const gsc = g.structuredContent as { vrfs?: string[]; show_global?: boolean };
+    expect(gsc.vrfs).toEqual(['global', 'red']);
+    expect(gsc.show_global).toBe(true);
+
+    // show_global:false alone still works and now travels as an explicit list
+    const s = await appsClient.callTool({
+      name: 'render_svg',
+      arguments: { path: 'vrf-lite.topo.json', view: 'logical', show_global: false },
+    });
+    expect((s.structuredContent as { vrfs?: string[] }).vrfs).toEqual(['blue', 'red']);
   });
 
   it('a client WITHOUT the ui capability gets results byte-identical to v0.5.0 (#31)', async () => {

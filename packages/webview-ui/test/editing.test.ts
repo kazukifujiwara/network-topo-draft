@@ -16,7 +16,7 @@ const FIXED_VIEW = {
   vt: { x: 0, y: 0, k: 1 },
   viewMode: 'physical' as const,
   underlayOn: true,
-  showGlobal: true,
+  hiddenVrfs: [],
   gridOn: true,
   snapOn: true,
 };

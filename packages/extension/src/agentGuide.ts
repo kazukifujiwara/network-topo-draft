@@ -97,7 +97,9 @@ environment, prefer this division of labor:
 - LOOK at your work: \`render_svg\` returns the same image the editor
   exports — check layout and overlaps (physical AND logical view when the
   topology has VRFs or segments) before calling the task done, and fix
-  placement with \`set_position\`.
+  placement with \`set_position\`. On busy logical views pass \`vrfs\`
+  (e.g. \`["blue"]\`, \`"global"\` for the global table) to look at one
+  VRF at a time.
 - \`describe_format\` returns this same contract on demand;
   \`read_topology\` summarizes a file without reading it whole.
 

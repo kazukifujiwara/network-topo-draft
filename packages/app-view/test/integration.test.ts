@@ -36,6 +36,7 @@ const FIXTURES = [
   'v1/canonical.topo.json',
   'v1/minimal.topo.json',
   'v1/vrrp-segment.topo.json',
+  'v1/vrf-lite.topo.json',
   'v3/wan-logical.topo.json',
   'v4v5/dx-endpoint-ip.topo.json',
   'v6v7/site-cloud.topo.json',
@@ -51,7 +52,7 @@ const mount = (): HTMLElement => {
 /** Expected drawn-link count, mirroring the scene's view filter. */
 function expectedLinks(t: Topology, view: ViewMode): number {
   const shown = displayTopology(t);
-  const nodes = buildNodes(shown, { viewMode: view, showGlobal: true });
+  const nodes = buildNodes(shown, { viewMode: view });
   return buildLinks(shown).filter((l) => {
     if (view === 'physical' && l.kind === 'logical') return false; // logical hidden
     // logical view keeps everything (underlay on — the widget default)
@@ -74,7 +75,7 @@ describe('fixture sweep (#33): every fixture renders in both views, counts from 
         const root = mount();
         const widget = mountAppView(root);
         widget.update(text, settings);
-        const nodes = buildNodes(displayTopology(t), { viewMode: view, showGlobal: true });
+        const nodes = buildNodes(displayTopology(t), { viewMode: view });
         expect(root.querySelectorAll('[data-node]')).toHaveLength(nodes.size);
         expect(root.querySelectorAll('[data-link]')).toHaveLength(expectedLinks(t, view));
         expect(root.querySelector('#errorBar')?.getAttribute('style') ?? '').not.toContain(
@@ -93,8 +94,9 @@ describe('server ⇄ widget contract loop (#33)', () => {
     const server = createServer(
       {
         readFile: (path) => {
-          if (path !== 'site-cloud.topo.json') throw new Error(`ENOENT: ${path}`);
-          return readFixture('v6v7/site-cloud.topo.json');
+          if (path === 'site-cloud.topo.json') return readFixture('v6v7/site-cloud.topo.json');
+          if (path === 'vrf-lite.topo.json') return readFixture('v1/vrf-lite.topo.json');
+          throw new Error(`ENOENT: ${path}`);
         },
         writeFile: () => {},
       },
@@ -134,12 +136,32 @@ describe('server ⇄ widget contract loop (#33)', () => {
 
     // the scene matches what core derives from the same fixture
     const t = parse(readFixture('v6v7/site-cloud.topo.json'));
-    const nodes = buildNodes(displayTopology(t), { viewMode: 'logical', showGlobal: false });
+    const nodes = buildNodes(displayTopology(t), { viewMode: 'logical', vrfs: ['PROD'] });
     expect(root.querySelectorAll('[data-node]')).toHaveLength(nodes.size);
     // show_global=false traveled the whole loop: no 'global' compartment rows
     const rowLabels = [...root.querySelectorAll('.vrf-row-label')].map((l) => l.textContent);
     expect(rowLabels.length).toBeGreaterThan(0);
     expect(rowLabels).not.toContain('global');
+    // the server resolved the filter for the widget: show_global folded into vrfs
+    expect((result.structuredContent as { vrfs?: string[] }).vrfs).toEqual(['PROD']);
+  });
+
+  it('a vrfs filter travels the loop: only the listed VRFs reach the canvas (#46)', async () => {
+    const result = await client.callTool({
+      name: 'render_svg',
+      arguments: { path: 'vrf-lite.topo.json', view: 'logical', vrfs: ['blue', 'global'] },
+    });
+    expect(result.isError).toBeFalsy();
+    const root = mount();
+    const widget = mountAppView(root);
+    const { text, settings } = toolResultToUpdate(result.structuredContent);
+    expect([...(settings.vrfs ?? [])].sort()).toEqual(['', 'blue']); // "global" → '' in scene terms
+    widget.update(text, settings);
+    const rowLabels = [...root.querySelectorAll('.vrf-row-label')].map((l) => l.textContent);
+    expect(rowLabels).not.toContain('red');
+    expect(rowLabels).toContain('blue');
+    expect(rowLabels).toContain('global');
+    expect(root.querySelector('[data-node="seg-blue"]')).not.toBeNull();
   });
 });
 

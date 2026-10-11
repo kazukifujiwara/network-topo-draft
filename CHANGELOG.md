@@ -6,8 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Logical-view VRF filter (#46): the **VRF ▾** toolbar dropdown is an
+  autofilter-style checklist — `global` pinned first, then every VRF in
+  the file, with All / None shortcuts. Only the checked VRFs' compartment
+  rows, logical links, and attached segments are drawn; a link between
+  two VRFs stays while either end is checked (route leaks stay visible).
+  The filter is view state (persisted with the other toggles, never
+  written to the file) and image exports render the filtered view.
+- MCP `render_svg` gains a `vrfs` input (VRF names, `"global"` for the
+  global routing table) that narrows the logical view the same way; the
+  MCP Apps widget renders the filtered view too. `show_global` stays as a
+  compatibility input.
+
 ### Changed
 
+- The separate **Global** toolbar toggle is gone — its job moved into the
+  VRF filter list (a previously saved "global off" state is restored as
+  the global row unchecked).
 - Dependency refresh (#48): 27 advisories published since the v0.6.1
   release cleared (`npm audit` 0, both CI gates green). The MCP server
   bundle now embeds `@modelcontextprotocol/sdk` 1.32.1 (was 1.29.x);

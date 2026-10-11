@@ -43,11 +43,14 @@ export function nodeHeight(vrfRowCount?: number): number {
 }
 
 /**
- * Compartment row labels for a device: the derived VRFs, prefixed with the
- * global row ('') when it is shown (v7 `vrfRows`).
+ * Compartment row labels for a device: the global row ('') followed by the
+ * derived VRFs, narrowed to `visible` when a VRF filter is set (v7
+ * `vrfRows` + #46). `visible` lists VRF names with '' for the global row;
+ * undefined = no filter.
  */
-export function vrfRows(derivedVrfs: string[], showGlobal: boolean): string[] {
-  return showGlobal ? ['', ...derivedVrfs] : derivedVrfs;
+export function vrfRows(derivedVrfs: string[], visible?: readonly string[]): string[] {
+  const rows = ['', ...derivedVrfs];
+  return visible ? rows.filter((v) => visible.includes(v)) : rows;
 }
 
 /** Corner radius of network-segment pill nodes (drawn with rx=SEGMENT_RX). */
@@ -120,13 +123,20 @@ export function anchor(x: number, y: number, w: number, h: number, tx: number, t
 
 /**
  * Index of the compartment row for a VRF ('' = global) given the visible
- * rows; -1 when the row is hidden (v7 `vrfRowIdx`).
+ * rows; -1 when the row is hidden (v7 `vrfRowIdx`). A VRF the device does
+ * not declare falls back to the global row when that is visible
+ * (validate() reports it as undeclared-vrf); a VRF hidden by the filter
+ * (`visible`, #46) never falls back — the caller anchors on the node body.
  */
-export function vrfRowIndex(rows: string[], vrf: string | undefined, showGlobal: boolean): number {
+export function vrfRowIndex(
+  rows: string[],
+  vrf: string | undefined,
+  visible?: readonly string[],
+): number {
   const v = (vrf ?? '').trim();
-  if (!v) return showGlobal ? 0 : -1;
+  if (visible && !visible.includes(v)) return -1;
   const i = rows.indexOf(v);
-  return i < 0 ? (showGlobal ? 0 : -1) : i;
+  return i < 0 && v ? rows.indexOf('') : i;
 }
 
 /** Rect of the compartment row at `rowIndex` inside a node at (nodeX, nodeY) (v7 `vrfRowRect`). */

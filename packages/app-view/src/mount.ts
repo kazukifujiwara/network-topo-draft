@@ -8,17 +8,22 @@
 import type { AppHost, PersistedViewState, ViewMode } from '@topodraft/webview-ui';
 import { createApp, initLocale } from '@topodraft/webview-ui';
 import type { HostToWebviewMessage, WebviewToHostMessage } from '@topodraft/protocol';
+import { allVrfs, parse } from '@topodraft/core';
 
 /** The view toggles a render carries (mirrors the render tool's inputs). */
 export interface ViewSettings {
   view: ViewMode;
-  showGlobal: boolean;
   underlay: boolean;
+  /**
+   * Logical view: the VRFs to draw ('' = the global row), #46; undefined =
+   * no filter. The canvas keeps the complementary HIDDEN set, computed
+   * against the rendered topology on every update.
+   */
+  vrfs?: readonly string[];
 }
 
 export const DEFAULT_SETTINGS: ViewSettings = {
   view: 'physical',
-  showGlobal: true,
   underlay: true,
 };
 
@@ -49,6 +54,7 @@ export interface MountOptions {
 export function mountAppView(root: HTMLElement, options: MountOptions = {}): AppView {
   initLocale(options.locale ?? 'en');
   let settings: ViewSettings = { ...DEFAULT_SETTINGS };
+  let hiddenVrfs: string[] = [];
   const host: AppHost = {
     postMessage: (message) => options.onMessage?.(message),
     // the "persisted" state is derived from the current render's settings —
@@ -57,7 +63,7 @@ export function mountAppView(root: HTMLElement, options: MountOptions = {}): App
       vt: { x: 60, y: 40, k: 1 },
       viewMode: settings.view,
       underlayOn: settings.underlay,
-      showGlobal: settings.showGlobal,
+      hiddenVrfs,
       gridOn: true,
       snapOn: true,
       panelCollapsed: true,
@@ -69,13 +75,26 @@ export function mountAppView(root: HTMLElement, options: MountOptions = {}): App
   let app = createApp(root, host);
   let docVersion = 0;
 
+  const sameList = (a: readonly string[] | undefined, b: readonly string[] | undefined): boolean =>
+    a === b || (a !== undefined && b !== undefined && a.length === b.length && a.every((v, i) => v === b[i]));
   const sameSettings = (a: ViewSettings, b: ViewSettings): boolean =>
-    a.view === b.view && a.showGlobal === b.showGlobal && a.underlay === b.underlay;
+    a.view === b.view && a.underlay === b.underlay && sameList(a.vrfs, b.vrfs);
+  /** The canvas hides what the render's VRF list leaves out. */
+  const hiddenFor = (text: string, vrfs: readonly string[] | undefined): string[] => {
+    if (!vrfs) return [];
+    try {
+      return ['', ...allVrfs(parse(text))].filter((v) => !vrfs.includes(v));
+    } catch {
+      return []; // unparsable text — the canvas shows its own D11 error
+    }
+  };
 
   return {
     update(text: string, next?: ViewSettings): void {
-      if (next && !sameSettings(settings, next)) {
-        settings = { ...next };
+      const hidden = hiddenFor(text, (next ?? settings).vrfs);
+      if ((next && !sameSettings(settings, next)) || !sameList(hidden, hiddenVrfs)) {
+        if (next) settings = { ...next };
+        hiddenVrfs = hidden;
         root.textContent = '';
         app = createApp(root, host); // re-created with the new view state
         docVersion = 0;

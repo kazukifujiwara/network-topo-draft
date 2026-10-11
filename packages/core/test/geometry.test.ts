@@ -90,20 +90,27 @@ describe('roundedAnchor (pill-shaped segment nodes)', () => {
 });
 
 describe('VRF compartments', () => {
-  it('vrfRows prepends the global row when shown (v7 vrfRows)', () => {
-    expect(vrfRows(['A', 'B'], true)).toEqual(['', 'A', 'B']);
-    expect(vrfRows(['A', 'B'], false)).toEqual(['A', 'B']);
+  it('vrfRows prepends the global row and narrows to the VRF filter (v7 vrfRows + #46)', () => {
+    expect(vrfRows(['A', 'B'])).toEqual(['', 'A', 'B']);
+    expect(vrfRows(['A', 'B'], ['A', 'B'])).toEqual(['A', 'B']); // global filtered out
+    expect(vrfRows(['A', 'B'], ['', 'B'])).toEqual(['', 'B']);
+    expect(vrfRows(['A', 'B'], [])).toEqual([]);
   });
 
   it('vrfRowIndex resolves global/VRF/hidden rows (v7 vrfRowIdx)', () => {
-    const rows = vrfRows(['A', 'B'], true);
-    expect(vrfRowIndex(rows, '', true)).toBe(0);
-    expect(vrfRowIndex(rows, undefined, true)).toBe(0);
-    expect(vrfRowIndex(rows, 'B', true)).toBe(2);
-    expect(vrfRowIndex(rows, 'ghost', true)).toBe(0); // unknown VRF falls back to global
-    const noGlobal = vrfRows(['A'], false);
-    expect(vrfRowIndex(noGlobal, '', false)).toBe(-1); // hidden
-    expect(vrfRowIndex(noGlobal, 'A', false)).toBe(0);
+    const rows = vrfRows(['A', 'B']);
+    expect(vrfRowIndex(rows, '')).toBe(0);
+    expect(vrfRowIndex(rows, undefined)).toBe(0);
+    expect(vrfRowIndex(rows, 'B')).toBe(2);
+    expect(vrfRowIndex(rows, 'ghost')).toBe(0); // unknown VRF falls back to global
+    const noGlobal = vrfRows(['A'], ['A']);
+    expect(vrfRowIndex(noGlobal, '', ['A'])).toBe(-1); // hidden
+    expect(vrfRowIndex(noGlobal, 'A', ['A'])).toBe(0);
+    expect(vrfRowIndex(noGlobal, 'ghost', ['A'])).toBe(-1); // no global row to fall back to
+    // a VRF hidden by the filter never falls back to the global row (#46)
+    const filtered = vrfRows(['A', 'B'], ['', 'A']);
+    expect(vrfRowIndex(filtered, 'B', ['', 'A'])).toBe(-1);
+    expect(vrfRowIndex(filtered, 'ghost', ['', 'A'])).toBe(-1);
   });
 
   it('vrfRowRect matches the v7 compartment metrics', () => {

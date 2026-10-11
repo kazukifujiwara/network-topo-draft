@@ -37,15 +37,30 @@ const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
 
 describe('toolResultToUpdate (pure mapping)', () => {
   it('maps topology + view options; field names mirror the tool inputs', () => {
-    const topology = { version: 1, devices: [{ name: 'a' }] };
+    const topology = { version: 1, devices: [{ name: 'a', vrfs: ['PROD'] }] };
     const r = toolResultToUpdate({ topology, view: 'logical', show_global: false, underlay: false });
     expect(JSON.parse(r.text)).toEqual(topology);
-    expect(r.settings).toEqual({ view: 'logical', showGlobal: false, underlay: false });
+    // show_global:false = "every named VRF, not the global row" (#46)
+    expect(r.settings).toEqual({ view: 'logical', underlay: false, vrfs: ['PROD'] });
   });
 
-  it('defaults: physical view, global row on, underlay on', () => {
+  it('defaults: physical view, no VRF filter, underlay on', () => {
     const r = toolResultToUpdate({ topology: { version: 1, devices: [] } });
-    expect(r.settings).toEqual({ view: 'physical', showGlobal: true, underlay: true });
+    expect(r.settings).toEqual({ view: 'physical', underlay: true });
+    expect(r.settings.vrfs).toBeUndefined();
+  });
+
+  it('maps the vrfs filter, translating the "global" alias to the scene model (#46)', () => {
+    const topology = { version: 1, devices: [{ name: 'a', vrfs: ['blue', 'red'] }] };
+    expect(toolResultToUpdate({ topology, view: 'logical', vrfs: ['global', 'blue'] }).settings.vrfs).toEqual([
+      '',
+      'blue',
+    ]);
+    // show_global:false strips the global row from an explicit list too
+    expect(
+      toolResultToUpdate({ topology, view: 'logical', vrfs: ['global', 'red'], show_global: false })
+        .settings.vrfs,
+    ).toEqual(['red']);
   });
 
   it('throws a pointed error when the topology is missing', () => {

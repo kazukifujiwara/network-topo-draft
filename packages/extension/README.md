@@ -38,7 +38,9 @@ after install (also: `Welcome: Open Walkthrough…`). The short version:
   the canvas. The `</>` title-bar button switches to the text view and back.
 - **Physical and logical layers in one file** — cables/circuits/sites on the
   physical view; VRF compartments, L3 links, and multi-access segments
-  (`networks[]` with HSRP/VRRP virtual IPs) on the logical view.
+  (`networks[]` with HSRP/VRRP virtual IPs) on the logical view, with a
+  **VRF filter** (checklist dropdown, `global` first) to show only the VRFs
+  you are working on — exports follow the filtered view.
 - **Full editing** — palette drag & drop, port-drag link creation
   (cable / circuit / logical by context), property panels, interfaces &
   VRFs, JSON config contexts, copy/paste/duplicate, align & distribute,

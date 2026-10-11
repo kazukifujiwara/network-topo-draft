@@ -87,13 +87,16 @@ export {
 export type { GlyphKey } from './glyphs';
 export { GLYPHS } from './glyphs';
 
-export type { LinkKind, LinkVM, NodeVM, SceneView, ViewMode } from './sceneModel';
+export type { EndpointKind, LinkKind, LinkVM, NodeVM, SceneView, ViewMode } from './sceneModel';
 export {
   buildLinks,
   buildNodes,
   displayTopology,
+  linkDrawn,
   logicalVrfOf,
   sceneBounds,
+  vrfFilterOf,
+  vrfVisible,
 } from './sceneModel';
 
 export { genMarkdown } from './generators/markdown';

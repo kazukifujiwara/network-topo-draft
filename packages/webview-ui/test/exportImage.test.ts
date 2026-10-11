@@ -34,7 +34,7 @@ describe('SVG export', () => {
       vt: { x: 0, y: 0, k: 1 },
       viewMode: 'logical',
       underlayOn: true,
-      showGlobal: true,
+      hiddenVrfs: [],
       gridOn: true,
     });
     const a = createApp(mount(), f.host);
