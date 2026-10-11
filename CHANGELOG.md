@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-10-10
+
+Ships as the VSCode extension **0.6.0** (Marketplace) and
+`topodraft-mcp@0.3.0` on npm.
+
 ### Added
 
 - Logical-view VRF filter (#46): the **VRF ▾** toolbar dropdown is an
