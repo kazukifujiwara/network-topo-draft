@@ -13,8 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   bundle now embeds `@modelcontextprotocol/sdk` 1.32.1 (was 1.29.x);
   toolchain majors: vitest 4, mocha 12, `@vscode/vsce` 4,
   `@vscode/test-electron` 3 (VS Code ≥ 1.110 renamed the macOS launcher
-  `Electron` → `Code`; the e2e gate failed to spawn it). No behavior
-  change — VSIX file list and SVG goldens are byte-identical.
+  `Electron` → `Code`; the e2e gate failed to spawn it), esbuild 0.28
+  (one version shared with vitest's vite — a lockfile with two esbuilds
+  broke `npm ci`). No behavior change — VSIX file list and SVG goldens
+  are byte-identical.
 
 ## [0.6.1] — 2026-07-11
 
