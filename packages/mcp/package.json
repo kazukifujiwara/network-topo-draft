@@ -6,7 +6,7 @@
   "description": "MCP server for TopoDraft topology files (*.topo.json) — AI agents read, validate, and learn the file format through Model Context Protocol tools.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kazukifujiwara/network-topo-draft.git",
+    "url": "git+https://github.com/kazukifujiwara/network-topo-draft.git",
     "directory": "packages/mcp"
   },
   "bugs": {
@@ -14,7 +14,7 @@
   },
   "homepage": "https://github.com/kazukifujiwara/network-topo-draft#readme",
   "bin": {
-    "topodraft-mcp": "./dist/mcp.js"
+    "topodraft-mcp": "dist/mcp.js"
   },
   "files": [
     "dist",
