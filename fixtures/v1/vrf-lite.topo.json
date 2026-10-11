@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "devices": [
+    {
+      "name": "rt-a",
+      "role": "router",
+      "site": "HQ",
+      "vrfs": [
+        "blue",
+        "red"
+      ],
+      "interfaces": [
+        {
+          "name": "Gi0/0",
+          "type": "1000base-t"
+        },
+        {
+          "name": "Gi0/0.10",
+          "ip_address": "10.0.10.1/30",
+          "type": "virtual",
+          "vrf": "blue"
+        },
+        {
+          "name": "Gi0/0.20",
+          "ip_address": "10.0.20.1/30",
+          "type": "virtual",
+          "vrf": "red"
+        },
+        {
+          "name": "Gi0/1",
+          "ip_address": "10.0.100.1/24",
+          "type": "1000base-t",
+          "vrf": "blue"
+        }
+      ],
+      "position": {
+        "x": 120,
+        "y": 60
+      }
+    },
+    {
+      "name": "rt-b",
+      "role": "router",
+      "site": "DC",
+      "vrfs": [
+        "blue",
+        "red"
+      ],
+      "interfaces": [
+        {
+          "name": "Gi0/0",
+          "type": "1000base-t"
+        },
+        {
+          "name": "Gi0/0.10",
+          "ip_address": "10.0.10.2/30",
+          "type": "virtual",
+          "vrf": "blue"
+        },
+        {
+          "name": "Gi0/0.20",
+          "ip_address": "10.0.20.2/30",
+          "type": "virtual",
+          "vrf": "red"
+        },
+        {
+          "name": "Gi0/1",
+          "ip_address": "10.0.100.2/24",
+          "type": "1000base-t",
+          "vrf": "blue"
+        }
+      ],
+      "position": {
+        "x": 620,
+        "y": 60
+      }
+    },
+    {
+      "name": "sw-a",
+      "role": "switch",
+      "site": "HQ",
+      "position": {
+        "x": 120,
+        "y": 340
+      }
+    }
+  ],
+  "networks": [
+    {
+      "name": "seg-blue",
+      "prefix": "10.0.100.0/24",
+      "vlan": "100",
+      "position": {
+        "x": 370,
+        "y": 340
+      }
+    }
+  ],
+  "cables": [
+    {
+      "a": {
+        "device": "rt-a",
+        "interface": "Gi0/0"
+      },
+      "b": {
+        "device": "rt-b",
+        "interface": "Gi0/0"
+      },
+      "type": "fiber",
+      "label": "802.1Q trunk"
+    },
+    {
+      "a": {
+        "device": "rt-a"
+      },
+      "b": {
+        "device": "sw-a"
+      },
+      "type": "cat6"
+    }
+  ],
+  "logical_links": [
+    {
+      "a": {
+        "device": "rt-a",
+        "vrf": "blue",
+        "interface": "Gi0/0.10"
+      },
+      "b": {
+        "device": "rt-b",
+        "vrf": "blue",
+        "interface": "Gi0/0.10"
+      },
+      "link_id": "blue-wan"
+    },
+    {
+      "a": {
+        "device": "rt-a",
+        "vrf": "red",
+        "interface": "Gi0/0.20"
+      },
+      "b": {
+        "device": "rt-b",
+        "vrf": "red",
+        "interface": "Gi0/0.20"
+      },
+      "link_id": "red-wan"
+    },
+    {
+      "a": {
+        "device": "rt-a"
+      },
+      "b": {
+        "device": "rt-b"
+      },
+      "link_id": "global-wan"
+    },
+    {
+      "a": {
+        "device": "rt-a",
+        "vrf": "blue"
+      },
+      "b": {
+        "device": "rt-b",
+        "vrf": "red"
+      },
+      "label": "route leak"
+    },
+    {
+      "a": {
+        "device": "rt-a",
+        "vrf": "blue",
+        "interface": "Gi0/1"
+      },
+      "b": {
+        "network": "seg-blue"
+      }
+    },
+    {
+      "a": {
+        "device": "rt-b",
+        "vrf": "blue",
+        "interface": "Gi0/1"
+      },
+      "b": {
+        "network": "seg-blue"
+      }
+    }
+  ]
+}

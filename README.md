@@ -94,6 +94,12 @@ Extension Development Host opens on `fixtures/`; open any `*.topo.json` there.
 - **Draw**: drag node types from the palette, connect via the ◦ ports shown on
   hover (same-site → cable, cross-site or provider network → circuit; in the
   logical view, drag between VRF compartments for logical links).
+- **VRF filter** (logical view): the **VRF ▾** toolbar dropdown is an
+  autofilter-style checklist — `global` first, then every VRF in the file.
+  Uncheck what you don't need and only those compartments, logical links,
+  and attached segments stay (a link between two VRFs stays while either
+  end is checked, so route leaks remain visible). The filter is view state,
+  never written to the file; image exports render the filtered view.
 - **Multi-access L3 segments** (format spec §3.10): `networks[]` entries render
   as pill nodes in the logical view — subnets shared by several devices, with
   optional FHRP (HSRP/VRRP) group and virtual IP. Each attached device gets one
@@ -164,7 +170,8 @@ AI agents get first-class tools over
 `validate_topology`), make structured edits with the post-edit
 diagnostics in every response (`add_device`, `add_link`, `update_device`,
 …), and *see* the diagram (`render_svg` — the same SVG the editor
-exports). Editing a file that is open in VSCode updates the canvas live.
+exports; `vrfs` narrows the logical view to the VRFs that matter). Editing
+a file that is open in VSCode updates the canvas live.
 On [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview)-capable
 hosts, `render_svg` goes further: the result renders as an **interactive
 inline canvas** (pan/zoom, physical ⇄ logical views) in the conversation

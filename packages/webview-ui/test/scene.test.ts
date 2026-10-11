@@ -21,14 +21,14 @@ describe('displayTopology (initial auto-placement, plan §3)', () => {
 describe('sceneBounds', () => {
   it('wraps all nodes with the v7 70px padding', () => {
     const t = parse(readFixture('v1/canonical.topo.json'));
-    const b = sceneBounds(t, { viewMode: 'physical', showGlobal: true });
+    const b = sceneBounds(t, { viewMode: 'physical', hiddenVrfs: new Set() });
     // positions: x 120..820 (+NODE_W 152), y 60..210 (+NODE_H 52)
     expect(b).toEqual({ x0: 50, y0: -10, x1: 1042, y1: 332 });
   });
 
   it('returns null for an empty topology', () => {
     const t = parse('{"version":1,"devices":[]}');
-    expect(sceneBounds(t, { viewMode: 'physical', showGlobal: true })).toBeNull();
+    expect(sceneBounds(t, { viewMode: 'physical', hiddenVrfs: new Set() })).toBeNull();
   });
 });
 

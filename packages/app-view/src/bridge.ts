@@ -9,6 +9,8 @@
  * the full loop with a fake — only main.ts touches the real class.
  */
 import type { WebviewToHostMessage } from '@topodraft/protocol';
+import type { Topology } from '@topodraft/core';
+import { vrfFilterOf } from '@topodraft/core';
 import type { AppView, ViewSettings } from './mount';
 import { DEFAULT_SETTINGS, mountAppView } from './mount';
 
@@ -22,7 +24,12 @@ export interface RenderPayload {
   view?: 'physical' | 'logical';
   show_global?: boolean;
   underlay?: boolean;
+  /** VRF filter (#46) in the tool's naming: "global" for the global row. */
+  vrfs?: string[];
 }
+
+/** The tool's "global" alias ⇄ the scene model's '' for the global row. */
+export const GLOBAL_VRF_ALIAS = 'global';
 
 export interface UpdateFromToolResult {
   /** Document text for the canvas (the topology, serialized verbatim). */
@@ -38,12 +45,14 @@ export function toolResultToUpdate(structuredContent: unknown): UpdateFromToolRe
       'tool result carries no topology — expected structuredContent.topology (canonical *.topo.json value)',
     );
   }
+  const named = sc.vrfs?.map((v) => (v === GLOBAL_VRF_ALIAS ? '' : v));
+  const vrfs = vrfFilterOf(sc.topology as unknown as Topology, named, sc.show_global);
   return {
     text: JSON.stringify(sc.topology),
     settings: {
       view: sc.view === 'logical' ? 'logical' : DEFAULT_SETTINGS.view,
-      showGlobal: sc.show_global !== false,
       underlay: sc.underlay !== false,
+      ...(vrfs ? { vrfs: [...vrfs] } : {}),
     },
   };
 }

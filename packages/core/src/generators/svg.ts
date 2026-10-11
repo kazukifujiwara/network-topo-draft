@@ -24,14 +24,30 @@ import {
   vrfRowRect,
 } from '../geometry';
 import type { LinkVM, NodeVM, SceneView, ViewMode } from '../sceneModel';
-import { buildLinks, buildNodes, displayTopology, logicalVrfOf, sceneBounds } from '../sceneModel';
+import {
+  buildLinks,
+  buildNodes,
+  displayTopology,
+  linkDrawn,
+  logicalVrfOf,
+  sceneBounds,
+  vrfFilterOf,
+} from '../sceneModel';
 import type { GlyphKey } from '../glyphs';
 import { GLYPHS } from '../glyphs';
 
 export interface SvgOptions {
   /** Which editor view to render (default 'physical'). */
   view?: ViewMode;
-  /** Logical view: show the implicit global ('' VRF) row (default true). */
+  /**
+   * Logical view: draw only these VRFs' compartment rows and logical links
+   * ('' = the global routing table); default all (#46).
+   */
+  vrfs?: readonly string[];
+  /**
+   * Logical view: show the implicit global ('' VRF) row (default true).
+   * `false` removes the global row from the VRF filter.
+   */
   showGlobal?: boolean;
   /** Logical view: draw the dimmed physical underlay (default true). */
   underlay?: boolean;
@@ -77,12 +93,12 @@ function xmlEscape(s: unknown): string {
 }
 
 export function genSvg(topology: Topology, options: SvgOptions = {}): string {
+  const t = displayTopology(topology);
   const view: SceneView = {
     viewMode: options.view ?? 'physical',
-    showGlobal: options.showGlobal ?? true,
+    vrfs: vrfFilterOf(t, options.vrfs, options.showGlobal),
   };
   const underlayOn = options.underlay ?? true;
-  const t = displayTopology(topology);
   const nodes = buildNodes(t, view);
   const links = buildLinks(t);
   const b = sceneBounds(topology, view) ?? { x0: 0, y0: 0, x1: 300, y1: 150 };
@@ -126,11 +142,7 @@ export function genSvg(topology: Topology, options: SvgOptions = {}): string {
      pair so endpoints stay on their compartment rows */
   const physLayer: string[] = [];
   const logiLayer: string[] = [];
-  const drawnInView = (l: LinkVM): boolean => {
-    if (view.viewMode === 'physical' && l.kind === 'logical') return false;
-    if (view.viewMode === 'logical' && l.kind !== 'logical' && !underlayOn) return false;
-    return true;
-  };
+  const drawnInView = (l: LinkVM): boolean => linkDrawn(l, view, underlayOn);
   const pairKey = (l: LinkVM): string =>
     l.kind === 'logical' && view.viewMode === 'logical'
       ? 'logi:' + [`${l.aName ?? ''}#${l.aVrf}`, `${l.bName ?? ''}#${l.bVrf}`].sort().join('|')
@@ -160,7 +172,7 @@ export function genSvg(topology: Topology, options: SvgOptions = {}): string {
         : anchor(n.x, n.y, NODE_W, n.h, tx, ty);
     const logicalAnchor = (n: NodeVM, vrf: string, tx: number, ty: number) => {
       if (n.kind !== 'device' || view.viewMode !== 'logical') return null;
-      const idx = vrfRowIndex(n.rows, vrf, view.showGlobal);
+      const idx = vrfRowIndex(n.rows, vrf, view.vrfs);
       if (idx < 0) return null;
       return logAnchor(vrfRowRect(n.x, n.y, idx), tx, ty);
     };

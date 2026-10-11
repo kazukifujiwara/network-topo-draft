@@ -42,6 +42,24 @@ describe('mountAppView (#28): the canvas renders without VSCode', () => {
     expect(posted.map((m) => m.type)).toContain('ready');
   });
 
+  it('applies a VRF filter from the settings and re-derives it per update (#46)', () => {
+    const { root } = mount();
+    const view = mountAppView(root);
+    const text = readFixture('v1/vrf-lite.topo.json');
+    view.update(text, { view: 'logical', underlay: true, vrfs: ['blue'] });
+    const labels = () => [...root.querySelectorAll('.vrf-row-label')].map((l) => l.textContent);
+    expect(labels()).toEqual(['blue', 'blue']);
+    expect(root.querySelector('[data-node="seg-blue"]')).not.toBeNull();
+    // same settings, a VRF added to the file: the filter still applies
+    const grown = text.replace('"blue",\n        "red"', '"blue",\n        "red",\n        "green"');
+    view.update(grown, { view: 'logical', underlay: true, vrfs: ['blue'] });
+    expect(labels()).toEqual(['blue', 'blue']);
+    // dropping the filter shows everything again
+    view.update(text, { view: 'logical', underlay: true });
+    expect(labels()).toContain('red');
+    expect(labels()).toContain('global');
+  });
+
   it('works without an onMessage hook (messages are dropped silently)', () => {
     const { root } = mount();
     expect(() => {

@@ -9,20 +9,21 @@
  * module only builds the DOM. Dynamic colors go through CSSOM (style.*) so
  * the webview CSP needs no 'unsafe-inline'.
  */
-import type { LinkVM, NodeVM, Topology, ViewMode } from '@topodraft/core';
+import type { LinkVM, NodeVM, SceneView, Topology, ViewMode } from '@topodraft/core';
 import {
   NODE_W,
   SEGMENT_RX,
   allVrfs,
   anchor,
   buildLinks,
-  buildNodes,
+  buildNodes as coreBuildNodes,
   displayTopology,
+  linkDrawn,
   linkSegment,
   logAnchor,
   logicalVrfOf,
   roundedAnchor,
-  sceneBounds,
+  sceneBounds as coreSceneBounds,
   sitesList,
   vrfColor,
   vrfRowIndex,
@@ -32,7 +33,7 @@ import { ICONS, ROLE_COLOR } from './icons';
 import { T } from './strings';
 
 export type { NodeVM, ViewMode };
-export { buildNodes, displayTopology, sceneBounds };
+export { displayTopology };
 
 export interface ViewTransform {
   x: number;
@@ -44,8 +45,40 @@ export interface ViewOptions {
   vt: ViewTransform;
   viewMode: ViewMode;
   underlayOn: boolean;
-  showGlobal: boolean;
+  /**
+   * Logical view: VRFs hidden by the VRF filter ('' = the global row), #46.
+   * Kept as a hidden set so a VRF that appears in the file later shows up
+   * by default.
+   */
+  hiddenVrfs: Set<string>;
   gridOn: boolean;
+}
+
+type SceneViewOptions = Pick<ViewOptions, 'viewMode' | 'hiddenVrfs'>;
+
+/**
+ * The core SceneView for the current toggles: the hidden set becomes the
+ * visible list the scene model filters on (undefined when nothing is
+ * hidden — unfiltered scenes stay identical to the export goldens).
+ */
+export function sceneViewOf(view: SceneViewOptions, t: Topology): SceneView {
+  const hidden = ['', ...allVrfs(t)].filter((v) => view.hiddenVrfs.has(v));
+  if (view.viewMode !== 'logical' || !hidden.length) return { viewMode: view.viewMode };
+  return {
+    viewMode: view.viewMode,
+    vrfs: ['', ...allVrfs(t)].filter((v) => !view.hiddenVrfs.has(v)),
+  };
+}
+
+export function buildNodes(t: Topology, view: SceneViewOptions): Map<string, NodeVM> {
+  return coreBuildNodes(t, sceneViewOf(view, t));
+}
+
+export function sceneBounds(
+  t: Topology,
+  view: SceneViewOptions,
+): ReturnType<typeof coreSceneBounds> {
+  return coreSceneBounds(t, sceneViewOf(view, t));
 }
 
 /** Editing affordances drawn on top of the base scene (Phase 2). */
@@ -119,7 +152,8 @@ export function renderScene(
   }
 
   const t = displayTopology(topology);
-  const nodes = buildNodes(t, view);
+  const scene = sceneViewOf(view, t);
+  const nodes = coreBuildNodes(t, scene);
   const links = buildLinks(t);
 
   /* sites (v7: devices sharing a site are framed together) */
@@ -146,14 +180,10 @@ export function renderScene(
     dom.lySites.appendChild(g);
   }
 
-  /* links — parallel offsets are computed over ALL links like v7 (hidden
-     links still consume an offset slot) */
+  /* links — only links drawn in this view (core linkDrawn: view, underlay,
+     VRF filter) take parallel-offset slots */
   const pairIdx = new Map<string, number>();
-  const drawnInView = (l: LinkVM): boolean => {
-    if (view.viewMode === 'physical' && l.kind === 'logical') return false;
-    if (view.viewMode === 'logical' && l.kind !== 'logical' && !view.underlayOn) return false;
-    return true;
-  };
+  const drawnInView = (l: LinkVM): boolean => linkDrawn(l, scene, view.underlayOn);
   // Parallel-offset bundles: two links spread apart only when their ANCHORS
   // coincide. In the logical view each VRF pair anchors to its own
   // compartment rows, so bundling by node pair (v7) shifted endpoints off
@@ -188,7 +218,7 @@ export function renderScene(
         : anchor(n.x, n.y, NODE_W, n.h, tx, ty);
     const logicalAnchor = (n: NodeVM, vrf: string, tx: number, ty: number) => {
       if (n.kind !== 'device' || view.viewMode !== 'logical') return null;
-      const idx = vrfRowIndex(n.rows, vrf, view.showGlobal);
+      const idx = vrfRowIndex(n.rows, vrf, scene.vrfs);
       if (idx < 0) return null;
       return logAnchor(vrfRowRect(n.x, n.y, idx), tx, ty);
     };

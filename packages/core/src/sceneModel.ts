@@ -9,18 +9,42 @@
  * generator) stays with each consumer.
  */
 import type { Cable, Circuit, LogicalEndpoint, LogicalLink, Topology } from './model';
-import { deriveDeviceVrfs, iconKey, siteOf } from './model';
+import { allVrfs, deriveDeviceVrfs, iconKey, siteOf } from './model';
 import { NODE_H, NODE_W, nodeHeight, vrfRows } from './geometry';
 import { autoLayout, needsAutoLayout } from './operations';
 import type { GlyphKey } from './glyphs';
 
 export type ViewMode = 'physical' | 'logical';
 
-/** The two view flags the scene derivation depends on. */
+/** The view state the scene derivation depends on. */
 export interface SceneView {
   viewMode: ViewMode;
-  /** Show the implicit global ('' VRF) compartment row in the logical view. */
-  showGlobal: boolean;
+  /**
+   * Logical view: the VRFs whose compartment rows and logical links are
+   * drawn ('' = the global routing table); undefined = no filter (#46).
+   * View-only state — never part of the file.
+   */
+  vrfs?: readonly string[];
+}
+
+/** Does the view's VRF filter show this VRF ('' = global)? */
+export function vrfVisible(view: SceneView, vrf: string): boolean {
+  return !view.vrfs || view.vrfs.includes(vrf);
+}
+
+/**
+ * Effective VRF filter for a render request: an explicit list, optionally
+ * minus the global row (`showGlobal: false` — the pre-#46 toggle, still
+ * accepted by the export and the MCP tool). Undefined when nothing is
+ * filtered, so unfiltered renders stay byte-identical.
+ */
+export function vrfFilterOf(
+  topology: Topology,
+  vrfs: readonly string[] | undefined,
+  showGlobal: boolean | undefined,
+): readonly string[] | undefined {
+  if (showGlobal !== false) return vrfs;
+  return (vrfs ?? ['', ...allVrfs(topology)]).filter((v) => v !== '');
 }
 
 export interface NodeVM {
@@ -40,12 +64,17 @@ export interface NodeVM {
 
 export type LinkKind = 'cable' | 'circuit' | 'logical';
 
+/** What a link endpoint references (mirrors NodeVM.kind). */
+export type EndpointKind = NodeVM['kind'];
+
 export interface LinkVM {
   kind: LinkKind;
   /** stable reference: 'cables:0' */
   refKey: string;
   aName: string | undefined;
   bName: string | undefined;
+  aKind: EndpointKind;
+  bKind: EndpointKind;
   aVrf: string;
   bVrf: string;
   aId: string;
@@ -67,9 +96,7 @@ export function buildNodes(topology: Topology, view: SceneView): Map<string, Nod
   for (const d of topology.devices) {
     if (map.has(d.name)) continue;
     const rows =
-      view.viewMode === 'logical'
-        ? vrfRows(deriveDeviceVrfs(topology, d.name), view.showGlobal)
-        : [];
+      view.viewMode === 'logical' ? vrfRows(deriveDeviceVrfs(topology, d.name), view.vrfs) : [];
     map.set(d.name, {
       kind: 'device',
       name: d.name,
@@ -100,6 +127,9 @@ export function buildNodes(topology: Topology, view: SceneView): Map<string, Nod
   if (view.viewMode === 'logical') {
     for (const n of topology.networks ?? []) {
       if (map.has(n.name)) continue;
+      // segments carry no VRF of their own: under a VRF filter a segment
+      // stays only while one of its attachments is drawn (#46)
+      if (view.vrfs && !segmentAttached(topology, n.name, view)) continue;
       const vm: NodeVM = {
         kind: 'network',
         name: n.name,
@@ -118,6 +148,18 @@ export function buildNodes(topology: Topology, view: SceneView): Map<string, Nod
     }
   }
   return map;
+}
+
+/** Is some logical link from a visible VRF attached to this segment? */
+function segmentAttached(topology: Topology, network: string, view: SceneView): boolean {
+  return (topology.logical_links ?? []).some((l) => {
+    const a = l.a ?? {};
+    const b = l.b ?? {};
+    const other = a.network === network ? b : b.network === network ? a : undefined;
+    return (
+      other !== undefined && other.network === undefined && vrfVisible(view, (other.vrf ?? '').trim())
+    );
+  });
 }
 
 function linkLabel(kind: LinkKind, raw: Cable | Circuit | LogicalLink): string {
@@ -144,11 +186,19 @@ export function buildLinks(topology: Topology): LinkVM[] {
   ): void => {
     const a = raw.a ?? {};
     const b = raw.b ?? {};
+    const endKind = (e: typeof a): EndpointKind =>
+      (e as LogicalEndpoint).network !== undefined
+        ? 'network'
+        : e.provider_network !== undefined
+          ? 'pn'
+          : 'device';
     out.push({
       kind,
       refKey: `${col}:${idx}`,
       aName: (a as LogicalEndpoint).network ?? a.provider_network ?? a.device,
       bName: (b as LogicalEndpoint).network ?? b.provider_network ?? b.device,
+      aKind: endKind(a),
+      bKind: endKind(b),
       aVrf: ('vrf' in a ? (a.vrf ?? '') : '').trim(),
       bVrf: ('vrf' in b ? (b.vrf ?? '') : '').trim(),
       aId: ('id' in a ? (a.id ?? '') : '').trim(),
@@ -165,6 +215,24 @@ export function buildLinks(topology: Topology): LinkVM[] {
 
 /** The VRF that colors a logical link (a-side wins, like v7). */
 export const logicalVrfOf = (l: LinkVM): string => l.aVrf || l.bVrf;
+
+/**
+ * Is a link drawn in the current view? Shared by the canvas and the SVG
+ * export so parallel-offset bundling stays identical. Under a VRF filter a
+ * logical link stays while EITHER device end sits in a visible VRF —
+ * isolating one VRF keeps its leaks in the picture (#46); segment ends
+ * carry no VRF and do not vote.
+ */
+export function linkDrawn(l: LinkVM, view: SceneView, underlayOn: boolean): boolean {
+  if (view.viewMode === 'physical') return l.kind !== 'logical';
+  if (l.kind !== 'logical') return underlayOn;
+  if (!view.vrfs) return true;
+  const ends: [EndpointKind, string][] = [
+    [l.aKind, l.aVrf],
+    [l.bKind, l.bVrf],
+  ];
+  return ends.filter(([k]) => k !== 'network').some(([, vrf]) => vrfVisible(view, vrf));
+}
 
 /** World-space bounding box of all nodes plus the v7 fit padding (70px). */
 export function sceneBounds(

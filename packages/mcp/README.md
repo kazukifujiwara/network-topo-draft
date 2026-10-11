@@ -11,7 +11,7 @@ the same validation loop the VSCode extension runs in its Problems panel.
 | `describe_format` | The format contract: editing rules, published JSON Schema, minimal example |
 | `read_topology` | Summary (devices/links/sites/VRFs, diagnostic counts) + canonical topology JSON |
 | `validate_topology` | Editor-grade diagnostics: JSON syntax, topology shape, semantic rules, unknown-field did-you-mean |
-| `render_svg` | The diagram as a standalone SVG (physical or logical view) — agents can *see* what they drew |
+| `render_svg` | The diagram as a standalone SVG (physical or logical view; `vrfs` narrows the logical view to selected VRFs, `"global"` = the global routing table) — agents can *see* what they drew |
 | `add_device` / `update_device` / `remove_device` | Structured device edits — renames follow every link reference |
 | `add_link` / `remove_link` | Cables, carrier circuits, and logical links; endpoints are checked against existing nodes |
 | `set_position` | Move nodes on the canvas (pairs with `render_svg` for layout passes) |

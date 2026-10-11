@@ -119,8 +119,13 @@ export const TOOL_DOCS = {
       'circuits; "logical" shows VRF compartments, logical links, and network segments.',
     pathDescription: 'Path to the topology file (*.topo.json or *.topo)',
     viewDescription: "Which editor view to render (default 'physical')",
+    vrfsDescription:
+      'Logical view: draw only these VRFs — their compartment rows, logical links, and ' +
+      'attached segments (names as in read_topology summary.vrfs; "global" = the global ' +
+      'routing table). A link between two VRFs stays while either end is listed. Default: all.',
     showGlobalDescription:
-      'Logical view: include the implicit global routing-table compartment row (default true)',
+      'Logical view: include the implicit global routing-table compartment row (default true; ' +
+      'false also removes "global" from vrfs)',
     underlayDescription:
       'Logical view: draw the physical links dimmed underneath (default true)',
     backgroundDescription:
