@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Dependency refresh (#48): 27 advisories published since the v0.6.1
+  release cleared (`npm audit` 0, both CI gates green). The MCP server
+  bundle now embeds `@modelcontextprotocol/sdk` 1.32.1 (was 1.29.x);
+  toolchain majors: vitest 4, mocha 12, `@vscode/vsce` 4,
+  `@vscode/test-electron` 3 (VS Code ≥ 1.110 renamed the macOS launcher
+  `Electron` → `Code`; the e2e gate failed to spawn it). No behavior
+  change — VSIX file list and SVG goldens are byte-identical.
+
 ## [0.6.1] — 2026-07-11
 
 Ships as `topodraft-mcp@0.2.1` on npm. The VSCode extension is unchanged
